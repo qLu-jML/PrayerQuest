@@ -1,0 +1,68 @@
+# Built application files
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+release/
+
+# Gradle files
+.gradle/
+build/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Android Studio
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+*.iml
+
+# Keystore files (do not commit signing keys)
+*.jks
+*.keystore
+
+# Google Services (may contain API keys)
+# google-services.json
+
+# External native build folder generated in Android Studio 2.2 and later
+.externalNativeBuild/
+.cxx/
+
+# Captures (Android profiler)
+/captures
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Proguard
+proguard/
+
+# Log files
+*.log
+
+# IntelliJ
+*.iws
+/out/
+
+# NDK
+obj/
+
+# Secrets / environment
+*.env
+secrets.properties

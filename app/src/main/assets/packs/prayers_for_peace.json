@@ -1,0 +1,15 @@
+{
+  "id": "peace",
+  "name": "Prayers for Peace",
+  "emoji": "🕊️",
+  "category": "Peace",
+  "description": "Prayers to cultivate inner peace and trust in God's sovereignty.",
+  "prayers": [
+    { "title": "Surrender anxiety to God", "description": "Cast all your anxiety on Him, because He cares for you. (1 Peter 5:7)", "category": "Peace" },
+    { "title": "Pray for a calm mind", "description": "Ask God to quiet the noise and fill you with His peace that surpasses understanding.", "category": "Peace" },
+    { "title": "Trust in God's timing", "description": "Release your timelines and trust that God's timing is perfect.", "category": "Trust" },
+    { "title": "Pray for restful sleep", "description": "Ask God to guard your mind and grant you peaceful rest tonight.", "category": "Peace" },
+    { "title": "Release control", "description": "Surrender the things you cannot change and trust God with the outcome.", "category": "Surrender" },
+    { "title": "Pray for contentment", "description": "Ask God to help you find joy and contentment in your current season.", "category": "Peace" }
+  ]
+}

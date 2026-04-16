@@ -1,0 +1,15 @@
+{
+  "id": "gratitude",
+  "name": "Prayers of Gratitude",
+  "emoji": "🌟",
+  "category": "Gratitude",
+  "description": "Cultivate a thankful heart through intentional prayers of thanksgiving.",
+  "prayers": [
+    { "title": "Thank God for His faithfulness", "description": "Reflect on how God has been faithful in your life and give thanks.", "category": "Gratitude" },
+    { "title": "Thank God for provision", "description": "Thank Him for food, shelter, work, and daily needs.", "category": "Gratitude" },
+    { "title": "Thank God for relationships", "description": "Express gratitude for the people God has placed in your life.", "category": "Gratitude" },
+    { "title": "Thank God for answered prayers", "description": "Look back at prayers God has answered and praise Him.", "category": "Gratitude" },
+    { "title": "Thank God for nature", "description": "Praise God for the beauty of His creation around you.", "category": "Gratitude" },
+    { "title": "Thank God in difficulties", "description": "Choose to give thanks even in the hard seasons, trusting His purpose.", "category": "Gratitude" }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "foundational",
+  "name": "Foundational Prayers",
+  "emoji": "🙏",
+  "category": "Essential",
+  "description": "Start your prayer journey with the most foundational prayers in the Christian faith.",
+  "prayers": [
+    { "title": "Thank God for salvation", "description": "Express gratitude for the gift of eternal life through Jesus Christ.", "category": "Gratitude" },
+    { "title": "Pray for daily guidance", "description": "Ask God to direct your steps and decisions today.", "category": "Guidance" },
+    { "title": "Confess and repent", "description": "Bring any known sin before God and receive His forgiveness.", "category": "Repentance" },
+    { "title": "Pray for your family", "description": "Lift up each family member by name — protection, health, and spiritual growth.", "category": "Family" },
+    { "title": "Pray for your church", "description": "Ask God to bless your pastor, leaders, and congregation.", "category": "Church" },
+    { "title": "Pray for strength", "description": "Ask for strength to resist temptation and persevere through trials.", "category": "Strength" },
+    { "title": "Praise and worship", "description": "Spend time simply adoring God for who He is.", "category": "Praise" },
+    { "title": "Pray for peace", "description": "Ask God to fill your heart and mind with His supernatural peace.", "category": "Peace" }
+  ]
+}

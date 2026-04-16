@@ -1,0 +1,16 @@
+{
+  "id": "family",
+  "name": "Prayers for Family",
+  "emoji": "👨‍👩‍👧‍👦",
+  "category": "Family",
+  "description": "Lift up your family members and home to the Lord.",
+  "prayers": [
+    { "title": "Pray for your spouse", "description": "Ask God to bless, protect, and strengthen your marriage.", "category": "Family" },
+    { "title": "Pray for your children", "description": "Ask God to guide, protect, and grow your children in faith.", "category": "Family" },
+    { "title": "Pray for your parents", "description": "Thank God for your parents and ask Him to bless them with health and joy.", "category": "Family" },
+    { "title": "Pray for family unity", "description": "Ask God to heal any divisions and bring your family closer together.", "category": "Family" },
+    { "title": "Pray for extended family", "description": "Lift up aunts, uncles, cousins, and grandparents by name.", "category": "Family" },
+    { "title": "Pray for future generations", "description": "Ask God to establish a legacy of faith in your family line.", "category": "Family" },
+    { "title": "Pray for prodigal family members", "description": "Intercede for family members who have wandered from faith.", "category": "Family" }
+  ]
+}

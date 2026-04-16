@@ -1,0 +1,361 @@
+package com.prayerquest.app.ui.groups
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.prayerquest.app.PrayerQuestApplication
+import com.prayerquest.app.data.entity.PrayerGroup
+import com.prayerquest.app.data.entity.PrayerGroupMember
+import com.prayerquest.app.data.entity.GroupPrayerItem
+import com.prayerquest.app.data.repository.PrayerGroupRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
+
+@Composable
+fun GroupDetailScreen(
+    groupId: Long,
+    onNavigateBack: () -> Unit,
+    onAddPrayer: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val app = LocalContext.current.applicationContext as PrayerQuestApplication
+    val viewModel: GroupDetailViewModel = viewModel(
+        factory = GroupDetailViewModel.Factory(app.container.prayerGroupRepository)
+    )
+
+    val group by viewModel.group.collectAsState(initial = null)
+    val prayerItems by viewModel.prayerItems.collectAsState(initial = emptyList())
+    val members by viewModel.members.collectAsState(initial = emptyList())
+    var showShareCodeCopied by remember { mutableStateOf(false) }
+    var showLeaveDialog by remember { mutableStateOf(false) }
+
+    if (group != null) {
+        Column(modifier = modifier.fillMaxSize()) {
+            // Top bar
+            TopAppBar(
+                title = { Text("Group") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { /* Share placeholder */ }) {
+                        Icon(Icons.Default.Share, contentDescription = "Share")
+                    }
+                }
+            )
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    // Group header
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = group!!.emoji,
+                                    style = MaterialTheme.typography.headlineMedium
+                                )
+                                Text(
+                                    text = group!!.name,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
+                            Text(
+                                text = "${members.size}",
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        if (group!!.description.isNotEmpty()) {
+                            Text(
+                                text = group!!.description,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                }
+
+                item {
+                    // Share code section
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "Invite Others",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(60.dp),
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = "Share Code",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = group!!.shareCode,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                IconButton(
+                                    onClick = {
+                                        viewModel.copyShareCode(group!!.shareCode)
+                                        showShareCodeCopied = true
+                                    }
+                                ) {
+                                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy")
+                                }
+                            }
+                        }
+                        if (showShareCodeCopied) {
+                            Text(
+                                text = "Share code copied!",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                }
+
+                // Shared prayers section
+                item {
+                    Text(
+                        text = "Group Prayers",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                if (prayerItems.isEmpty()) {
+                    item {
+                        Text(
+                            text = "No prayers shared yet",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp)
+                        )
+                    }
+                } else {
+                    items(prayerItems) { prayerItem ->
+                        GroupPrayerItemCard(
+                            prayerItem = prayerItem,
+                            onPrayedClick = { viewModel.markPrayed(it) }
+                        )
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+
+            // Action buttons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = { onAddPrayer(groupId) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    colors = ButtonDefaults.outlinedButtonColors()
+                ) {
+                    Text("Add Prayer")
+                }
+                Button(
+                    onClick = { showLeaveDialog = true },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Leave Group")
+                }
+            }
+        }
+
+        // Leave group dialog
+        if (showLeaveDialog) {
+            AlertDialog(
+                onDismissRequest = { showLeaveDialog = false },
+                title = { Text("Leave Group?") },
+                text = { Text("You'll no longer see prayers from \"${group!!.name}\"") },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.leaveGroup(groupId)
+                            onNavigateBack()
+                            showLeaveDialog = false
+                        }
+                    ) {
+                        Text("Leave")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showLeaveDialog = false }
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+    } else {
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+    }
+}
+
+@Composable
+private fun GroupPrayerItemCard(
+    prayerItem: GroupPrayerItem,
+    onPrayedClick: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ElevatedCard(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = prayerItem.title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            if (prayerItem.description.isNotEmpty()) {
+                Text(
+                    text = prayerItem.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Prayed by ${prayerItem.prayedByCount} members",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                IconButton(
+                    onClick = { onPrayedClick(prayerItem.id) },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.FavoriteBorder,
+                        contentDescription = "I Prayed This",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+    }
+}
+
+class GroupDetailViewModel(
+    private val groupRepository: PrayerGroupRepository,
+    savedStateHandle: SavedStateHandle = SavedStateHandle()
+) : ViewModel() {
+
+    private val groupId: Long = savedStateHandle["groupId"] ?: 0L
+
+    val group: Flow<PrayerGroup?> = emptyFlow()
+    val prayerItems: Flow<List<GroupPrayerItem>> = emptyFlow()
+    val members: Flow<List<PrayerGroupMember>> = emptyFlow()
+
+    fun markPrayed(itemId: Long) {
+        viewModelScope.launch {
+            groupRepository.markPrayedForGroupItem(itemId)
+        }
+    }
+
+    fun leaveGroup(groupId: Long) {
+        viewModelScope.launch {
+            groupRepository.leaveGroup(groupId)
+        }
+    }
+
+    fun copyShareCode(code: String) {
+        // Clipboard copy implementation
+    }
+
+    class Factory(
+        private val groupRepository: PrayerGroupRepository
+    ) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return GroupDetailViewModel(groupRepository) as T
+        }
+    }
+}
