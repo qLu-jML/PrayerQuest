@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
@@ -13,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -25,11 +25,11 @@ import com.prayerquest.app.data.entity.PrayerItem
 import com.prayerquest.app.data.repository.CollectionRepository
 import com.prayerquest.app.data.repository.PrayerRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CollectionDetailScreen(
     collectionId: Long,
@@ -39,10 +39,15 @@ fun CollectionDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val app = LocalContext.current.applicationContext as PrayerQuestApplication
+    // Key the VM by collectionId so navigating between two different
+    // collections gives us a fresh VM instance scoped to the new id instead
+    // of reusing the previous one (which would keep emitting the old row).
     val viewModel: CollectionDetailViewModel = viewModel(
+        key = "collection_detail_$collectionId",
         factory = CollectionDetailViewModel.Factory(
-            app.container.collectionRepository,
-            app.container.prayerRepository
+            collectionId = collectionId,
+            collectionRepository = app.container.collectionRepository,
+            prayerRepository = app.container.prayerRepository
         )
     )
     val collection by viewModel.collection.collectAsState(initial = null)
@@ -116,6 +121,13 @@ fun CollectionDetailScreen(
                                         style = MaterialTheme.typography.labelSmall
                                     )
                                 },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.Label,
+                                        contentDescription = "Tag",
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                },
                                 modifier = Modifier
                                     .padding(top = 8.dp)
                                     .height(28.dp)
@@ -125,7 +137,7 @@ fun CollectionDetailScreen(
                 }
 
                 item {
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 }
 
                 if (items.isEmpty()) {
@@ -284,12 +296,24 @@ private fun CollectionItemCard(
 }
 
 class CollectionDetailViewModel(
+    private val collectionId: Long,
     private val collectionRepository: CollectionRepository,
     private val prayerRepository: PrayerRepository
 ) : ViewModel() {
 
-    val collection: Flow<PrayerCollection?> = emptyFlow()
-    val items: Flow<List<PrayerItem>> = emptyFlow()
+    /**
+     * Live-observed collection row. Was previously [emptyFlow] which never
+     * emitted — leaving the screen stuck on its loading spinner. Now bound to
+     * the repository so the header renders as soon as Room returns the row.
+     */
+    val collection: Flow<PrayerCollection?> =
+        collectionRepository.observeById(collectionId)
+
+    /**
+     * Live-observed items joined through the collection cross-ref table.
+     */
+    val items: Flow<List<PrayerItem>> =
+        collectionRepository.observeItemsForCollection(collectionId)
 
     fun removeItem(itemId: Long, collectionId: Long) {
         viewModelScope.launch {
@@ -298,12 +322,17 @@ class CollectionDetailViewModel(
     }
 
     class Factory(
+        private val collectionId: Long,
         private val collectionRepository: CollectionRepository,
         private val prayerRepository: PrayerRepository
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return CollectionDetailViewModel(collectionRepository, prayerRepository) as T
+            return CollectionDetailViewModel(
+                collectionId = collectionId,
+                collectionRepository = collectionRepository,
+                prayerRepository = prayerRepository
+            ) as T
         }
     }
 }

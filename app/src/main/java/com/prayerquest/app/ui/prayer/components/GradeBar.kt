@@ -2,11 +2,14 @@ package com.prayerquest.app.ui.prayer.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +22,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.prayerquest.app.domain.model.PrayerGrade
 import com.prayerquest.app.ui.theme.ErrorRed
@@ -87,53 +92,56 @@ fun GradeBar(
         )
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             GradeButton(
-                label = "Again\n(0.5x)",
+                label = "Again",
+                multiplier = "0.5×",
                 grade = PrayerGrade.AGAIN,
                 color = ErrorRed,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(80.dp),
+                modifier = Modifier.weight(1f),
                 onGradeSelected = { onGradeSelected(it, selectedDepth) }
             )
             GradeButton(
-                label = "Hard\n(0.75x)",
+                label = "Hard",
+                multiplier = "0.75×",
                 grade = PrayerGrade.HARD,
                 color = WarningGold,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(80.dp),
+                modifier = Modifier.weight(1f),
                 onGradeSelected = { onGradeSelected(it, selectedDepth) }
             )
             GradeButton(
-                label = "Good\n(1.0x)",
+                label = "Good",
+                multiplier = "1.0×",
                 grade = PrayerGrade.GOOD,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(80.dp),
+                modifier = Modifier.weight(1f),
                 onGradeSelected = { onGradeSelected(it, selectedDepth) }
             )
             GradeButton(
-                label = "Easy\n(1.25x)",
+                label = "Easy",
+                multiplier = "1.25×",
                 grade = PrayerGrade.EASY,
                 color = SuccessGreen,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(80.dp),
+                modifier = Modifier.weight(1f),
                 onGradeSelected = { onGradeSelected(it, selectedDepth) }
             )
         }
     }
 }
 
+/**
+ * Grade button with a two-line, single-line-per-line layout. The outer
+ * [Button]'s default 24dp horizontal contentPadding is replaced with a
+ * tight 4dp; with `softWrap = false` on each [Text] this keeps "0.75×" and
+ * "1.25×" from wrapping character-by-character into ugly stacks on narrow
+ * phones. Same pattern as ScriptureQuest's donate buttons.
+ */
 @Composable
 private fun GradeButton(
     label: String,
+    multiplier: String,
     grade: PrayerGrade,
     color: androidx.compose.ui.graphics.Color,
     modifier: Modifier = Modifier,
@@ -141,17 +149,34 @@ private fun GradeButton(
 ) {
     Button(
         onClick = { onGradeSelected(grade) },
-        modifier = modifier,
+        modifier = modifier.heightIn(min = 64.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = color,
             contentColor = androidx.compose.ui.graphics.Color.White
         ),
-        shape = MaterialTheme.shapes.medium
+        shape = MaterialTheme.shapes.medium,
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 10.dp)
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                softWrap = false
+            )
+            Text(
+                text = multiplier,
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                softWrap = false
+            )
+        }
     }
 }

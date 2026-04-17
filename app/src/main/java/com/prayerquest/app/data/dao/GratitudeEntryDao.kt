@@ -43,6 +43,19 @@ interface GratitudeEntryDao {
     @Query("SELECT COUNT(*) FROM gratitude_entries WHERE photoUri IS NOT NULL")
     suspend fun getPhotoCount(): Int
 
+    /**
+     * Count of photo-attached entries whose `date` column (ISO `yyyy-MM-dd`)
+     * starts with the given YYYY-MM prefix. Used to enforce the free-tier
+     * monthly photo cap in [com.prayerquest.app.billing.PremiumFeatures].
+     *
+     * The LIKE-prefix match leverages the column's natural sort order; no
+     * additional index is needed — the table stays small enough that a scan is
+     * fine, and the DataStore-backed user stream doesn't read this on a hot
+     * path.
+     */
+    @Query("SELECT COUNT(*) FROM gratitude_entries WHERE photoUri IS NOT NULL AND date LIKE :yearMonthPrefix || '%'")
+    suspend fun getPhotoCountForMonth(yearMonthPrefix: String): Int
+
     @Query("SELECT COUNT(*) FROM gratitude_entries WHERE date = :date")
     suspend fun getCountForDate(date: String): Int
 

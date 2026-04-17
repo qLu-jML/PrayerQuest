@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prayerquest.app.PrayerQuestApplication
+import com.prayerquest.app.ads.BannerAdView
 import com.prayerquest.app.data.entity.FamousPrayer
 import com.prayerquest.app.data.entity.GratitudeEntry
 import com.prayerquest.app.data.entity.PrayerCollection
@@ -75,29 +77,36 @@ fun LibraryScreen(
             )
         }
 
-        // Tab Content
-        when (selectedTabIndex) {
-            0 -> MyCollectionsTab(
-                onNavigateToDetail = onNavigateToCollectionDetail,
-                onNavigateToCreate = onNavigateToCreateCollection,
-                modifier = Modifier.fillMaxSize(),
-                viewModel = libraryViewModel
-            )
-            1 -> FamousPrayersTab(
-                onNavigateToDetail = onNavigateToFamousPrayerDetail,
-                modifier = Modifier.fillMaxSize(),
-                viewModel = libraryViewModel
-            )
-            2 -> AnsweredPrayersTab(
-                onNavigateToDetail = onNavigateToAnsweredPrayerDetail,
-                modifier = Modifier.fillMaxSize(),
-                viewModel = libraryViewModel
-            )
-            3 -> GratitudeTab(
-                modifier = Modifier.fillMaxSize(),
-                viewModel = libraryViewModel
-            )
+        // Tab Content — takes remaining space above the banner ad so the
+        // banner never covers list content, even on very short screens.
+        Box(modifier = Modifier.weight(1f)) {
+            when (selectedTabIndex) {
+                0 -> MyCollectionsTab(
+                    onNavigateToDetail = onNavigateToCollectionDetail,
+                    onNavigateToCreate = onNavigateToCreateCollection,
+                    modifier = Modifier.fillMaxSize(),
+                    viewModel = libraryViewModel
+                )
+                1 -> FamousPrayersTab(
+                    onNavigateToDetail = onNavigateToFamousPrayerDetail,
+                    modifier = Modifier.fillMaxSize(),
+                    viewModel = libraryViewModel
+                )
+                2 -> AnsweredPrayersTab(
+                    onNavigateToDetail = onNavigateToAnsweredPrayerDetail,
+                    modifier = Modifier.fillMaxSize(),
+                    viewModel = libraryViewModel
+                )
+                3 -> GratitudeTab(
+                    modifier = Modifier.fillMaxSize(),
+                    viewModel = libraryViewModel
+                )
+            }
         }
+
+        // Banner ad pinned above the bottom nav. Hides for premium + when
+        // ads are disabled (controlled inside BannerAdView).
+        BannerAdView(modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -221,6 +230,13 @@ private fun CollectionCard(
                 AssistChip(
                     onClick = {},
                     label = { Text(collection.topicTag, style = MaterialTheme.typography.labelSmall) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Label,
+                            contentDescription = "Tag",
+                            modifier = Modifier.size(14.dp)
+                        )
+                    },
                     modifier = Modifier.height(28.dp)
                 )
             }
@@ -317,6 +333,13 @@ private fun FamousPrayerCard(
                     AssistChip(
                         onClick = {},
                         label = { Text(prayer.category, style = MaterialTheme.typography.labelSmall) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Label,
+                                contentDescription = "Tag",
+                                modifier = Modifier.size(14.dp)
+                            )
+                        },
                         modifier = Modifier.height(28.dp)
                     )
                 }
@@ -521,6 +544,13 @@ private fun GratitudeEntryCard(
                 AssistChip(
                     onClick = {},
                     label = { Text(entry.category, style = MaterialTheme.typography.labelSmall) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Label,
+                            contentDescription = "Tag",
+                            modifier = Modifier.size(14.dp)
+                        )
+                    },
                     modifier = Modifier.height(28.dp)
                 )
             }

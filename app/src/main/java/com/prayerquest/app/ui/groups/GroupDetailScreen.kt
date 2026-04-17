@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -27,9 +26,9 @@ import com.prayerquest.app.data.entity.PrayerGroupMember
 import com.prayerquest.app.data.entity.GroupPrayerItem
 import com.prayerquest.app.data.repository.PrayerGroupRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupDetailScreen(
     groupId: Long,
@@ -38,13 +37,21 @@ fun GroupDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val app = LocalContext.current.applicationContext as PrayerQuestApplication
+    // The VM holds a groupId-scoped Flow graph, so key it on groupId — if the
+    // user navigates to a different group the VM is recreated with the right
+    // groupId instead of reusing the old one's Flows. Factory now takes the
+    // groupId directly: the previous implementation read it from an empty
+    // SavedStateHandle and always got 0L, which is why observeGroup(0L)
+    // returned null forever and the screen sat on the loading spinner.
     val viewModel: GroupDetailViewModel = viewModel(
-        factory = GroupDetailViewModel.Factory(app.container.prayerGroupRepository)
+        key = "group_detail_$groupId",
+        factory = GroupDetailViewModel.Factory(groupId, app.container.prayerGroupRepository)
     )
 
     val group by viewModel.group.collectAsState(initial = null)
     val prayerItems by viewModel.prayerItems.collectAsState(initial = emptyList())
     val members by viewModel.members.collectAsState(initial = emptyList())
+    val weeklyCounts by viewModel.weeklyCounts.collectAsState(initial = emptyMap())
     var showShareCodeCopied by remember { mutableStateOf(false) }
     var showLeaveDialog by remember { mutableStateOf(false) }
 
@@ -109,7 +116,7 @@ fun GroupDetailScreen(
                 }
 
                 item {
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 }
 
                 item {
@@ -167,7 +174,7 @@ fun GroupDetailScreen(
                 }
 
                 item {
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 }
 
                 // Shared prayers section
@@ -194,6 +201,7 @@ fun GroupDetailScreen(
                     items(prayerItems) { prayerItem ->
                         GroupPrayerItemCard(
                             prayerItem = prayerItem,
+                            weeklyPrayerCount = weeklyCounts[prayerItem.id] ?: 0,
                             onPrayedClick = { viewModel.markPrayed(it) }
                         )
                     }
@@ -273,6 +281,7 @@ fun GroupDetailScreen(
 @Composable
 private fun GroupPrayerItemCard(
     prayerItem: GroupPrayerItem,
+    weeklyPrayerCount: Int,
     onPrayedClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -303,11 +312,28 @@ private fun GroupPrayerItemCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Prayed by ${prayerItem.prayedByCount} members",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "Prayed by ${prayerItem.prayedByCount} members",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    // Positive-signal-only: only show the weekly chip when there's
+                    // actual recent activity. No "stale" nudge per product decision.
+                    if (weeklyPrayerCount > 0) {
+                        Surface(
+                            shape = MaterialTheme.shapes.small,
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Text(
+                                text = "\uD83D\uDE4F $weeklyPrayerCount this week",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+                }
                 IconButton(
                     onClick = { onPrayedClick(prayerItem.id) },
                     modifier = Modifier.size(32.dp)
@@ -324,15 +350,22 @@ private fun GroupPrayerItemCard(
 }
 
 class GroupDetailViewModel(
-    private val groupRepository: PrayerGroupRepository,
-    savedStateHandle: SavedStateHandle = SavedStateHandle()
+    private val groupId: Long,
+    private val groupRepository: PrayerGroupRepository
 ) : ViewModel() {
 
-    private val groupId: Long = savedStateHandle["groupId"] ?: 0L
+    val group: Flow<PrayerGroup?> = groupRepository.observeGroup(groupId)
+    val prayerItems: Flow<List<GroupPrayerItem>> =
+        groupRepository.observeGroupPrayerItemDetails(groupId)
+    val members: Flow<List<PrayerGroupMember>> = groupRepository.observeMembers(groupId)
 
-    val group: Flow<PrayerGroup?> = emptyFlow()
-    val prayerItems: Flow<List<GroupPrayerItem>> = emptyFlow()
-    val members: Flow<List<PrayerGroupMember>> = emptyFlow()
+    /**
+     * Map of groupPrayerItemId → number of times the item was prayed for in
+     * the last 7 days. UI reads this to render the "prayed this week" chip.
+     * Items with 0 (or missing) count simply omit the chip — positive signal only.
+     */
+    val weeklyCounts: Flow<Map<Long, Int>> =
+        groupRepository.observeWeeklyCountsForGroup(groupId)
 
     fun markPrayed(itemId: Long) {
         viewModelScope.launch {
@@ -351,11 +384,12 @@ class GroupDetailViewModel(
     }
 
     class Factory(
+        private val groupId: Long,
         private val groupRepository: PrayerGroupRepository
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return GroupDetailViewModel(groupRepository) as T
+            return GroupDetailViewModel(groupId, groupRepository) as T
         }
     }
 }

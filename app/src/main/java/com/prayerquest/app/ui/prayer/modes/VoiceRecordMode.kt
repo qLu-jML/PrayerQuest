@@ -4,14 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Mic
@@ -42,13 +41,27 @@ fun VoiceRecordMode(
     var isRecording by remember { mutableStateOf(false) }
     var recordingDuration by remember { mutableStateOf("00:00") }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+    PrayerModeScaffold(
+        modifier = modifier,
+        contentHorizontalAlignment = Alignment.CenterHorizontally,
+        action = {
+            // Pinned "Done Recording" button. Voice mode's content is
+            // vertically tall (mic button + transcript + playback button) so
+            // the Done action was consistently pushed below the fold.
+            Button(
+                onClick = { onModeComplete(transcription) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                enabled = transcription.isNotEmpty(),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text(
+                    text = "Done Recording",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
     ) {
         Text(
             text = "Voice Prayer",
@@ -172,23 +185,5 @@ fun VoiceRecordMode(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Done button
-        Button(
-            onClick = {
-                onModeComplete(transcription)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            enabled = transcription.isNotEmpty(),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Text(
-                text = "Done Recording",
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
     }
 }

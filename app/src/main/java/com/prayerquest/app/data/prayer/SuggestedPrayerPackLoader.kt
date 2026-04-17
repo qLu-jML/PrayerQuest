@@ -5,7 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
 /**
- * Reads suggested prayer packs from assets/packs/*.json.
+ * Reads suggested prayer packs from assets/packs/ (JSON files).
  * Modeled after ScriptureQuest's SuggestedPackLoader.
  */
 class SuggestedPrayerPackLoader(

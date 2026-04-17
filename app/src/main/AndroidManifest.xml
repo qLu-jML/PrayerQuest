@@ -2,9 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Internet for Firebase (Auth, Firestore, Cloud Messaging) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Permissions for voice-to-text and camera (Phase 2+) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Runtime-requested on Android 13+ (API 33+). Older devices auto-grant.
+         Required for DailyPrayerReminderWorker, StreakAlertWorker,
+         QuestNotificationWorker, GratitudePromptWorker, DailyDevotionalWorker. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".PrayerQuestApplication"
@@ -16,6 +24,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.PrayerQuest">
+        <!-- AdMob App ID (production) -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-5463466003093177~5875494466" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

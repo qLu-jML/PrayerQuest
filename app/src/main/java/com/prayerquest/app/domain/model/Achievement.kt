@@ -78,7 +78,9 @@ object Achievements {
 
         // --- LEVELING ---
         AchievementDef("level_5", "Rising Disciple", "Reach Level 5", AchievementCategory.LEVELING, 5, 30, 3, "📈"),
-        AchievementDef("level_10", "Prayer Champion", "Reach max level", AchievementCategory.LEVELING, 10, 100, 10, "👑"),
+        AchievementDef("level_10", "Double Digits", "Reach Level 10", AchievementCategory.LEVELING, 10, 100, 10, "👑"),
+        AchievementDef("level_25", "Devoted Disciple", "Reach Level 25", AchievementCategory.LEVELING, 25, 150, 15, "⭐"),
+        AchievementDef("level_50", "Prayer Champion", "Reach Level 50", AchievementCategory.LEVELING, 50, 250, 25, "🏆"),
 
         // --- XP MILESTONE ---
         AchievementDef("xp_1000", "Thousandaire", "Earn 1,000 total XP", AchievementCategory.XP_MILESTONE, 1000, 25, 3, "💰"),

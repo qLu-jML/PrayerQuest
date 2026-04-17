@@ -40,9 +40,8 @@ data class UserStats(
     val longestSessionMinutes: Int = 0,
     val totalDistinctModesUsed: Int = 0,
 
-    // Streak protection
-    val hearts: Int = 3,
-    val freezes: Int = 0,
+    // Streak protection: hearts + freezes now live on StreakData.
+    // See CLAUDE.md "Architectural decisions of record" (2026-04-16).
 
     // Quest tracking
     val consecutiveQuestDays: Int = 0,

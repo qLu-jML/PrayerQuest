@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -41,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prayerquest.app.PrayerQuestApplication
+import com.prayerquest.app.data.entity.PrayerItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +59,7 @@ fun FormationScreen(
     )
     val currentStep by viewModel.currentStep.collectAsState()
     val xpEarned by viewModel.xpEarned.collectAsState()
+    val prayerItem by viewModel.prayerItem.collectAsState()
 
     Scaffold(
         topBar = {
@@ -213,7 +217,7 @@ private fun MeetYourPrayerStep(prayerItem: PrayerItem) {
         )
 
         Text(
-            text = prayerItem.emoji,
+            text = "\uD83D\uDE4F",
             fontSize = 64.sp,
             modifier = Modifier.padding(16.dp)
         )

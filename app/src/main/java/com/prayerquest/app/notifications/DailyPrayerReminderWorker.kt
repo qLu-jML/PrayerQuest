@@ -1,17 +1,30 @@
 package com.prayerquest.app.notifications
 
 import android.content.Context
-import androidx.work.Worker
+import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.prayerquest.app.PrayerQuestApplication
 import kotlin.random.Random
 
+/**
+ * Converted to CoroutineWorker so we can consult the Flow-based
+ * UserPreferences for Quiet Hours before posting. Violating Quiet Hours
+ * is a P0 bug, so every post path goes through [QuietHoursGuard].
+ */
 class DailyPrayerReminderWorker(
     context: Context,
     params: WorkerParameters
-) : Worker(context, params) {
+) : CoroutineWorker(context, params) {
 
-    override fun doWork(): Result {
+    override suspend fun doWork(): Result {
         return try {
+            val userPrefs = (applicationContext as PrayerQuestApplication)
+                .container.userPreferences
+            if (!QuietHoursGuard.canPostNow(userPrefs)) {
+                // Silently skip — we'll fire again tomorrow at the same slot.
+                return Result.success()
+            }
+
             val title = "Time to pray! 🙏"
             val messages = listOf(
                 "A few minutes with God can transform your whole day.",

@@ -1,17 +1,22 @@
 package com.prayerquest.app.notifications
 
 import android.content.Context
-import androidx.work.Worker
+import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.prayerquest.app.PrayerQuestApplication
 import kotlin.random.Random
 
 class QuestNotificationWorker(
     context: Context,
     params: WorkerParameters
-) : Worker(context, params) {
+) : CoroutineWorker(context, params) {
 
-    override fun doWork(): Result {
+    override suspend fun doWork(): Result {
         return try {
+            val userPrefs = (applicationContext as PrayerQuestApplication)
+                .container.userPreferences
+            if (!QuietHoursGuard.canPostNow(userPrefs)) return Result.success()
+
             val title = "New daily quests are ready! 🎯"
             val messages = listOf(
                 "Complete all 3 for bonus XP.",

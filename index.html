@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrayerQuest | A gamified prayer habit app</title>
+    <meta name="description" content="PrayerQuest is a gamified, offline-first prayer habit app for Android. Pray, journal, log gratitude, and build lasting faith routines.">
+    <style>
+        :root {
+            --bg: #faf8f5;
+            --text: #2c2c2c;
+            --accent: #5c6bc0;
+            --accent-soft: rgba(92, 107, 192, 0.08);
+            --muted: #666;
+            --border: #e0dcd7;
+            --card: #ffffff;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1a1a2e;
+                --text: #e0e0e0;
+                --accent: #9fa8da;
+                --accent-soft: rgba(159, 168, 218, 0.1);
+                --muted: #aaa;
+                --border: #333;
+                --card: #22223b;
+            }
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.65;
+            padding: 2rem 1rem 3rem;
+        }
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        header.hero {
+            text-align: center;
+            padding: 2rem 0 2.5rem;
+        }
+        .logo {
+            font-size: 3rem;
+            line-height: 1;
+            margin-bottom: 0.75rem;
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.01em;
+        }
+        .tagline {
+            color: var(--muted);
+            font-size: 1.1rem;
+            margin-bottom: 0;
+        }
+        h2 {
+            font-size: 1.35rem;
+            margin-top: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+        p, li {
+            margin-bottom: 0.75rem;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0 2rem;
+        }
+        .feature {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.1rem 1.2rem;
+        }
+        .feature h3 {
+            font-size: 1rem;
+            margin-bottom: 0.35rem;
+        }
+        .feature p {
+            font-size: 0.92rem;
+            color: var(--muted);
+            margin-bottom: 0;
+        }
+        .link-card-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin: 1.25rem 0 1rem;
+        }
+        .link-card {
+            display: block;
+            background: var(--accent-soft);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 8px;
+            padding: 1.1rem 1.25rem;
+            text-decoration: none;
+            color: var(--text);
+            transition: transform 0.15s ease;
+        }
+        .link-card:hover {
+            transform: translateY(-2px);
+        }
+        .link-card .link-title {
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 1.05rem;
+            margin-bottom: 0.25rem;
+        }
+        .link-card .link-desc {
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+        a { color: var(--accent); }
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <header class="hero">
+        <div class="logo">&#128591;</div>
+        <h1>PrayerQuest</h1>
+        <p class="tagline">A gamified, offline-first prayer habit app for Android</p>
+    </header>
+
+    <p>PrayerQuest helps you build a lasting prayer rhythm. Track your prayer requests, capture gratitude, journal what God is doing, and see your streaks grow. Prayer Groups let you share requests privately with people you invite by code.</p>
+
+    <h2>What&rsquo;s inside</h2>
+    <div class="feature-grid">
+        <div class="feature">
+            <h3>&#128304; Eight prayer modes</h3>
+            <p>Guided ACTS, voice-to-text journaling, Scripture Soak, Contemplative Silence, and more.</p>
+        </div>
+        <div class="feature">
+            <h3>&#10024; Answered prayer catalogue</h3>
+            <p>Archive answered requests with testimony, photo, or voice note &mdash; a timeline of God&rsquo;s faithfulness.</p>
+        </div>
+        <div class="feature">
+            <h3>&#128293; Streaks &amp; quests</h3>
+            <p>XP, levels, daily quests, hearts, and achievements that keep the habit fun without feeling childish.</p>
+        </div>
+        <div class="feature">
+            <h3>&#128170; Gratitude section</h3>
+            <p>Log 1, 3, or 5 gratitudes a day, with optional photos and Scripture-themed prompts.</p>
+        </div>
+        <div class="feature">
+            <h3>&#129505; Prayer Groups</h3>
+            <p>Invite-only groups with a shareable code. One-tap &ldquo;I prayed for this&rdquo; for every member.</p>
+        </div>
+        <div class="feature">
+            <h3>&#128274; Offline-first</h3>
+            <p>Personal prayers, journals, and gratitudes stay on your device. Only Prayer Groups sync to the cloud.</p>
+        </div>
+    </div>
+
+    <h2>Support &amp; policies</h2>
+    <p>The links below cover everything you need to know about your data and how to manage or delete your account.</p>
+
+    <div class="link-card-row">
+        <a class="link-card" href="privacy-policy.html">
+            <div class="link-title">Privacy Policy</div>
+            <div class="link-desc">What data we collect, where it&rsquo;s stored, and the third-party services we use.</div>
+        </a>
+        <a class="link-card" href="delete-account.html">
+            <div class="link-title">Delete your account</div>
+            <div class="link-desc">Step-by-step instructions to remove your account and cloud data.</div>
+        </a>
+    </div>
+
+    <h2>Contact</h2>
+    <p>Questions, bug reports, feature ideas, or privacy concerns? Email <a href="mailto:jedimasterlenny@gmail.com">jedimasterlenny@gmail.com</a>.</p>
+
+    <footer>
+        <p>&copy; 2026 Nathan DeBruler. All rights reserved.</p>
+        <p><a href="privacy-policy.html">Privacy Policy</a> &middot; <a href="delete-account.html">Delete your account</a></p>
+        <p style="margin-top: 0.75rem;">PrayerQuest is not affiliated with or endorsed by Google LLC.</p>
+    </footer>
+
+</div>
+</body>
+</html>

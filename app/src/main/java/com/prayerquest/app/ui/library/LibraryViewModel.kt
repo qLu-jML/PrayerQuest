@@ -21,7 +21,7 @@ class LibraryViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Famous Prayers tab data
-    val famousPrayers = prayerRepository.observeAllItems()
+    val famousPrayers = prayerRepository.observeAllFamousPrayers()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Answered Prayers tab data

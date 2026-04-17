@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrayerQuest — Delete Your Account & Data</title>
+    <style>
+        :root {
+            --bg: #faf8f5;
+            --text: #2c2c2c;
+            --accent: #5c6bc0;
+            --muted: #666;
+            --border: #e0dcd7;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1a1a2e;
+                --text: #e0e0e0;
+                --accent: #9fa8da;
+                --muted: #aaa;
+                --border: #333;
+            }
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.25rem;
+        }
+        .subtitle {
+            color: var(--muted);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+        h2 {
+            font-size: 1.3rem;
+            margin-top: 2.25rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.35rem;
+            border-bottom: 1px solid var(--border);
+        }
+        p, li {
+            margin-bottom: 0.75rem;
+        }
+        ul, ol {
+            padding-left: 1.5rem;
+        }
+        .highlight {
+            background: rgba(92, 107, 192, 0.08);
+            border-left: 3px solid var(--accent);
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .step-number {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            text-align: center;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-right: 0.5rem;
+        }
+        .step {
+            margin-bottom: 1.25rem;
+        }
+        a { color: var(--accent); }
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <p style="margin-bottom: 1.5rem; font-size: 0.9rem;"><a href="index.html">&larr; Home</a> &nbsp;&middot;&nbsp; <a href="privacy-policy.html">Privacy Policy</a></p>
+
+    <h1>Delete Your Account & Data</h1>
+    <p class="subtitle">PrayerQuest &nbsp;|&nbsp; Last Updated: April 16, 2026</p>
+
+    <p>We respect your right to control your data. This page explains how to delete your PrayerQuest account and associated data, and what happens when you do.</p>
+
+    <h2>1. Delete Your Account In the App (Recommended)</h2>
+    <p>The fastest way to delete your account is directly within PrayerQuest:</p>
+    <div class="step">
+        <p><span class="step-number">1</span>Open <strong>PrayerQuest</strong></p>
+    </div>
+    <div class="step">
+        <p><span class="step-number">2</span>Go to the <strong>Settings</strong> tab (bottom navigation)</p>
+    </div>
+    <div class="step">
+        <p><span class="step-number">3</span>Scroll down to the <strong>Account</strong> section</p>
+    </div>
+    <div class="step">
+        <p><span class="step-number">4</span>Tap <strong>"Delete My Account"</strong></p>
+    </div>
+    <div class="step">
+        <p><span class="step-number">5</span>Confirm deletion in the two confirmation dialogs</p>
+    </div>
+    <p>Your account and all cloud data will be deleted immediately and automatically.</p>
+
+    <h2>2. Delete Your Account via Email (Fallback)</h2>
+    <p>If you've already uninstalled the app or can't access the in-app option, send an email to:</p>
+    <div class="highlight">
+        <p><strong>Email:</strong> <a href="mailto:jedimasterlenny@gmail.com?subject=PrayerQuest%20Account%20Deletion%20Request">jedimasterlenny@gmail.com</a></p>
+        <p>Subject line: <strong>PrayerQuest Account Deletion Request</strong></p>
+        <p>Please include the email address associated with your Google sign-in so we can locate your account.</p>
+    </div>
+    <p>We will process your request within <strong>14 business days</strong> and send you a confirmation email once complete.</p>
+
+    <h2>3. What Gets Deleted</h2>
+    <p>When you request account deletion, the following data is permanently removed from our servers:</p>
+
+    <ul>
+        <li><strong>Your Firebase Authentication account</strong> — the record tying your Google sign-in to PrayerQuest, including your email, display name, and user ID</li>
+        <li><strong>Prayer Group membership</strong> — your membership in all groups you've joined</li>
+        <li><strong>Shared prayer requests</strong> — prayer items you added to groups</li>
+        <li><strong>"I prayed for this" activity</strong> — your prayer activity on group items</li>
+        <li><strong>Groups you created</strong> — if you are the sole admin, the group and all its data will be deleted. If there are other members, the longest-tenured member is promoted to Admin before you leave.</li>
+    </ul>
+    <p>Firebase Analytics and Firebase Cloud Messaging data associated with your app installation is tied to a randomly generated app-instance ID, not to your account. It is not personally identifying; it is automatically aged out by Google per its default retention (currently 14 months). Uninstalling the App resets this identifier.</p>
+
+    <h2>4. What Is NOT Affected</h2>
+    <p>The following data is stored <strong>locally on your device only</strong> and is not part of the server-side deletion:</p>
+    <ul>
+        <li>Personal prayer items, journal entries, and voice transcriptions</li>
+        <li>Gratitude entries and photos</li>
+        <li>Answered prayer testimonies</li>
+        <li>Gamification progress (XP, level, streaks, achievements)</li>
+        <li>App settings and preferences</li>
+    </ul>
+    <p>To delete local data, go to your Android Settings, find PrayerQuest under Apps, and select <strong>"Clear Data"</strong>, or simply uninstall the app.</p>
+
+    <h2>5. Delete Local Data Only (Without Deleting Your Account)</h2>
+    <p>If you want to clear your local data but keep your Prayer Groups account active:</p>
+    <div class="step">
+        <p><span class="step-number">1</span>Open your device's <strong>Settings</strong> app</p>
+    </div>
+    <div class="step">
+        <p><span class="step-number">2</span>Navigate to <strong>Apps</strong> (or <strong>Apps & notifications</strong>)</p>
+    </div>
+    <div class="step">
+        <p><span class="step-number">3</span>Find and tap <strong>PrayerQuest</strong></p>
+    </div>
+    <div class="step">
+        <p><span class="step-number">4</span>Tap <strong>Storage & cache</strong>, then <strong>Clear storage</strong></p>
+    </div>
+    <p>This removes all locally stored prayers, gratitude entries, gamification progress, and settings. Your Prayer Groups membership will remain intact and resync when you next sign in.</p>
+
+    <h2>6. Data Retention After Deletion</h2>
+    <p>Once we process your deletion request:</p>
+    <ul>
+        <li>Your data is removed from our active Firebase database immediately.</li>
+        <li>Cached copies on other group members' devices will be cleared on their next sync.</li>
+        <li>Google may retain encrypted backups for up to <strong>180 days</strong> as part of their standard infrastructure, after which they are permanently purged. See <a href="https://firebase.google.com/support/privacy" target="_blank">Firebase Privacy Documentation</a> for details.</li>
+    </ul>
+
+    <h2>7. Contact Us</h2>
+    <p>If you have questions about data deletion or need assistance, please reach out:</p>
+    <p><strong>Email:</strong> <a href="mailto:jedimasterlenny@gmail.com">jedimasterlenny@gmail.com</a></p>
+
+    <footer>
+        <p>&copy; 2026 Nathan DeBruler. All rights reserved.</p>
+        <p><a href="privacy-policy.html">Privacy Policy</a></p>
+    </footer>
+
+</div>
+</body>
+</html>

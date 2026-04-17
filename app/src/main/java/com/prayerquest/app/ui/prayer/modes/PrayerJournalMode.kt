@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Button
@@ -43,12 +41,58 @@ fun PrayerJournalMode(
     val dateFormatter = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
     val currentDate = dateFormatter.format(Date())
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    PrayerModeScaffold(
+        modifier = modifier,
+        action = {
+            // Pinned bottom action area. The button that lives here depends on
+            // the two-phase flow:
+            //   • Writing phase  → "Submit Prayer" (advances to recap)
+            //   • Recap phase    → "Edit" + "Confirm" side-by-side
+            // Keeping both phases' actions in the scaffold slot guarantees the
+            // primary call-to-action is always visible without scrolling —
+            // which was the specific bug on long journal entries where the
+            // user had to scroll past a 200dp text field to find Submit.
+            if (!showRecap) {
+                Button(
+                    onClick = { showRecap = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    enabled = journalEntry.isNotEmpty(),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text(
+                        text = "Submit Prayer",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { showRecap = false },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Text("Edit")
+                    }
+                    Button(
+                        onClick = { onModeComplete(journalEntry) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Text("Confirm")
+                    }
+                }
+            }
+        },
+        contentArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
             text = "Prayer Journal",
@@ -104,26 +148,11 @@ fun PrayerJournalMode(
             }
         )
 
-        // Submit button
-        Button(
-            onClick = {
-                showRecap = true
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            enabled = journalEntry.isNotEmpty(),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Text(
-                text = "Submit Prayer",
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
-
-        // Recap section
+        // Recap section — shown after user taps Submit. Lives in the
+        // scrollable body so long recaps can scroll while the Edit/Confirm
+        // actions stay pinned below.
         if (showRecap) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Column(
                 modifier = Modifier
@@ -146,33 +175,6 @@ fun PrayerJournalMode(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = { showRecap = false },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(40.dp),
-                        shape = MaterialTheme.shapes.small
-                    ) {
-                        Text("Edit")
-                    }
-                    Button(
-                        onClick = {
-                            onModeComplete(journalEntry)
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(40.dp),
-                        shape = MaterialTheme.shapes.small
-                    ) {
-                        Text("Confirm")
-                    }
-                }
             }
         }
     }

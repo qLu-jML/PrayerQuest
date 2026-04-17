@@ -1,25 +1,31 @@
 package com.prayerquest.app.notifications
 
 import android.content.Context
-import androidx.work.Worker
+import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.prayerquest.app.data.repository.PrayerSessionRepository
-import kotlinx.coroutines.runBlocking
-import java.util.Calendar
+import com.prayerquest.app.PrayerQuestApplication
+import java.time.LocalDate
 
+/**
+ * Streak Alert — fires in the evening to warn users they haven't logged a
+ * prayer session today and risk breaking their streak. Silent no-op if the
+ * user already prayed today OR if we're inside Quiet Hours.
+ */
 class StreakAlertWorker(
     context: Context,
     params: WorkerParameters
-) : Worker(context, params) {
+) : CoroutineWorker(context, params) {
 
-    override fun doWork(): Result {
+    override suspend fun doWork(): Result {
         return try {
-            // Check if user has prayed today
-            val hasPrayedToday = runBlocking {
-                checkIfPrayedToday()
-            }
+            val container = (applicationContext as PrayerQuestApplication).container
+            val userPrefs = container.userPreferences
+            if (!QuietHoursGuard.canPostNow(userPrefs)) return Result.success()
 
-            // Only fire if no sessions logged today
+            // Check if user has already prayed today — no reason to alert
+            // if they're safe.
+            val hasPrayedToday = checkIfPrayedToday()
+
             if (!hasPrayedToday) {
                 val title = "Don't lose your 🔥 streak!"
                 val messages = listOf(
@@ -45,10 +51,23 @@ class StreakAlertWorker(
         }
     }
 
+    /**
+     * Cheap read against DailyActivityDao — if the user logged any activity
+     * today, they're safe. Uses the same table that powers the streak
+     * check-in logic, so the answer here always matches what the streak
+     * repo would see.
+     */
     private suspend fun checkIfPrayedToday(): Boolean {
-        // This would be implemented based on your database structure
-        // For now, returning false to ensure notification fires
-        return false
+        return try {
+            val container = (applicationContext as PrayerQuestApplication).container
+            val today = LocalDate.now().toString()
+            val activity = container.database.dailyActivityDao().getForDate(today)
+            activity != null && activity.sessionsCompleted > 0
+        } catch (e: Exception) {
+            // If we can't tell, fire the nudge — safer than silently
+            // dropping it.
+            false
+        }
     }
 
     companion object {

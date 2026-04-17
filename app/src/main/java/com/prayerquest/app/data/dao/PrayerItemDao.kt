@@ -52,6 +52,9 @@ interface PrayerItemDao {
     @Query("SELECT COUNT(*) FROM prayer_items WHERE status = 'Active'")
     suspend fun getActiveCount(): Int
 
+    @Query("SELECT * FROM prayer_items WHERE status = 'Active' ORDER BY createdAt DESC")
+    suspend fun getActiveList(): List<PrayerItem>
+
     @Query("UPDATE prayer_items SET status = :status, answeredAt = :answeredAt, testimonyText = :testimony WHERE id = :id")
     suspend fun updateStatus(id: Long, status: String, answeredAt: Long? = null, testimony: String? = null)
 

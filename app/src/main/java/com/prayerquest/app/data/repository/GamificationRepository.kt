@@ -162,8 +162,8 @@ class GamificationRepository(
         } else 0
 
         var newStreak = streak.currentStreak
-        var newFreezes = stats.freezes
-        var newHearts = stats.hearts
+        var newFreezes = streak.freezes
+        var newHearts = streak.hearts
         var lastFreezeDate = streak.lastFreezeUsedDate
 
         when {
@@ -208,11 +208,11 @@ class GamificationRepository(
             currentStreak = newStreak,
             longestStreak = maxOf(streak.longestStreak, newStreak),
             lastActiveDate = date,
-            lastFreezeUsedDate = lastFreezeDate
+            lastFreezeUsedDate = lastFreezeDate,
+            hearts = newHearts,
+            freezes = newFreezes
         )
         streakDao.update(updatedStreak)
-        userStatsDao.setFreezes(newFreezes)
-        userStatsDao.setHearts(newHearts)
 
         return updatedStreak
     }

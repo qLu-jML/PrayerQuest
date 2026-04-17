@@ -23,11 +23,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -47,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prayerquest.app.PrayerQuestApplication
+import com.prayerquest.app.ads.BannerAdView
 import com.prayerquest.app.data.entity.DailyQuest
 import com.prayerquest.app.data.repository.DashboardData
 import com.prayerquest.app.domain.model.Leveling
@@ -72,7 +77,8 @@ import com.prayerquest.app.ui.theme.WarningGold
 fun HomeScreen(
     onStartPrayer: () -> Unit = {},
     onLogGratitude: () -> Unit = {},
-    onPrayerGroups: () -> Unit = {}
+    onPrayerGroups: () -> Unit = {},
+    onOpenSettings: () -> Unit = {}
 ) {
     val app = LocalContext.current.applicationContext as PrayerQuestApplication
     val viewModel: HomeViewModel = viewModel(
@@ -94,7 +100,8 @@ fun HomeScreen(
                     dashboard = state.dashboard,
                     onStartPrayer = onStartPrayer,
                     onLogGratitude = onLogGratitude,
-                    onPrayerGroups = onPrayerGroups
+                    onPrayerGroups = onPrayerGroups,
+                    onOpenSettings = onOpenSettings
                 )
         }
     }
@@ -117,7 +124,8 @@ private fun HomeContent(
     dashboard: DashboardData,
     onStartPrayer: () -> Unit,
     onLogGratitude: () -> Unit,
-    onPrayerGroups: () -> Unit
+    onPrayerGroups: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -126,12 +134,13 @@ private fun HomeContent(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 1. Greeting row with streak chips
+        // 1. Greeting row with streak chips + settings cog
         item {
             GreetingRow(
                 streakDays = dashboard.streak.currentStreak,
-                hearts = dashboard.stats.hearts,
-                freezes = dashboard.stats.freezes
+                hearts = dashboard.streak.hearts,
+                freezes = dashboard.streak.freezes,
+                onOpenSettings = onOpenSettings
             )
         }
 
@@ -171,6 +180,11 @@ private fun HomeContent(
             )
         }
 
+        // 7. Bottom banner ad. Auto-hides for premium users via the
+        // LocalIsPremium check inside BannerAdView, so callers don't need
+        // to wrap this in an isPremium conditional.
+        item { BannerAdView(modifier = Modifier.fillMaxWidth()) }
+
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
 }
@@ -183,22 +197,41 @@ private fun HomeContent(
 private fun GreetingRow(
     streakDays: Int,
     hearts: Int,
-    freezes: Int
+    freezes: Int,
+    onOpenSettings: () -> Unit
 ) {
-    Row(
+    // Restructured from a single SpaceBetween row into a two-row layout so the
+    // settings cog has a predictable right-top home without fighting the streak
+    // chips for width. Top row: greeting + cog. Bottom row: three chip stats.
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 8.dp, vertical = 12.dp)
     ) {
-        Text(
-            text = "Hi, Prayer Warrior 👋",
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.Bold
-            ),
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Hi, Prayer Warrior 👋",
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.weight(1f)
+            )
+
+            IconButton(onClick = onOpenSettings) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -207,7 +240,7 @@ private fun GreetingRow(
         ) {
             ChipStat(emoji = "🔥", value = streakDays.toString(), tint = FlameRed)
             Spacer(modifier = Modifier.width(8.dp))
-            ChipStat(emoji = "❄️", value = freezes.toString(), tint = WarningGold)
+            ChipStat(emoji = "🛡️", value = freezes.toString(), tint = WarningGold)
             Spacer(modifier = Modifier.width(8.dp))
             ChipStat(emoji = "❤️", value = "$hearts/3", tint = MaterialTheme.colorScheme.tertiary)
         }
@@ -295,11 +328,6 @@ private fun LevelCard(
                     text = "Level $level",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                Text(
-                    text = Leveling.titleForLevel(level),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                 )
 
                 // XP Progress bar

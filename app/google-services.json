@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "904535620336",
+    "project_id": "prayerquest-282da",
+    "storage_bucket": "prayerquest-282da.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:904535620336:android:afdc2e406c3c3b7efe2035",
+        "android_client_info": {
+          "package_name": "com.prayerquest.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "904535620336-spta4s4630jgia5vferrj4fb9s3ehm71.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDF9GuHrN3mAn3Wv-CVw7bkmHNK1kvYL1I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "904535620336-spta4s4630jgia5vferrj4fb9s3ehm71.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

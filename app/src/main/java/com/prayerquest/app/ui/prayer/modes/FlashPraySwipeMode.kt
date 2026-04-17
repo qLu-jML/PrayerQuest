@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
@@ -38,9 +36,17 @@ import kotlin.math.roundToInt
 @Composable
 fun FlashPraySwipeMode(
     onModeComplete: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /**
+     * Optional topic list — when the user is praying through a collection we
+     * want the swipe cards to show their *actual* prayer items, not our
+     * generic placeholders. Null or empty falls back to the default
+     * intercession topics below. Titles only (no descriptions) so the card's
+     * big centered text stays readable at a glance.
+     */
+    topics: List<String>? = null
 ) {
-    val prayerTopics = listOf(
+    val defaultTopics = listOf(
         "Global peace",
         "Healing from pain",
         "Financial wisdom",
@@ -52,26 +58,56 @@ fun FlashPraySwipeMode(
         "Joy & laughter",
         "Purpose & calling"
     )
+    val prayerTopics = topics?.takeIf { it.isNotEmpty() } ?: defaultTopics
 
     var currentIndex by remember { mutableIntStateOf(0) }
     var swipedCount by remember { mutableIntStateOf(0) }
     var dragOffset by remember { mutableFloatStateOf(0f) }
 
-    val currentTopic = prayerTopics.getOrNull(currentIndex) ?: return
+    // Guard against out-of-bounds instead of `?: return` — the latter would
+    // render the whole composable as empty when the user swipes past the last
+    // card, leaving only the back arrow visible and hiding the completion
+    // button below. Now we fall through to the "all swiped" completion block.
+    val allSwiped = currentIndex >= prayerTopics.size
+    val currentTopic = prayerTopics.getOrNull(currentIndex) ?: ""
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+    PrayerModeScaffold(
+        modifier = modifier,
+        // Tighter arrangement than the default 20dp — FlashPraySwipe has a
+        // 200dp card that has to stay above-the-fold on standard phones, so
+        // every dp of vertical chrome between the progress bar and the card
+        // matters. The 12dp rhythm still reads as spacious.
+        contentArrangement = Arrangement.spacedBy(12.dp),
+        action = {
+            // Pinned bottom action. Two modes:
+            //  - allSwiped: "Complete Session" — the user finished every card.
+            //  - otherwise: "Finish Session" — early-exit with whatever they've
+            //    prayed so far. Always visible so the user is never trapped
+            //    mid-deck wondering how to bail.
+            Button(
+                onClick = {
+                    onModeComplete(
+                        if (allSwiped) {
+                            "Flash Prayed $swipedCount/$currentIndex topics"
+                        } else {
+                            "Flash Prayed $swipedCount/${currentIndex + 1} topics"
+                        }
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text(
+                    text = if (allSwiped) "Complete Session" else "Finish Session",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
     ) {
-        Text(
-            text = "Flash Pray Swipe",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-
+        // Headline removed — TopAppBar already shows "Prayer Session · N/N",
+        // duplicating it here just pushed the swipe card below the fold.
         Text(
             text = "Swipe right to pray → | Swipe left to skip ←",
             style = MaterialTheme.typography.bodyMedium,
@@ -104,133 +140,98 @@ fun FlashPraySwipeMode(
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Swipeable prayer card
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(220.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            ElevatedCard(
+        // Swipeable prayer card — only rendered while there's a card left to
+        // swipe. Once the user has swiped through every topic we hide the
+        // card entirely and let the "all done" completion block below take
+        // the full attention of the screen.
+        if (!allSwiped) {
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp)
-                    .offset { IntOffset(dragOffset.roundToInt(), 0) }
-                    .pointerInput(Unit) {
-                        detectHorizontalDragGestures(
-                            onDragEnd = {
-                                when {
-                                    dragOffset > 100 -> {
-                                        // Swiped right - marked as prayed
-                                        swipedCount++
-                                        dragOffset = 0f
-                                        currentIndex++
-                                    }
-                                    dragOffset < -100 -> {
-                                        // Swiped left - skipped
-                                        dragOffset = 0f
-                                        currentIndex++
-                                    }
-                                    else -> {
-                                        // Snap back
-                                        dragOffset = 0f
-                                    }
-                                }
-                            },
-                            onHorizontalDrag = { _, dragAmount ->
-                                dragOffset += dragAmount
-                            }
-                        )
-                    }
+                    .height(200.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Column(
+                ElevatedCard(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                        .height(200.dp)
+                        .offset { IntOffset(dragOffset.roundToInt(), 0) }
+                        .pointerInput(Unit) {
+                            detectHorizontalDragGestures(
+                                onDragEnd = {
+                                    when {
+                                        dragOffset > 100 -> {
+                                            // Swiped right - marked as prayed
+                                            swipedCount++
+                                            dragOffset = 0f
+                                            currentIndex++
+                                        }
+                                        dragOffset < -100 -> {
+                                            // Swiped left - skipped
+                                            dragOffset = 0f
+                                            currentIndex++
+                                        }
+                                        else -> {
+                                            // Snap back
+                                            dragOffset = 0f
+                                        }
+                                    }
+                                },
+                                onHorizontalDrag = { _, dragAmount ->
+                                    dragOffset += dragAmount
+                                }
+                            )
+                        }
                 ) {
-                    Text(
-                        text = "Pray for:",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = currentTopic,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    if (dragOffset > 50) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
                         Text(
-                            text = "✓ I Prayed This",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    } else if (dragOffset < -50) {
-                        Text(
-                            text = "← Skip",
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = "Pray for:",
+                            style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = currentTopic,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        if (dragOffset > 50) {
+                            Text(
+                                text = "✓ I Prayed This",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        } else if (dragOffset < -50) {
+                            Text(
+                                text = "← Skip",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Instructions
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .background(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = MaterialTheme.shapes.small
-                    )
-                    .padding(12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "→ Pray",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = MaterialTheme.shapes.small
-                    )
-                    .padding(12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "← Skip",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Manual complete button (if all swiped)
-        if (currentIndex >= prayerTopics.size) {
+            // Bottom Pray/Skip hint row removed — the instruction line above
+            // ("Swipe right to pray → | Swipe left to skip ←") already says
+            // this, and the card itself shows live "✓ I Prayed This" / "← Skip"
+            // feedback as the user drags. Keeping the hint row would push the
+            // card below the fold on standard-height phones.
+        } else {
+            // Completion celebration block — shown once every card has been
+            // swiped. The actual "Complete Session" CTA lives in the pinned
+            // action slot; this block is just the congratulatory message.
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -241,33 +242,6 @@ fun FlashPraySwipeMode(
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )
-                Button(
-                    onClick = {
-                        onModeComplete(
-                            "Flash Prayed $swipedCount/$currentIndex topics"
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Text("Complete Session", style = MaterialTheme.typography.labelLarge)
-                }
-            }
-        } else {
-            Button(
-                onClick = {
-                    onModeComplete(
-                        "Flash Prayed $swipedCount/${currentIndex + 1} topics"
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Text("Finish Session", style = MaterialTheme.typography.labelLarge)
             }
         }
     }

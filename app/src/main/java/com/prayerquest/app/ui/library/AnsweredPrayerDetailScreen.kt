@@ -22,11 +22,13 @@ import com.prayerquest.app.data.entity.PrayerItem
 import com.prayerquest.app.data.repository.PrayerRepository
 import com.prayerquest.app.ui.theme.SuccessGreen
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnsweredPrayerDetailScreen(
     prayerId: Long,
@@ -42,8 +44,9 @@ fun AnsweredPrayerDetailScreen(
 
     if (prayer != null && prayer!!.status == PrayerItem.STATUS_ANSWERED) {
         val dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault())
-        val answeredDate = if (prayer!!.answeredAt != null) {
-            dateFormat.format(Date(prayer!!.answeredAt))
+        val answeredAtMs = prayer!!.answeredAt
+        val answeredDate = if (answeredAtMs != null) {
+            dateFormat.format(Date(answeredAtMs))
         } else {
             "Recently"
         }
@@ -134,7 +137,7 @@ fun AnsweredPrayerDetailScreen(
                 }
 
                 item {
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 }
 
                 // Original request details
@@ -166,7 +169,7 @@ fun AnsweredPrayerDetailScreen(
                 }
 
                 item {
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 }
 
                 // Testimony

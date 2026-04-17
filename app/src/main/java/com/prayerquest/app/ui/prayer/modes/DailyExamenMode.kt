@@ -1,0 +1,259 @@
+package com.prayerquest.app.ui.prayer.modes
+
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+
+/**
+ * Daily Examen — the Ignatian 5-step review of the day (DD §3.4 item 6).
+ *
+ * Steps:
+ *  1. Gratitude      — what am I thankful for today?
+ *  2. Petition       — ask the Spirit for insight before reviewing
+ *  3. Review         — walk through the day with God
+ *  4. Repentance     — confess shortcomings
+ *  5. Resolution     — how will I meet tomorrow with Christ?
+ *
+ * Each step is a short prompt with a voice-to-text-capable input and a 60–90s
+ * suggested pace (shown as a soft hint — no timer pressure for end-of-day
+ * reflection). The final Complete button joins all 5 responses with a
+ * separator and hands them to [onModeComplete] so the grade/summary flow can
+ * save the full session transcript in [PrayerRecord.journalText].
+ *
+ * Auto-Gratitude hook (DD line 72): the Gratitude step response is the same
+ * text the user would hand to the Gratitude Catalogue; wiring the automatic
+ * write into the Gratitude table happens in Sprint 4 when the Gratitude
+ * section gets its repository-level side-effect hook.
+ */
+@Composable
+fun DailyExamenMode(
+    onModeComplete: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val steps = remember { ExamenStep.all() }
+    var currentStepIndex by remember { mutableIntStateOf(0) }
+    var stepResponses by remember { mutableStateOf(List(steps.size) { "" }) }
+
+    val currentStep = steps[currentStepIndex]
+    val isLastStep = currentStepIndex == steps.lastIndex
+    val stepResponse = stepResponses[currentStepIndex]
+
+    PrayerModeScaffold(
+        modifier = modifier,
+        action = {
+            Button(
+                onClick = {
+                    if (!isLastStep) {
+                        currentStepIndex++
+                    } else {
+                        onModeComplete(formatExamenTranscript(steps, stepResponses))
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text(
+                    text = if (isLastStep) "Complete Examen" else "Next Step",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+    ) {
+        // Progress dots — one per examen step
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            steps.forEachIndexed { index, _ ->
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .background(
+                            color = if (index <= currentStepIndex)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.surfaceVariant,
+                            shape = CircleShape
+                        )
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = "${currentStepIndex + 1}/${steps.size}",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .animateContentSize(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Step ${currentStepIndex + 1}: ${currentStep.title}",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            // Prompt card — the spiritual question for this step
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = MaterialTheme.shapes.medium
+                    )
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = currentStep.prompt,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    text = currentStep.guidance,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // Pace hint (not a countdown — end-of-day reflection, no pressure)
+            Text(
+                text = "Suggested: ${currentStep.suggestedSeconds}s · take your time",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            OutlinedTextField(
+                value = stepResponse,
+                onValueChange = { newText ->
+                    stepResponses = stepResponses.toMutableList().apply {
+                        this[currentStepIndex] = newText
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 120.dp, max = 200.dp),
+                placeholder = { Text(currentStep.placeholder) },
+                shape = MaterialTheme.shapes.medium,
+                trailingIcon = {
+                    IconButton(onClick = { /* Voice-to-text wired in SpeechRecognizer pass */ }) {
+                        Icon(
+                            imageVector = Icons.Default.Mic,
+                            contentDescription = "Voice to text",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            )
+        }
+    }
+}
+
+/**
+ * The 5 Ignatian steps in order. [suggestedSeconds] is shown as a gentle
+ * pacing hint, not enforced — the Examen is end-of-day reflection and should
+ * never feel rushed.
+ */
+private data class ExamenStep(
+    val title: String,
+    val prompt: String,
+    val guidance: String,
+    val placeholder: String,
+    val suggestedSeconds: Int
+) {
+    companion object {
+        fun all(): List<ExamenStep> = listOf(
+            ExamenStep(
+                title = "Gratitude",
+                prompt = "What are you thankful for today?",
+                guidance = "Start here. Notice one or two gifts from today, big or small.",
+                placeholder = "Today I'm grateful for…",
+                suggestedSeconds = 60
+            ),
+            ExamenStep(
+                title = "Petition",
+                prompt = "Ask the Spirit for light to see your day honestly.",
+                guidance = "Before reviewing, invite God to show you what he sees.",
+                placeholder = "Lord, help me see today the way you see it…",
+                suggestedSeconds = 45
+            ),
+            ExamenStep(
+                title = "Review",
+                prompt = "Walk through your day with God.",
+                guidance = "Where did you feel close to God? Where did you drift? Where were you loved, and where did you love?",
+                placeholder = "This morning I… / Around midday… / Tonight I…",
+                suggestedSeconds = 90
+            ),
+            ExamenStep(
+                title = "Repentance",
+                prompt = "Where did you miss the mark today?",
+                guidance = "Name anything you want to bring under Christ's mercy — without shame, without minimizing.",
+                placeholder = "Forgive me, Lord, for…",
+                suggestedSeconds = 60
+            ),
+            ExamenStep(
+                title = "Resolution",
+                prompt = "How will you meet tomorrow with Christ?",
+                guidance = "A simple, concrete resolve: one thing you'll do, ask for, or let go of tomorrow.",
+                placeholder = "Tomorrow, with God's help, I will…",
+                suggestedSeconds = 45
+            )
+        )
+    }
+}
+
+/** Join all 5 responses into a single transcript suitable for [PrayerRecord.journalText]. */
+private fun formatExamenTranscript(
+    steps: List<ExamenStep>,
+    responses: List<String>
+): String = buildString {
+    steps.forEachIndexed { index, step ->
+        val text = responses.getOrNull(index)?.trim().orEmpty()
+        if (text.isNotEmpty()) {
+            appendLine("【${step.title}】")
+            appendLine(text)
+            appendLine()
+        }
+    }
+}.trim()

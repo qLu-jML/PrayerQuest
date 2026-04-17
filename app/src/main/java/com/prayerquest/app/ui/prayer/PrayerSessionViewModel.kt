@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.prayerquest.app.data.entity.PrayerItem
 import com.prayerquest.app.data.entity.PrayerRecord
+import com.prayerquest.app.data.repository.CollectionRepository
 import com.prayerquest.app.data.repository.GamificationRepository
 import com.prayerquest.app.data.repository.PrayerRepository
 import com.prayerquest.app.data.repository.SessionGamificationResult
@@ -33,7 +34,16 @@ sealed class UiState {
         val totalItems: Int,
         val currentMode: PrayerMode,
         val currentPrayerItem: PrayerItem,
-        val showGradeBar: Boolean
+        val showGradeBar: Boolean,
+        /**
+         * Full list of prayer items in this session (e.g. every item in the
+         * collection the user is praying through). Used by the session UI to
+         * show a "Praying for: …" context banner and by topic-based modes
+         * like FlashPraySwipe to render cards from the user's real items
+         * instead of generic placeholders. Empty when the session was
+         * launched without a collection (single-item fallback).
+         */
+        val sessionItems: List<PrayerItem> = emptyList()
     ) : UiState()
     data class Finished(
         val result: SessionGamificationResult
@@ -42,18 +52,49 @@ sealed class UiState {
 
 class PrayerSessionViewModel(
     private val prayerRepository: PrayerRepository,
-    private val gamificationRepository: GamificationRepository
+    private val gamificationRepository: GamificationRepository,
+    /**
+     * The mode the user picked in the Mode Picker (DD §3.1.3). When non-null,
+     * the session is a single-item run of this one mode — each picked mode is
+     * a complete prayer experience on its own (Breath Prayer, Daily Office,
+     * Lectio, Beads all have their own internal flow). When null, falls back
+     * to the legacy mixed-session behavior: one item per active prayer item
+     * with modes assigned cyclically.
+     */
+    private val fixedMode: PrayerMode? = null,
+    /**
+     * When set, the session sources its prayer items from this collection
+     * instead of the user's global Active list. Null means "global session"
+     * — the historical default. Nav layer passes -1 through [Routes.NO_COLLECTION]
+     * which is normalized to null at the screen boundary so this field stays
+     * semantically meaningful.
+     */
+    private val collectionId: Long? = null,
+    /**
+     * Only consulted when [collectionId] is non-null. We accept null here so
+     * callers that never pray a collection (e.g. the Home → mode picker
+     * path) don't have to thread the repo through — the Factory can inject
+     * it uniformly and we just ignore it in the non-collection branch.
+     */
+    private val collectionRepository: CollectionRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     private var sessionItems: List<SessionItem> = emptyList()
+    /**
+     * Raw PrayerItem list backing [sessionItems]. Cached so the InProgress
+     * state can expose it to the UI (for the "Praying for: …" banner and
+     * topic-based modes) without re-hitting the repo every frame.
+     */
+    private var sessionPrayerItems: List<PrayerItem> = emptyList()
     private var currentItemIndex = 0
     private var sessionStartTime = 0L
     private var currentModeCompletionContent = ""
     private var totalXpEarned = 0
     private var sessionDuration = 0L
+    private var modesUsed = mutableSetOf<PrayerMode>()
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
     private val availableModes = PrayerMode.entries.toList()
@@ -65,12 +106,36 @@ class PrayerSessionViewModel(
     private fun loadPrayerItems() {
         viewModelScope.launch {
             try {
-                val items = prayerRepository.getPrayerItems()
-                if (items.isEmpty()) {
-                    sessionItems = generateDefaultSessionItems()
+                // Source of items: collection items if the session was
+                // launched from a collection detail, else the user's global
+                // Active list. The collection path is critical — users were
+                // seeing "placeholders" because we used to always hit the
+                // global list regardless of entry point.
+                val items: List<PrayerItem> = if (collectionId != null && collectionRepository != null) {
+                    collectionRepository.getItemsForCollection(collectionId)
+                        .takeIf { it.isNotEmpty() }
+                        ?: prayerRepository.getActiveItems()
                 } else {
-                    // Assign modes to items cyclically
-                    sessionItems = items.mapIndexed { index, item ->
+                    prayerRepository.getActiveItems()
+                }
+                sessionPrayerItems = items
+                sessionItems = if (fixedMode != null) {
+                    // Single-mode session — the chosen mode is a complete
+                    // prayer experience. We seed with ONE session item
+                    // anchored on the first available prayer item (or a
+                    // synthetic one when there are none). The full list is
+                    // still exposed via [sessionPrayerItems] so the UI can
+                    // show "Praying for: a, b, c…" and topic-based modes
+                    // can iterate through every item within the mode.
+                    val anchor = items.firstOrNull() ?: syntheticItemFor(fixedMode)
+                    listOf(SessionItem(prayerItem = anchor, mode = fixedMode))
+                } else if (items.isEmpty()) {
+                    generateDefaultSessionItems().also {
+                        sessionPrayerItems = it.map { sessionItem -> sessionItem.prayerItem }
+                    }
+                } else {
+                    // Legacy mixed session — cycle modes across active items.
+                    items.mapIndexed { index, item ->
                         SessionItem(
                             prayerItem = item,
                             mode = availableModes[index % availableModes.size]
@@ -80,26 +145,42 @@ class PrayerSessionViewModel(
                 sessionStartTime = System.currentTimeMillis()
                 advanceToNextItem()
             } catch (e: Exception) {
-                sessionItems = generateDefaultSessionItems()
+                val fallback = if (fixedMode != null) {
+                    listOf(SessionItem(prayerItem = syntheticItemFor(fixedMode), mode = fixedMode))
+                } else {
+                    generateDefaultSessionItems()
+                }
+                sessionItems = fallback
+                sessionPrayerItems = fallback.map { it.prayerItem }
                 sessionStartTime = System.currentTimeMillis()
                 advanceToNextItem()
             }
         }
     }
 
+    /**
+     * When there are no active prayer items to anchor a session on, synthesize
+     * one from the mode metadata so the record has something to attach to and
+     * the UI has a title to render. id=0 → PrayerRecord will store
+     * prayerItemId=null so it doesn't dangle a FK to a nonexistent row.
+     */
+    private fun syntheticItemFor(mode: PrayerMode): PrayerItem {
+        return PrayerItem(id = 0, title = mode.displayName, description = mode.description)
+    }
+
     private fun generateDefaultSessionItems(): List<SessionItem> {
         return listOf(
             SessionItem(
                 prayerItem = PrayerItem(id = 0, title = "ACTS Prayer", description = "Adoration, Confession, Thanksgiving, Supplication"),
-                mode = PrayerMode.GuidedActs
+                mode = PrayerMode.GUIDED_ACTS
             ),
             SessionItem(
-                prayerItem = PrayerItem(id = 0, title = "Gratitude Blast", description = "Rapid-fire gratitude listing"),
-                mode = PrayerMode.GratitudeBlast
+                prayerItem = PrayerItem(id = 0, title = "Daily Examen", description = "Ignatian 5-step prayerful review of the day"),
+                mode = PrayerMode.DAILY_EXAMEN
             ),
             SessionItem(
-                prayerItem = PrayerItem(id = 0, title = "Scripture Soak", description = "Meditate on a verse and pray over it"),
-                mode = PrayerMode.ScriptureSoak
+                prayerItem = PrayerItem(id = 0, title = "Breath Prayer", description = "Inhale and exhale a short sacred phrase"),
+                mode = PrayerMode.BREATH_PRAYER
             )
         )
     }
@@ -112,7 +193,8 @@ class PrayerSessionViewModel(
                 totalItems = sessionItems.size,
                 currentMode = sessionItem.mode,
                 currentPrayerItem = sessionItem.prayerItem,
-                showGradeBar = false
+                showGradeBar = false,
+                sessionItems = sessionPrayerItems
             )
         } else {
             finishSession()
@@ -121,9 +203,29 @@ class PrayerSessionViewModel(
 
     fun onModeComplete(content: String) {
         currentModeCompletionContent = content
-        val currentState = _uiState.value
-        if (currentState is UiState.InProgress) {
-            _uiState.value = currentState.copy(showGradeBar = true)
+        if (fixedMode != null) {
+            // Single-mode sessions come from the Mode Picker (DD §3.1.3) and are
+            // a complete prayer experience on their own — Flash Pray, Breath
+            // Prayer, Lectio, etc. each have their own internal completion
+            // flow. A per-item grade row on top of that is an extra prompt the
+            // user can easily miss (especially when the mode itself has a
+            // vertically-scrolling body, which pushes the bar below the fold).
+            // We auto-grade as GOOD (1× multiplier, the neutral middle option)
+            // and advance straight to the summary, which is where the "how did
+            // this session land" reflection should happen anyway.
+            viewModelScope.launch {
+                recordPrayerSession(PrayerGrade.GOOD, depth = 3)
+                currentItemIndex++
+                advanceToNextItem()
+            }
+        } else {
+            // Legacy mixed session — user rotates through multiple items and
+            // grades each one so the gamification layer can weight them
+            // individually. Keep the per-item grade bar here.
+            val currentState = _uiState.value
+            if (currentState is UiState.InProgress) {
+                _uiState.value = currentState.copy(showGradeBar = true)
+            }
         }
     }
 
@@ -138,6 +240,7 @@ class PrayerSessionViewModel(
     private suspend fun recordPrayerSession(grade: PrayerGrade, depth: Int) {
         try {
             val sessionItem = sessionItems[currentItemIndex]
+            modesUsed.add(sessionItem.mode)
             val sessionDurationMillis = System.currentTimeMillis() - sessionStartTime
             val xpEarned = calculateXpForGrade(grade, sessionItem.mode)
 
@@ -152,7 +255,7 @@ class PrayerSessionViewModel(
                 sessionDate = dateFormat.format(Date())
             )
 
-            prayerRepository.recordPrayerSession(record)
+            prayerRepository.recordSession(record)
             totalXpEarned += xpEarned
             sessionDuration = sessionDurationMillis / 1000
         } catch (e: Exception) {
@@ -168,19 +271,26 @@ class PrayerSessionViewModel(
     private fun finishSession() {
         viewModelScope.launch {
             try {
+                // Use the last mode used or default to GuidedActs
+                val lastMode = modesUsed.lastOrNull() ?: PrayerMode.GUIDED_ACTS
                 val result = gamificationRepository.onPrayerSessionCompleted(
-                    xpEarned = totalXpEarned,
-                    sessionDuration = sessionDuration.toInt(),
-                    itemsCompleted = sessionItems.size
+                    mode = lastMode,
+                    grade = PrayerGrade.GOOD,
+                    durationSeconds = sessionDuration.toInt(),
+                    itemsPrayed = sessionItems.size,
+                    isFamousPrayer = false,
+                    isGroupPrayer = false
                 )
                 _uiState.value = UiState.Finished(result)
             } catch (e: Exception) {
                 val result = SessionGamificationResult(
                     xpEarned = totalXpEarned,
+                    totalXp = totalXpEarned,
+                    newLevel = 1,
+                    leveledUp = false,
+                    levelTitle = "Level 1",
                     streakDays = 1,
-                    currentLevel = 1,
-                    levelProgressPercent = 25,
-                    newlyUnlockedAchievements = emptyList()
+                    newAchievements = emptyList()
                 )
                 _uiState.value = UiState.Finished(result)
             }
@@ -198,13 +308,19 @@ class PrayerSessionViewModel(
     companion object {
         class Factory(
             private val prayerRepository: PrayerRepository,
-            private val gamificationRepository: GamificationRepository
+            private val gamificationRepository: GamificationRepository,
+            private val fixedMode: PrayerMode? = null,
+            private val collectionId: Long? = null,
+            private val collectionRepository: CollectionRepository? = null
         ) : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 return PrayerSessionViewModel(
                     prayerRepository = prayerRepository,
-                    gamificationRepository = gamificationRepository
+                    gamificationRepository = gamificationRepository,
+                    fixedMode = fixedMode,
+                    collectionId = collectionId,
+                    collectionRepository = collectionRepository
                 ) as T
             }
         }

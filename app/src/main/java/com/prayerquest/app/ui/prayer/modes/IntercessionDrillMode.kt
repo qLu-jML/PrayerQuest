@@ -2,6 +2,7 @@ package com.prayerquest.app.ui.prayer.modes
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,8 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Mic
@@ -66,12 +65,46 @@ fun IntercessionDrillMode(
     val currentItem = prayerItems[currentItemIndex]
     val progress = (currentItemIndex + 1).toFloat() / prayerItems.size
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    PrayerModeScaffold(
+        modifier = modifier,
+        contentArrangement = Arrangement.spacedBy(16.dp),
+        action = {
+            // Pinned "Prayed & Next / Complete Drill" CTA. Intercession is a
+            // fast rhythm with a 30-second ticker per item; if the button is
+            // below the fold the user runs out the clock trying to find it.
+            Button(
+                onClick = {
+                    prayedItems = prayedItems + currentItemIndex
+                    if (currentItemIndex < prayerItems.size - 1) {
+                        currentItemIndex++
+                    } else {
+                        onModeComplete(
+                            prayerItems.zip(
+                                prayerItems.indices.map { idx ->
+                                    quickNotes[idx] ?: ""
+                                }
+                            ).joinToString("\n") { (item, note) ->
+                                if (note.isNotEmpty()) "$item: $note" else item
+                            }
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Mark as prayed",
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text(
+                    text = if (currentItemIndex < prayerItems.size - 1) "Prayed & Next" else "Complete Drill",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
     ) {
         Text(
             text = "Intercession Drill",
@@ -105,10 +138,10 @@ fun IntercessionDrillMode(
                 progress = { progress },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(8.dp),
+                    .height(8.dp)
+                    .clip(MaterialTheme.shapes.small),
                 color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                shape = MaterialTheme.shapes.small
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
         }
 
@@ -170,40 +203,6 @@ fun IntercessionDrillMode(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-
-        // Mark as prayed button
-        Button(
-            onClick = {
-                prayedItems = prayedItems + currentItemIndex
-                if (currentItemIndex < prayerItems.size - 1) {
-                    currentItemIndex++
-                } else {
-                    onModeComplete(
-                        prayerItems.zip(
-                            prayerItems.indices.map { idx ->
-                                quickNotes[idx] ?: ""
-                            }
-                        ).joinToString("\n") { (item, note) ->
-                            if (note.isNotEmpty()) "$item: $note" else item
-                        }
-                    )
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = "Mark as prayed",
-                modifier = Modifier.padding(end = 8.dp)
-            )
-            Text(
-                text = if (currentItemIndex < prayerItems.size - 1) "Prayed & Next" else "Complete Drill",
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
 
         // Completion status
         if (prayedItems.isNotEmpty()) {

@@ -2,6 +2,7 @@ package com.prayerquest.app.ui.prayer.components
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,12 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -29,12 +28,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.prayerquest.app.data.repository.SessionGamificationResult
+import com.prayerquest.app.domain.model.Leveling
 import kotlinx.coroutines.delay
 
 @Composable
@@ -49,13 +48,15 @@ fun SessionSummary(
 
     LaunchedEffect(Unit) {
         val steps = 30
-        val increment = targetXp / steps
+        val increment = targetXp / steps.coerceAtLeast(1)
         repeat(steps) {
             displayedXp = (it + 1) * increment
             delay(20)
         }
         displayedXp = targetXp
     }
+
+    val xpProgress = Leveling.progressWithinLevel(result.totalXp)
 
     Column(
         modifier = modifier
@@ -80,12 +81,21 @@ fun SessionSummary(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
+        // Level-up celebration
+        if (result.leveledUp) {
+            Text(
+                text = "🎉 Level Up! You reached Level ${result.newLevel}!",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center
+            )
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
 
         // XP Card
-        ElevatedCard(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -100,7 +110,7 @@ fun SessionSummary(
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.Baseline
+                    verticalAlignment = Alignment.Bottom
                 ) {
                     Text(
                         text = "+$displayedXp",
@@ -119,9 +129,7 @@ fun SessionSummary(
         }
 
         // Streak Card
-        ElevatedCard(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -152,17 +160,12 @@ fun SessionSummary(
                         )
                     }
                 }
-                Text(
-                    text = "🔥",
-                    fontSize = 36.sp
-                )
+                Text(text = "🔥", fontSize = 36.sp)
             }
         }
 
         // Level Card
-        ElevatedCard(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -181,32 +184,32 @@ fun SessionSummary(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "Level ${result.currentLevel}",
+                            text = "Level ${result.newLevel}",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     }
                     Text(
-                        text = "${result.levelProgressPercent}%",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = "${xpProgress.first}/${xpProgress.second}",
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 LinearProgressIndicator(
-                    progress = { result.levelProgressPercent / 100f },
+                    progress = { (xpProgress.first.toFloat() / xpProgress.second).coerceIn(0f, 1f) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(8.dp),
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp)),
                     color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(4.dp)
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             }
         }
 
         // Unlocked Achievements
-        if (result.newlyUnlockedAchievements.isNotEmpty()) {
+        if (result.newAchievements.isNotEmpty()) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -216,8 +219,8 @@ fun SessionSummary(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                result.newlyUnlockedAchievements.forEach { achievement ->
-                    AchievementChip(achievement)
+                result.newAchievements.forEach { achievement ->
+                    AchievementChip(name = achievement.name, description = achievement.description)
                 }
             }
         }
@@ -226,8 +229,7 @@ fun SessionSummary(
 
         // Action Buttons
         Column(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Button(
@@ -237,10 +239,7 @@ fun SessionSummary(
                     .height(48.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Text(
-                    text = "Pray Again",
-                    style = MaterialTheme.typography.labelLarge
-                )
+                Text(text = "Pray Again", style = MaterialTheme.typography.labelLarge)
             }
             OutlinedButton(
                 onClick = onDone,
@@ -249,17 +248,14 @@ fun SessionSummary(
                     .height(48.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Text(
-                    text = "Done",
-                    style = MaterialTheme.typography.labelLarge
-                )
+                Text(text = "Done", style = MaterialTheme.typography.labelLarge)
             }
         }
     }
 }
 
 @Composable
-private fun AchievementChip(achievement: String) {
+private fun AchievementChip(name: String, description: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -270,11 +266,19 @@ private fun AchievementChip(achievement: String) {
             .padding(12.dp),
         contentAlignment = Alignment.CenterStart
     ) {
-        Text(
-            text = achievement,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
+        Column {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+            )
+        }
     }
 }
 

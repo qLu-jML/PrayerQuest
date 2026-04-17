@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -293,10 +294,6 @@ private fun lighten(color: Long, factor: Float): Long {
     val newG = ((g + (255 - g) * factor).toInt()).coerceIn(0, 255)
     val newB = ((b + (255 - b) * factor).toInt()).coerceIn(0, 255)
 
-    return (0xFF shl 24) or (newR.toLong() shl 16) or (newG.toLong() shl 8) or newB.toLong()
+    return (0xFFL shl 24) or (newR.toLong() shl 16) or (newG.toLong() shl 8) or newB.toLong()
 }
 
-// Extension function for aspectRatio
-private fun Modifier.aspectRatio(ratio: Float): Modifier = this.then(
-    androidx.compose.foundation.layout.aspectRatio(ratio)
-)

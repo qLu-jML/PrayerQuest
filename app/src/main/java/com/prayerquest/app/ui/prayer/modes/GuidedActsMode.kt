@@ -11,9 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Button
@@ -50,13 +48,33 @@ fun GuidedActsMode(
 
     var currentPhaseIndex by remember { mutableIntStateOf(0) }
     var phaseTexts by remember { mutableStateOf(List(4) { "" }) }
+    val isLastPhase = currentPhaseIndex >= phases.size - 1
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+    PrayerModeScaffold(
+        modifier = modifier,
+        action = {
+            // Pinned Next/Complete button — lives in the scaffold's bottom
+            // action slot so users never have to scroll to find it, even when
+            // the prompt + timer + text field push the body below the fold.
+            Button(
+                onClick = {
+                    if (!isLastPhase) {
+                        currentPhaseIndex++
+                    } else {
+                        onModeComplete(phaseTexts.joinToString("\n---\n"))
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text(
+                    text = if (!isLastPhase) "Next Step" else "Complete ACTS",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
     ) {
         // Phase indicator dots
         Row(
@@ -139,26 +157,6 @@ fun GuidedActsMode(
                     }
                 }
             )
-
-            // Next button
-            Button(
-                onClick = {
-                    if (currentPhaseIndex < phases.size - 1) {
-                        currentPhaseIndex++
-                    } else {
-                        onModeComplete(phaseTexts.joinToString("\n---\n"))
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Text(
-                    text = if (currentPhaseIndex < phases.size - 1) "Next Step" else "Complete ACTS",
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
         }
     }
 }

@@ -44,9 +44,6 @@ interface UserStatsDao {
     @Query("UPDATE user_stats SET totalFamousPrayersSaid = totalFamousPrayersSaid + 1 WHERE id = 1")
     suspend fun incrementFamousPrayers()
 
-    @Query("UPDATE user_stats SET hearts = :hearts WHERE id = 1")
-    suspend fun setHearts(hearts: Int)
-
-    @Query("UPDATE user_stats SET freezes = :freezes WHERE id = 1")
-    suspend fun setFreezes(freezes: Int)
+    // Hearts + freezes have moved to StreakDao.
+    // See CLAUDE.md "Architectural decisions of record" (2026-04-16).
 }

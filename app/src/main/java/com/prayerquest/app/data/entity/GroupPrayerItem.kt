@@ -31,7 +31,10 @@ data class GroupPrayerItem(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val groupId: Long,
     val prayerItemId: Long,
+    val title: String = "",                    // Denormalized for display + Firestore sync
+    val description: String = "",              // Denormalized for display + Firestore sync
     val addedBy: String = "local_user",
     val addedAt: Long = System.currentTimeMillis(),
-    val prayedByCount: Int = 0
+    val prayedByCount: Int = 0,
+    val firestoreId: String? = null            // Firestore document ID for cloud sync
 )

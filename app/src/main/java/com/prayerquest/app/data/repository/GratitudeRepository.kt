@@ -24,6 +24,14 @@ class GratitudeRepository(
     suspend fun getPhotoCount(): Int = gratitudeEntryDao.getPhotoCount()
     suspend fun getCountForDate(date: String): Int = gratitudeEntryDao.getCountForDate(date)
 
+    /**
+     * How many photo-attached gratitude entries fall in the given month
+     * ("YYYY-MM"). Backs the free-tier monthly photo quota gate — callers
+     * compare against [com.prayerquest.app.billing.PremiumFeatures.FREE_GRATITUDE_PHOTOS_PER_MONTH].
+     */
+    suspend fun getPhotoCountForMonth(yearMonthPrefix: String): Int =
+        gratitudeEntryDao.getPhotoCountForMonth(yearMonthPrefix)
+
     suspend fun add(entry: GratitudeEntry): Long = gratitudeEntryDao.insert(entry)
     suspend fun addAll(entries: List<GratitudeEntry>) = gratitudeEntryDao.insertAll(entries)
     suspend fun update(entry: GratitudeEntry) = gratitudeEntryDao.update(entry)

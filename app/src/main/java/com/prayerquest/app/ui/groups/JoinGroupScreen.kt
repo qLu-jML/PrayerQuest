@@ -26,6 +26,7 @@ import com.prayerquest.app.data.repository.PrayerGroupRepository
 import com.prayerquest.app.ui.theme.SuccessGreen
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JoinGroupScreen(
     onNavigateBack: () -> Unit,
@@ -114,7 +115,7 @@ fun JoinGroupScreen(
                     singleLine = true,
                     maxLines = 1,
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Alphanumeric,
+                        keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(onDone = {
@@ -279,9 +280,9 @@ class JoinGroupViewModel(
             try {
                 val result = groupRepository.joinGroup(shareCode)
                 if (result != null) {
-                    onResult(true, "Successfully joined the group!")
+                    onResult(true, "Successfully joined the group! Pull to refresh to see shared prayers.")
                 } else {
-                    onResult(false, "Invalid invite code. Please check and try again.")
+                    onResult(false, "Invalid invite code. Make sure you're signed in and the code is correct.")
                 }
             } catch (e: Exception) {
                 onResult(false, "Error joining group: ${e.message ?: "Unknown error"}")

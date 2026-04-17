@@ -31,8 +31,7 @@ class ProgressRepository(
     suspend fun incrementGratitudePhotos() = userStatsDao.incrementGratitudePhotos()
     suspend fun incrementGroupPrayers() = userStatsDao.incrementGroupPrayers()
     suspend fun incrementFamousPrayers() = userStatsDao.incrementFamousPrayers()
-    suspend fun setHearts(hearts: Int) = userStatsDao.setHearts(hearts)
-    suspend fun setFreezes(freezes: Int) = userStatsDao.setFreezes(freezes)
+    // Hearts + freezes moved to StreakDao / GamificationRepository on 2026-04-16.
 
     // --- DailyActivity ---
     fun observeActivity(date: String): Flow<DailyActivity?> = dailyActivityDao.observeForDate(date)

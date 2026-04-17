@@ -1,21 +1,27 @@
 package com.prayerquest.app.ui.settings
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.prayerquest.app.data.preferences.DevotionalAuthor
+import com.prayerquest.app.data.preferences.LiturgicalCalendar
+import com.prayerquest.app.data.preferences.ReminderSlotConfig
 import com.prayerquest.app.data.preferences.ThemeMode
 import com.prayerquest.app.data.preferences.UserPreferences
+import com.prayerquest.app.domain.model.PrayerMode
+import com.prayerquest.app.domain.model.Tradition
+import com.prayerquest.app.notifications.NotificationScheduler
 import com.prayerquest.app.ui.theme.AppTheme
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 /**
  * Serializable data class for storing custom themes
  */
-@Serializable
 data class CustomThemeData(
     val id: String,
     val name: String,
@@ -114,11 +120,21 @@ data class CustomThemeData(
 }
 
 /**
- * SettingsViewModel manages user preferences for settings, themes, and goals
+ * SettingsViewModel manages user preferences: themes, goals, reminder slots,
+ * quiet hours, tradition + mode toggles, and the daily-devotional author.
+ *
+ * Holds on to an [applicationContext] (the safe application-scoped Context
+ * — never an Activity) so time-affecting setters can immediately call
+ * [NotificationScheduler.rescheduleAll] after writing the new preference.
+ * This is what makes a newly chosen reminder time "just work" without
+ * requiring a relaunch.
  */
-class SettingsViewModel(private val userPreferences: UserPreferences) : ViewModel() {
+class SettingsViewModel(
+    private val userPreferences: UserPreferences,
+    private val applicationContext: Context
+) : ViewModel() {
 
-    // Expose user preferences as flows
+    // --- Existing flows (theme / goals / name) -----------------------------
     val themeMode: Flow<ThemeMode> = userPreferences.themeMode
     val selectedThemeId: Flow<String> = userPreferences.selectedThemeId
     val dailyGoal: Flow<Int> = userPreferences.dailyGoal
@@ -126,70 +142,159 @@ class SettingsViewModel(private val userPreferences: UserPreferences) : ViewMode
     val displayName: Flow<String> = userPreferences.displayName
     val customThemesJson: Flow<String> = userPreferences.customThemesJson
 
-    /**
-     * Set the theme mode (System, Light, or Dark)
-     */
+    // --- Sprint 4 flows (notifications + traditions + devotional) ----------
+    val reminderSlots: Flow<List<ReminderSlotConfig>> = userPreferences.reminderSlots
+    val quietHoursEnabled: Flow<Boolean> = userPreferences.quietHoursEnabled
+    val quietHoursStartMin: Flow<Int> = userPreferences.quietHoursStartMin
+    val quietHoursEndMin: Flow<Int> = userPreferences.quietHoursEndMin
+    val enabledTraditions: Flow<Set<Tradition>> = userPreferences.enabledTraditions
+    val disabledModes: Flow<Set<PrayerMode>> = userPreferences.disabledModes
+    val devotionalAuthor: Flow<DevotionalAuthor> = userPreferences.devotionalAuthor
+    val devotionalSpurgeonMin: Flow<Int> = userPreferences.devotionalSpurgeonMin
+    val devotionalSpurgeonEveningMin: Flow<Int> = userPreferences.devotionalSpurgeonEveningMin
+    val devotionalSpurgeonMorningEnabled: Flow<Boolean> =
+        userPreferences.devotionalSpurgeonMorningEnabled
+    val devotionalSpurgeonEveningEnabled: Flow<Boolean> =
+        userPreferences.devotionalSpurgeonEveningEnabled
+    val devotionalBonhoefferMin: Flow<Int> = userPreferences.devotionalBonhoefferMin
+    val liturgicalCalendar: Flow<LiturgicalCalendar> = userPreferences.liturgicalCalendar
+
+    // --- Existing setters --------------------------------------------------
+
     fun setThemeMode(mode: ThemeMode) {
-        viewModelScope.launch {
-            userPreferences.setThemeMode(mode)
-        }
+        viewModelScope.launch { userPreferences.setThemeMode(mode) }
     }
 
-    /**
-     * Set the selected theme ID
-     */
     fun setSelectedThemeId(themeId: String) {
-        viewModelScope.launch {
-            userPreferences.setSelectedThemeId(themeId)
-        }
+        viewModelScope.launch { userPreferences.setSelectedThemeId(themeId) }
     }
 
-    /**
-     * Set the daily prayer goal in minutes
-     */
     fun setDailyGoal(minutes: Int) {
-        viewModelScope.launch {
-            userPreferences.setDailyGoal(minutes)
-        }
+        viewModelScope.launch { userPreferences.setDailyGoal(minutes) }
     }
 
-    /**
-     * Set the daily gratitude goal in entries
-     */
     fun setGratitudeGoal(count: Int) {
-        viewModelScope.launch {
-            userPreferences.setGratitudeGoal(count)
-        }
+        viewModelScope.launch { userPreferences.setGratitudeGoal(count) }
     }
 
-    /**
-     * Set the user's display name
-     */
     fun setDisplayName(name: String) {
+        viewModelScope.launch { userPreferences.setDisplayName(name) }
+    }
+
+    // --- Sprint 4 setters --------------------------------------------------
+
+    /**
+     * Swap a single reminder slot. Writes first, then reschedules — so the
+     * new time/enabled state lands in WorkManager before the user can close
+     * the settings screen. Reschedule uses REPLACE policy internally so the
+     * old work is immediately retired.
+     */
+    fun setReminderSlot(config: ReminderSlotConfig) {
         viewModelScope.launch {
-            userPreferences.setDisplayName(name)
+            userPreferences.setReminderSlot(config)
+            NotificationScheduler.rescheduleAll(applicationContext)
         }
     }
 
-    /**
-     * Add a custom theme to the user's collection
-     * Reads current custom themes, adds the new one, and saves back
-     */
+    fun setQuietHoursEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferences.setQuietHoursEnabled(enabled)
+            // Quiet hours don't change fire times, but the Guard reads the
+            // latest flag at fire time — no reschedule strictly needed.
+            // Reschedule here anyway for consistency/clarity.
+            NotificationScheduler.rescheduleAll(applicationContext)
+        }
+    }
+
+    fun setQuietHoursWindow(startMin: Int, endMin: Int) {
+        viewModelScope.launch {
+            userPreferences.setQuietHoursWindow(startMin, endMin)
+        }
+    }
+
+    fun toggleTradition(tradition: Tradition) {
+        viewModelScope.launch {
+            val current = userPreferences.enabledTraditions.first()
+            val next = if (tradition in current) {
+                // Refuse to leave the user with an empty set — fall back to
+                // DEFAULT so the Mode Picker still has shelves.
+                (current - tradition).ifEmpty { Tradition.DEFAULT }
+            } else {
+                current + tradition
+            }
+            userPreferences.setEnabledTraditions(next)
+        }
+    }
+
+    fun setModeEnabled(mode: PrayerMode, enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferences.setModeEnabled(mode, enabled)
+        }
+    }
+
+    fun setDevotionalAuthor(author: DevotionalAuthor) {
+        viewModelScope.launch {
+            userPreferences.setDevotionalAuthor(author)
+            NotificationScheduler.rescheduleAll(applicationContext)
+        }
+    }
+
+    fun setDevotionalTime(author: DevotionalAuthor, minuteOfDay: Int) {
+        viewModelScope.launch {
+            userPreferences.setDevotionalTime(author, minuteOfDay)
+            NotificationScheduler.rescheduleAll(applicationContext)
+        }
+    }
+
+    /** Spurgeon's EVENING time slot — writes then reschedules. */
+    fun setDevotionalSpurgeonEveningMin(minuteOfDay: Int) {
+        viewModelScope.launch {
+            userPreferences.setDevotionalSpurgeonEveningMin(minuteOfDay)
+            NotificationScheduler.rescheduleAll(applicationContext)
+        }
+    }
+
+    fun setDevotionalSpurgeonMorningEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferences.setDevotionalSpurgeonMorningEnabled(enabled)
+            NotificationScheduler.rescheduleAll(applicationContext)
+        }
+    }
+
+    fun setDevotionalSpurgeonEveningEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferences.setDevotionalSpurgeonEveningEnabled(enabled)
+            NotificationScheduler.rescheduleAll(applicationContext)
+        }
+    }
+
+    fun setLiturgicalCalendar(choice: LiturgicalCalendar) {
+        viewModelScope.launch {
+            userPreferences.setLiturgicalCalendar(choice)
+        }
+    }
+
+    // --- Custom themes (unchanged) -----------------------------------------
+
+    private val gson = Gson()
+    private val themeListType = object : TypeToken<List<CustomThemeData>>() {}.type
+
     fun addCustomTheme(theme: AppTheme) {
         viewModelScope.launch {
             try {
                 val customThemeData = CustomThemeData.fromAppTheme(theme)
                 userPreferences.customThemesJson.collect { json ->
-                    val themes = try {
-                        Json.decodeFromString<List<CustomThemeData>>(
-                            if (json.isBlank() || json == "[]") "[]" else json
-                        )
+                    val themes: List<CustomThemeData> = try {
+                        gson.fromJson(
+                            if (json.isBlank() || json == "[]") "[]" else json,
+                            themeListType
+                        ) ?: emptyList()
                     } catch (e: Exception) {
                         emptyList()
                     }
 
                     val updatedThemes = themes.filter { it.id != customThemeData.id } + customThemeData
-                    val newJson = Json.encodeToString(updatedThemes)
+                    val newJson = gson.toJson(updatedThemes)
                     userPreferences.setCustomThemesJson(newJson)
                 }
             } catch (e: Exception) {
@@ -198,23 +303,21 @@ class SettingsViewModel(private val userPreferences: UserPreferences) : ViewMode
         }
     }
 
-    /**
-     * Remove a custom theme by ID
-     */
     fun removeCustomTheme(themeId: String) {
         viewModelScope.launch {
             try {
                 userPreferences.customThemesJson.collect { json ->
-                    val themes = try {
-                        Json.decodeFromString<List<CustomThemeData>>(
-                            if (json.isBlank() || json == "[]") "[]" else json
-                        )
+                    val themes: List<CustomThemeData> = try {
+                        gson.fromJson(
+                            if (json.isBlank() || json == "[]") "[]" else json,
+                            themeListType
+                        ) ?: emptyList()
                     } catch (e: Exception) {
                         emptyList()
                     }
 
                     val updatedThemes = themes.filter { it.id != themeId }
-                    val newJson = Json.encodeToString(updatedThemes)
+                    val newJson = gson.toJson(updatedThemes)
                     userPreferences.setCustomThemesJson(newJson)
                 }
             } catch (e: Exception) {
@@ -224,15 +327,22 @@ class SettingsViewModel(private val userPreferences: UserPreferences) : ViewMode
     }
 
     /**
-     * Factory for creating SettingsViewModel instances
+     * Factory for creating SettingsViewModel instances.
+     * Now requires the application context for notification rescheduling.
      */
     companion object {
-        fun create(userPreferences: UserPreferences): ViewModelProvider.Factory {
+        fun create(
+            userPreferences: UserPreferences,
+            applicationContext: Context
+        ): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
-                        return SettingsViewModel(userPreferences) as T
+                        return SettingsViewModel(
+                            userPreferences,
+                            applicationContext.applicationContext
+                        ) as T
                     }
                     throw IllegalArgumentException("Unknown ViewModel class")
                 }

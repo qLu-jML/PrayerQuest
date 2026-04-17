@@ -7,6 +7,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,25 +21,40 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prayerquest.app.PrayerQuestApplication
+import com.prayerquest.app.billing.PremiumFeatures
 import com.prayerquest.app.data.entity.GratitudeEntry
 import com.prayerquest.app.data.repository.GamificationRepository
 import com.prayerquest.app.data.repository.GratitudeRepository
 import com.prayerquest.app.ui.theme.GratitudeGold
 import com.prayerquest.app.ui.theme.GratitudeGreen
+import com.prayerquest.app.ui.theme.LocalIsPremium
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GratitudeLogScreen(
     onNavigateBack: () -> Unit,
     onGratitudeSaved: (xpEarned: Int) -> Unit,
+    onNavigateToPaywall: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val app = LocalContext.current.applicationContext as PrayerQuestApplication
     val viewModel: GratitudeLogViewModel = viewModel(
         factory = GratitudeLogViewModel.Factory(app.container.gratitudeRepository, app.container.gamificationRepository)
     )
+
+    val isPremium = LocalIsPremium.current
+    val photoCountThisMonth by viewModel.photoCountThisMonth.collectAsState()
+    val monthlyPhotoCap = PremiumFeatures.gratitudePhotosPerMonthFor(isPremium)
+    // For free users, the cap is a small int (10). Premium passes Int.MAX_VALUE
+    // from PremiumFeatures.gratitudePhotosPerMonthFor — the comparison below
+    // always yields false in that case, so premium users are never gated.
+    val atPhotoCap = photoCountThisMonth >= monthlyPhotoCap
 
     var entryCount by remember { mutableIntStateOf(1) }
     var gratitudeTexts by remember { mutableStateOf(listOf("")) }
@@ -98,7 +114,7 @@ fun GratitudeLogScreen(
             }
 
             item {
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             }
 
             item {
@@ -135,7 +151,7 @@ fun GratitudeLogScreen(
             }
 
             item {
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             }
 
             // Gratitude entry fields
@@ -156,8 +172,47 @@ fun GratitudeLogScreen(
                         newList[index] = it
                         selectedCategories = newList
                     },
-                    onPhotoClick = { hasPhotos = true }
+                    onPhotoClick = {
+                        if (atPhotoCap && !isPremium) {
+                            onNavigateToPaywall()
+                        } else {
+                            hasPhotos = true
+                        }
+                    },
+                    photoLocked = atPhotoCap && !isPremium,
                 )
+            }
+
+            if (atPhotoCap && !isPremium) {
+                item {
+                    // Inline cap notice. Kept deliberately small / non-modal so
+                    // the user can still log text-only gratitude without
+                    // interruption — the paywall opens only if they tap
+                    // "Add Photo" or the upgrade CTA here.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(
+                            text = "Monthly photo limit reached (${PremiumFeatures.FREE_GRATITUDE_PHOTOS_PER_MONTH}). Keep logging without photos, or upgrade for unlimited.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f),
+                        )
+                        TextButton(onClick = onNavigateToPaywall) {
+                            Text("Upgrade", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
             }
 
             item {
@@ -208,6 +263,7 @@ private fun GratitudeEntryField(
     selectedCategory: String,
     onCategoryChange: (String) -> Unit,
     onPhotoClick: () -> Unit,
+    photoLocked: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(modifier = modifier.fillMaxWidth()) {
@@ -274,19 +330,25 @@ private fun GratitudeEntryField(
                 }
             }
 
-            // Photo picker button
+            // Photo picker button — swaps to a lock icon + "Upgrade" label
+            // once the free monthly photo cap is hit. Tapping it still opens
+            // the paywall (the Screen's onPhotoClick branches on the same
+            // condition), so users always have a path to unlock.
             OutlinedButton(
                 onClick = onPhotoClick,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(
-                    Icons.Default.AddPhotoAlternate,
+                    imageVector = if (photoLocked) Icons.Default.Lock else Icons.Default.AddPhotoAlternate,
                     contentDescription = null,
                     modifier = Modifier
                         .size(20.dp)
                         .padding(end = 8.dp)
                 )
-                Text("Add Photo (Optional)", style = MaterialTheme.typography.labelSmall)
+                Text(
+                    text = if (photoLocked) "Add Photo (Premium)" else "Add Photo (Optional)",
+                    style = MaterialTheme.typography.labelSmall,
+                )
             }
         }
     }
@@ -296,6 +358,27 @@ class GratitudeLogViewModel(
     private val gratitudeRepository: GratitudeRepository,
     private val gamificationRepository: GamificationRepository
 ) : ViewModel() {
+
+    private val _photoCountThisMonth = MutableStateFlow(0)
+
+    /**
+     * How many gratitude-photo entries the user has logged this calendar
+     * month. Compared against
+     * [com.prayerquest.app.billing.PremiumFeatures.FREE_GRATITUDE_PHOTOS_PER_MONTH]
+     * by the Screen to decide whether "Add Photo" attaches a photo or bumps
+     * the user into the paywall.
+     *
+     * Loaded once in `init` — fresh every time this VM is created, which
+     * happens on every Screen entry since the VM isn't retained across nav.
+     */
+    val photoCountThisMonth: StateFlow<Int> = _photoCountThisMonth.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val ym = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"))
+            _photoCountThisMonth.value = gratitudeRepository.getPhotoCountForMonth(ym)
+        }
+    }
 
     fun logGratitudes(
         entries: List<String>,

@@ -15,6 +15,9 @@ import androidx.compose.ui.platform.LocalContext
 // CompositionLocal for the current theme ID
 val LocalCurrentThemeId = staticCompositionLocalOf<String> { "prayer_quest" }
 
+// CompositionLocal for premium status (used by ad views to hide ads for premium users)
+val LocalIsPremium = staticCompositionLocalOf<Boolean> { false }
+
 /**
  * Create a light color scheme from an AppTheme
  */

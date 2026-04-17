@@ -28,6 +28,7 @@ import com.prayerquest.app.data.entity.PrayerCollection
 import com.prayerquest.app.data.repository.CollectionRepository
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateCollectionScreen(
     onNavigateBack: () -> Unit,
@@ -49,6 +50,11 @@ fun CreateCollectionScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
+            // imePadding lets the bottom Button slide up above the soft
+            // keyboard when the tag / description / name fields are focused,
+            // so "Create Collection" stays reachable instead of hiding behind
+            // the IME.
+            .imePadding()
     ) {
         // Top bar
         TopAppBar(
@@ -62,9 +68,10 @@ fun CreateCollectionScreen(
 
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .weight(1f)
-                .padding(16.dp),
+                .padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
@@ -180,7 +187,8 @@ fun CreateCollectionScreen(
             }
         }
 
-        // Create button
+        // Create button — padding BEFORE height so the 16dp outer margin
+        // doesn't eat into the button's 52dp tap target.
         Button(
             onClick = {
                 if (name.isNotBlank()) {
@@ -190,8 +198,8 @@ fun CreateCollectionScreen(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .height(52.dp),
             enabled = name.isNotBlank()
         ) {
             Text("Create Collection", style = MaterialTheme.typography.labelLarge)

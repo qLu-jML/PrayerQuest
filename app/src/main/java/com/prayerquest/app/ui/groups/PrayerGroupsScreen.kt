@@ -1,9 +1,12 @@
 package com.prayerquest.app.ui.groups
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,16 +20,24 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prayerquest.app.PrayerQuestApplication
+import com.prayerquest.app.ads.BannerAdView
 import com.prayerquest.app.data.entity.PrayerGroup
 import com.prayerquest.app.data.repository.PrayerGroupRepository
+import com.prayerquest.app.firebase.AuthState
+import com.prayerquest.app.firebase.FirebaseAuthManager
 import com.prayerquest.app.ui.theme.CommunityBlue
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrayerGroupsScreen(
+    onNavigateBack: () -> Unit,
     onNavigateToGroupDetail: (Long) -> Unit,
     onNavigateToCreateGroup: () -> Unit,
     onNavigateToJoinGroup: () -> Unit,
@@ -34,96 +45,181 @@ fun PrayerGroupsScreen(
 ) {
     val app = LocalContext.current.applicationContext as PrayerQuestApplication
     val viewModel: PrayerGroupsViewModel = viewModel(
-        factory = PrayerGroupsViewModel.Factory(app.container.prayerGroupRepository)
+        factory = PrayerGroupsViewModel.Factory(
+            app.container.prayerGroupRepository,
+            app.container.firebaseAuthManager
+        )
     )
 
     var showActionMenu by remember { mutableStateOf(false) }
     val groups by viewModel.userGroups.collectAsState(initial = emptyList())
+    val authState by viewModel.authState.collectAsState()
+    val infoMessage by viewModel.infoMessage.collectAsState()
+
+    // Google Sign-In launcher
+    val signInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.handleSignInResult(result)
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "Prayer Groups",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Connect and pray with your faith community",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            if (groups.isEmpty()) {
-                // Empty state
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "You're Not In Any Groups Yet",
-                        style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Text(
-                        text = "Create a new prayer group or join an existing one to start praying with others",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 24.dp)
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Button(
-                            onClick = onNavigateToCreateGroup,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp)
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Create")
-                        }
-                        OutlinedButton(
-                            onClick = onNavigateToJoinGroup,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp)
-                        ) {
-                            Text("Join")
-                        }
-                    }
-                }
-            } else {
-                // Groups list
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    contentPadding = PaddingValues(vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(groups) { group ->
-                        PrayerGroupCard(
-                            group = group,
-                            onClick = { onNavigateToGroupDetail(group.id) }
+            // Top bar with back button
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(
+                            text = "Prayer Groups",
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Connect and pray with your faith community",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+                // No sync/refresh action: Firestore snapshot listeners
+                // mirror cloud → Room in real time, and the Firestore cache
+                // covers offline reads. See PrayerGroupRepository.startCloudMirror.
+            )
+
+            // Sign-in banner (if not signed in)
+            if (authState is AuthState.SignedOut) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Sign in to share prayer groups",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = "Sign in with Google to create and join prayer groups that sync across devices and with other members.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Button(
+                            onClick = {
+                                val intent = viewModel.getSignInIntent()
+                                if (intent != null) signInLauncher.launch(intent)
+                            },
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text("Sign in with Google")
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // Transient info message (e.g. sign-in result). Real-time group
+            // changes don't need a banner — they just appear in the list.
+            if (infoMessage.isNotEmpty()) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                ) {
+                    Text(
+                        text = infoMessage,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // Wrap list + empty state in a weighted Box so the banner ad
+            // below claims its space without stealing from the list.
+            Box(modifier = Modifier.weight(1f)) {
+                if (groups.isEmpty()) {
+                    // Empty state
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "You're Not In Any Groups Yet",
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Text(
+                            text = "Create a new prayer group or join an existing one to start praying with others",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 24.dp)
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Button(
+                                onClick = onNavigateToCreateGroup,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Create")
+                            }
+                            OutlinedButton(
+                                onClick = onNavigateToJoinGroup,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp)
+                            ) {
+                                Text("Join")
+                            }
+                        }
+                    }
+                } else {
+                    // Groups list
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        contentPadding = PaddingValues(vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(groups) { group ->
+                            PrayerGroupCard(
+                                group = group,
+                                onClick = { onNavigateToGroupDetail(group.id) }
+                            )
+                        }
+                    }
                 }
             }
+
+            // Banner ad above the bottom nav. Self-hides for premium users.
+            BannerAdView(modifier = Modifier.fillMaxWidth())
         }
 
         // FAB with menu
@@ -157,6 +253,11 @@ fun PrayerGroupsScreen(
                 Icon(Icons.Default.Add, contentDescription = "Groups Menu")
             }
         }
+
+        // No post-sync popup: group activity now streams in live via the
+        // snapshot-listener mirror in PrayerGroupRepository. When the app
+        // is closed, FCM push notifications (Sprint 4) surface new activity
+        // instead of a batched "you missed X prayers" dialog.
     }
 }
 
@@ -168,7 +269,10 @@ private fun PrayerGroupCard(
 ) {
     val app = LocalContext.current.applicationContext as PrayerQuestApplication
     val viewModel: PrayerGroupsViewModel = viewModel(
-        factory = PrayerGroupsViewModel.Factory(app.container.prayerGroupRepository)
+        factory = PrayerGroupsViewModel.Factory(
+            app.container.prayerGroupRepository,
+            app.container.firebaseAuthManager
+        )
     )
 
     val memberCount by viewModel.getMemberCount(group.id).collectAsState(initial = 0)
@@ -195,17 +299,36 @@ private fun PrayerGroupCard(
                     text = group.emoji,
                     style = MaterialTheme.typography.headlineMedium
                 )
-                AssistChip(
-                    onClick = {},
-                    label = {
-                        Text(
-                            "👥 $memberCount",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = CommunityBlue
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Cloud sync indicator
+                    if (group.firestoreId != null) {
+                        AssistChip(
+                            onClick = {},
+                            label = {
+                                Text(
+                                    "synced",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            modifier = Modifier.height(24.dp)
                         )
-                    },
-                    modifier = Modifier.height(28.dp)
-                )
+                    }
+                    AssistChip(
+                        onClick = {},
+                        label = {
+                            Text(
+                                "members",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = CommunityBlue
+                            )
+                        },
+                        modifier = Modifier.height(28.dp)
+                    )
+                }
             }
             Text(
                 text = group.name,
@@ -222,32 +345,65 @@ private fun PrayerGroupCard(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-            Text(
-                text = "🙏 $prayerCount prayers",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
 
 class PrayerGroupsViewModel(
-    private val groupRepository: PrayerGroupRepository
+    private val groupRepository: PrayerGroupRepository,
+    private val authManager: FirebaseAuthManager
 ) : ViewModel() {
 
     val userGroups = groupRepository.observeAllGroups()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun getMemberCount(groupId: Long): Flow<Int> = emptyFlow()
+    val authState = authManager.authState
 
-    fun getPrayerCount(groupId: Long): Flow<Int> = emptyFlow()
+    /**
+     * Transient informational message surface — sign-in result copy lives
+     * here. Not used for sync status (there is no manual sync anymore).
+     */
+    private val _infoMessage = MutableStateFlow("")
+    val infoMessage: StateFlow<String> = _infoMessage
+
+    init {
+        // Open Firestore snapshot listeners for the lifetime of this
+        // ViewModel. The repository observes authState internally, so this
+        // call is a no-op until the user signs in and tears itself down
+        // automatically on sign-out. Cancellation is scope-driven —
+        // viewModelScope gets cancelled when the Groups screen leaves the
+        // back stack, at which point every listener is detached.
+        groupRepository.startCloudMirror(viewModelScope)
+    }
+
+    fun getMemberCount(groupId: Long): Flow<Int> =
+        groupRepository.observeMembers(groupId).map { it.size }
+
+    fun getPrayerCount(groupId: Long): Flow<Int> =
+        groupRepository.observeGroupPrayerItemDetails(groupId).map { it.size }
+
+    fun getSignInIntent() = authManager.getSignInIntent()
+
+    fun handleSignInResult(result: androidx.activity.result.ActivityResult) {
+        viewModelScope.launch {
+            val signInResult = authManager.handleSignInResult(result)
+            if (signInResult.isSuccess) {
+                _infoMessage.value = "Signed in as ${signInResult.getOrNull()?.displayName}"
+                // No explicit sync call: the authState emission will trigger
+                // startCloudMirror's collector to attach listeners automatically.
+            } else {
+                _infoMessage.value = "Sign-in failed: ${signInResult.exceptionOrNull()?.message}"
+            }
+        }
+    }
 
     class Factory(
-        private val groupRepository: PrayerGroupRepository
+        private val groupRepository: PrayerGroupRepository,
+        private val authManager: FirebaseAuthManager
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return PrayerGroupsViewModel(groupRepository) as T
+            return PrayerGroupsViewModel(groupRepository, authManager) as T
         }
     }
 }

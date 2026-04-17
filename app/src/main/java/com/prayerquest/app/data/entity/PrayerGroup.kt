@@ -14,6 +14,7 @@ data class PrayerGroup(
     val description: String = "",
     val emoji: String = "",
     val shareCode: String,                     // e.g. "PRAY-8K9M2X"
-    val createdBy: String = "local_user",      // userId — local for MVP
-    val createdAt: Long = System.currentTimeMillis()
+    val createdBy: String = "local_user",      // userId — Firebase UID when signed in
+    val createdAt: Long = System.currentTimeMillis(),
+    val firestoreId: String? = null            // Firestore document ID for cloud sync
 )

@@ -1,8 +1,10 @@
 package com.prayerquest.app.data.repository
 
+import com.prayerquest.app.data.dao.FamousPrayerDao
 import com.prayerquest.app.data.dao.PrayerItemDao
 import com.prayerquest.app.data.dao.PrayerRecordDao
 import com.prayerquest.app.data.dao.UserPrayerProgressDao
+import com.prayerquest.app.data.entity.FamousPrayer
 import com.prayerquest.app.data.entity.PrayerItem
 import com.prayerquest.app.data.entity.PrayerRecord
 import com.prayerquest.app.data.entity.UserPrayerProgress
@@ -14,7 +16,8 @@ import kotlinx.coroutines.flow.Flow
 class PrayerRepository(
     private val prayerItemDao: PrayerItemDao,
     private val prayerRecordDao: PrayerRecordDao,
-    private val userPrayerProgressDao: UserPrayerProgressDao
+    private val userPrayerProgressDao: UserPrayerProgressDao,
+    private val famousPrayerDao: FamousPrayerDao? = null
 ) {
 
     // --- Prayer Items ---
@@ -26,6 +29,7 @@ class PrayerRepository(
     fun searchItems(query: String): Flow<List<PrayerItem>> = prayerItemDao.search(query)
 
     suspend fun getItem(id: Long): PrayerItem? = prayerItemDao.getById(id)
+    suspend fun getActiveItems(): List<PrayerItem> = prayerItemDao.getActiveList()
     suspend fun getActiveCount(): Int = prayerItemDao.getActiveCount()
     suspend fun getAnsweredCount(): Int = prayerItemDao.getAnsweredCount()
 
@@ -57,6 +61,10 @@ class PrayerRepository(
     suspend fun reactivate(id: Long) {
         prayerItemDao.updateStatus(id = id, status = PrayerItem.STATUS_ACTIVE)
     }
+
+    // --- Famous Prayers ---
+    fun observeAllFamousPrayers(): Flow<List<FamousPrayer>> =
+        famousPrayerDao?.observeAll() ?: kotlinx.coroutines.flow.flowOf(emptyList())
 
     // --- Prayer Records ---
     suspend fun recordSession(record: PrayerRecord): Long = prayerRecordDao.insert(record)

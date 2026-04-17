@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FamousPrayerDetailScreen(
     prayerId: String,
@@ -100,6 +102,13 @@ fun FamousPrayerDetailScreen(
                                         style = MaterialTheme.typography.labelSmall
                                     )
                                 },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.Label,
+                                        contentDescription = "Tag",
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                },
                                 modifier = Modifier
                                     .padding(top = 8.dp)
                                     .height(28.dp)
@@ -109,7 +118,7 @@ fun FamousPrayerDetailScreen(
                 }
 
                 item {
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 }
 
                 item {
@@ -133,7 +142,7 @@ fun FamousPrayerDetailScreen(
                 }
 
                 item {
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 }
 
                 item {

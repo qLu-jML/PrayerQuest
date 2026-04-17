@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.prayerquest.app.data.entity.PrayerItem
 import com.prayerquest.app.data.repository.GamificationRepository
 import com.prayerquest.app.data.repository.PrayerRepository
+import com.prayerquest.app.domain.model.PrayerGrade
+import com.prayerquest.app.domain.model.PrayerMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +32,16 @@ class FormationViewModel(
     private val _isComplete = MutableStateFlow(false)
     val isComplete: StateFlow<Boolean> = _isComplete.asStateFlow()
 
+    private val _prayerItem = MutableStateFlow(
+        PrayerItem(
+            title = "My First Prayer",
+            description = "A prayer to begin my journey with PrayerQuest",
+            category = "Personal",
+            status = PrayerItem.STATUS_ACTIVE
+        )
+    )
+    val prayerItem: StateFlow<PrayerItem> = _prayerItem.asStateFlow()
+
     fun nextStep() {
         if (_currentStep.value < TOTAL_STEPS - 1) {
             _currentStep.value++
@@ -49,15 +61,28 @@ class FormationViewModel(
         viewModelScope.launch {
             try {
                 gamificationRepository.onPrayerSessionCompleted(
-                    xpEarned = FORMATION_COMPLETION_XP,
-                    sessionDuration = 0,
-                    itemsCompleted = 1
+                    mode = PrayerMode.GUIDED_ACTS,
+                    grade = PrayerGrade.GOOD,
+                    durationSeconds = 0,
+                    itemsPrayed = 1,
+                    isFamousPrayer = false,
+                    isGroupPrayer = false
                 )
                 _xpEarned.value = FORMATION_COMPLETION_XP
                 _isComplete.value = true
             } catch (e: Exception) {
                 _xpEarned.value = FORMATION_COMPLETION_XP
                 _isComplete.value = true
+            }
+        }
+    }
+
+    fun addToCollection(prayerItem: PrayerItem) {
+        viewModelScope.launch {
+            try {
+                prayerRepository.addItem(prayerItem)
+            } catch (e: Exception) {
+                // Handle silently
             }
         }
     }
