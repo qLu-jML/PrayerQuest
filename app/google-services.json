@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "904535620336-ihl4nu7sv293tu76bbsbk68v9ohi533q.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.prayerquest.app",
+            "certificate_hash": "42398859956e4c0b9c92b0ba4b017643ab74b74a"
+          }
+        },
+        {
           "client_id": "904535620336-spta4s4630jgia5vferrj4fb9s3ehm71.apps.googleusercontent.com",
           "client_type": 3
         }

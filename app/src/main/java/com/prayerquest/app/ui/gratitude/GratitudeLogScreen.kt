@@ -7,6 +7,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.*
@@ -41,6 +42,7 @@ fun GratitudeLogScreen(
     onNavigateBack: () -> Unit,
     onGratitudeSaved: (xpEarned: Int) -> Unit,
     onNavigateToPaywall: () -> Unit = {},
+    onNavigateToSpeedRound: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val app = LocalContext.current.applicationContext as PrayerQuestApplication
@@ -109,6 +111,64 @@ fun GratitudeLogScreen(
                             modifier = Modifier.padding(12.dp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                }
+            }
+
+            item {
+                // Speed Round CTA — prominent card anchored right under the
+                // verse prompt. We keep it above the entry-count selector so
+                // it's the first interactive element a returning user sees;
+                // the Log screen itself is still the default flow, but
+                // "rapid-fire gratitude" is how we get streak-builders back
+                // in when they have 60 seconds of margin between meetings.
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = GratitudeGold.copy(alpha = 0.18f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Surface(
+                            shape = MaterialTheme.shapes.medium,
+                            color = GratitudeGold.copy(alpha = 0.35f),
+                            modifier = Modifier.size(44.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Bolt,
+                                    contentDescription = null,
+                                    tint = GratitudeGreen
+                                )
+                            }
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Speed Round",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Rapid-fire gratitude — 60 seconds, bonus XP if you hit 5.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        FilledTonalButton(
+                            onClick = onNavigateToSpeedRound,
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = GratitudeGreen,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        ) {
+                            Text("Start", style = MaterialTheme.typography.labelMedium)
+                        }
                     }
                 }
             }

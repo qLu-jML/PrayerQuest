@@ -31,6 +31,16 @@ class GamificationRepository(
         const val QUESTS_PER_DAY = 3
         const val QUEST_SET_BONUS_XP = 30
         const val QUEST_SET_BONUS_COINS = 5
+        /** Flat XP bonus awarded by [onPrayerMarkedAnswered]. */
+        const val ANSWERED_PRAYER_XP = 25
+
+        /**
+         * Flat XP bonus awarded when a Gratitude Speed Round finishes under
+         * 60 seconds with ≥ 5 entries. Small but visibly separate from the
+         * per-entry XP so the "Grateful heart, fast hands!" toast has
+         * something concrete to show.
+         */
+        const val GRATITUDE_SPEED_BONUS_XP = 15
         private val DATE_FMT = DateTimeFormatter.ISO_LOCAL_DATE
     }
 
@@ -109,13 +119,26 @@ class GamificationRepository(
 
     /**
      * Called when gratitude entries are logged.
+     *
+     * [speedBonus] is `true` when the entries came from the Gratitude Speed
+     * Round (§3.6) finishing with ≥ 5 items in under 60 seconds — the bonus
+     * adds a flat [GRATITUDE_SPEED_BONUS_XP] on top of the per-entry XP. The
+     * screen surfaces the bonus via a toast ("Grateful heart, fast hands!")
+     * so the number here is the only place where bonus XP is awarded; the
+     * UI just displays it.
      */
-    suspend fun onGratitudeLogged(count: Int, hasPhoto: Boolean): Int {
+    suspend fun onGratitudeLogged(
+        count: Int,
+        hasPhoto: Boolean,
+        speedBonus: Boolean = false
+    ): Int {
         val date = today()
         val stats = userStatsDao.get() ?: UserStats()
 
-        // XP: 5 base + 3 per extra + 5 for photo
-        val xpEarned = 5 + ((count - 1).coerceAtLeast(0) * 3) + (if (hasPhoto) 5 else 0)
+        // XP: 5 base + 3 per extra + 5 for photo (+15 speed bonus)
+        val baseXp = 5 + ((count - 1).coerceAtLeast(0) * 3) + (if (hasPhoto) 5 else 0)
+        val bonus = if (speedBonus) GRATITUDE_SPEED_BONUS_XP else 0
+        val xpEarned = baseXp + bonus
         val newTotalXp = stats.totalXp + xpEarned
         val newLevel = Leveling.levelForXp(newTotalXp)
 
@@ -135,12 +158,83 @@ class GamificationRepository(
         // Gratitude also protects streak
         checkInStreak(date, stats)
 
+        // Recompute consecutive-gratitude-days (DD §3.6 "Thankful Heart" /
+        // "Gratitude Starter" badges). We look at today + yesterday only —
+        // cheap, and if the user logs the same day twice it stays flat.
+        updateConsecutiveGratitudeDays(stats, date)
+
         // Advance quests
         ensureQuestsGenerated(date)
         advanceQuestType(date, QuestType.LOG_GRATITUDE.name, count)
 
         evaluateAchievements()
         return xpEarned
+    }
+
+    /**
+     * Refreshes `consecutiveGratitudeDays` on UserStats. Called at the end of
+     * each [onGratitudeLogged] so the streak-based gratitude badges (7 / 30
+     * consecutive days) see an up-to-date value. We intentionally rely on
+     * the DailyActivity table rather than the raw entries — the user logs
+     * multiple entries on the same date but that's still one "day" of
+     * gratitude.
+     */
+    private suspend fun updateConsecutiveGratitudeDays(stats: UserStats, today: String) {
+        val todayDate = LocalDate.parse(today, DATE_FMT)
+        val yesterday = todayDate.minusDays(1).format(DATE_FMT)
+
+        val yesterdayCount = gratitudeEntryDao.getCountForDate(yesterday)
+        val newConsecutive = when {
+            // First-ever gratitude log today → streak becomes 1.
+            stats.consecutiveGratitudeDays == 0 -> 1
+            // Logged again today, consecutive day holds.
+            yesterdayCount > 0 -> stats.consecutiveGratitudeDays.coerceAtLeast(1)
+            // User missed yesterday — reset to 1 (today still counts).
+            else -> 1
+        }
+
+        if (newConsecutive != stats.consecutiveGratitudeDays) {
+            userStatsDao.setConsecutiveGratitudeDays(newConsecutive)
+        }
+    }
+
+    /**
+     * Called exactly once per "Answered" transition — see
+     * [com.prayerquest.app.data.repository.PrayerRepository.markAnswered]
+     * and its [PrayerRepository.MarkAnsweredResult.wasNewlyAnswered] guard.
+     *
+     * Bumps [UserStats.answeredPrayerCount] atomically, awards a flat XP
+     * bonus for God's faithfulness (the completion itself is the emotional
+     * payoff — see DD §3.5.2 "generous animation is the emotional payoff"),
+     * and re-evaluates achievements so the ANSWERED_PRAYER category
+     * ("God Answers" → "Faithful Witness" → "Testimony Builder" — the
+     * FIRST_ANSWERED / FAITHFUL_10 / FAITHFUL_50 milestones) can unlock
+     * on the spot.
+     *
+     * Returns the list of achievements newly unlocked by this call so the
+     * celebration screen can surface them alongside the confetti.
+     */
+    suspend fun onPrayerMarkedAnswered(): AnsweredGamificationResult {
+        val stats = userStatsDao.get() ?: UserStats()
+        val xpEarned = ANSWERED_PRAYER_XP
+        val newTotalXp = stats.totalXp + xpEarned
+        val newLevel = Leveling.levelForXp(newTotalXp)
+        val leveledUp = Leveling.didLevelUp(stats.totalXp, newTotalXp)
+
+        userStatsDao.addXpAndSetLevel(xpEarned, newLevel)
+        userStatsDao.incrementAnsweredPrayers()
+
+        // Re-read so achievement evaluation sees the incremented
+        // answeredPrayerCount.
+        val newAchievements = evaluateAchievements()
+
+        return AnsweredGamificationResult(
+            xpEarned = xpEarned,
+            totalXp = newTotalXp,
+            newLevel = newLevel,
+            leveledUp = leveledUp,
+            newAchievements = newAchievements
+        )
     }
 
     // ═══════════════════════════════════════════════
@@ -351,7 +445,17 @@ class GamificationRepository(
         AchievementCategory.FAMOUS_PRAYER -> stats.totalFamousPrayersSaid
         AchievementCategory.ANSWERED_PRAYER -> stats.answeredPrayerCount
         AchievementCategory.GRATITUDE -> when (def.id) {
+            // Consecutive-day badges: Gratitude Starter (7 days) and
+            // Thankful Heart (30 consecutive days). These read the
+            // live `consecutiveGratitudeDays` counter maintained by
+            // [updateConsecutiveGratitudeDays] — the old behaviour
+            // (compare target to `totalGratitudesLogged`) would have
+            // unlocked Gratitude Starter after the user's 7th entry
+            // even if all 7 landed on the same day.
+            "gratitude_7", "gratitude_30" -> stats.consecutiveGratitudeDays
             "gratitude_photo_50" -> stats.totalGratitudePhotos
+            // Volume milestones (Abundance Mindset, Faithful Thanksgiver)
+            // stay on the raw lifetime-entry counter.
             else -> stats.totalGratitudesLogged
         }
         AchievementCategory.GROUP -> when (def.id) {
@@ -416,6 +520,19 @@ data class SessionGamificationResult(
     val leveledUp: Boolean,
     val levelTitle: String,
     val streakDays: Int,
+    val newAchievements: List<AchievementDef>
+)
+
+/**
+ * Result of [GamificationRepository.onPrayerMarkedAnswered] — surfaced to
+ * the Big Celebration screen so it can show "+25 XP", any brand-new
+ * achievements, and a level-up ribbon on the verse card.
+ */
+data class AnsweredGamificationResult(
+    val xpEarned: Int,
+    val totalXp: Int,
+    val newLevel: Int,
+    val leveledUp: Boolean,
     val newAchievements: List<AchievementDef>
 )
 

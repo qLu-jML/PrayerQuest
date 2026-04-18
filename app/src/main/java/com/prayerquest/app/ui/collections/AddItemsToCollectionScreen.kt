@@ -24,6 +24,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,9 +40,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -52,10 +57,13 @@ import com.prayerquest.app.PrayerQuestApplication
 import com.prayerquest.app.data.entity.PrayerItem
 import com.prayerquest.app.data.repository.CollectionRepository
 import com.prayerquest.app.data.repository.PrayerRepository
+import com.prayerquest.app.domain.tagging.PrayerTagger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
@@ -93,9 +101,33 @@ fun AddItemsToCollectionScreen(
 
     val addableItems by viewModel.addableItems.collectAsState(initial = emptyList())
     val selectedIds by viewModel.selectedIds.collectAsState()
+    val suggestedTags by viewModel.suggestedTags.collectAsState()
 
     var newTitle by remember { mutableStateOf("") }
     var newDescription by remember { mutableStateOf("") }
+
+    // Which suggested category the user has tapped to accept. `null` means
+    // no suggestion has been accepted — if they save in that state the
+    // PrayerItem is persisted with an empty category (§3.5.1: "accept or
+    // dismiss with a tap"). Manual category pickers, when one is added to
+    // this flow, take precedence over this field.
+    var acceptedCategory by remember { mutableStateOf<PrayerTagger.Category?>(null) }
+
+    // Feed the VM draft state so its debounced suggestion flow can run. We
+    // do this in a LaunchedEffect keyed on the inputs so the VM receives one
+    // update per keystroke, not one per recomposition.
+    LaunchedEffect(newTitle, newDescription) {
+        viewModel.onDraftChanged(newTitle, newDescription)
+    }
+
+    // If the user clears the title, the suggestion row disappears — clear
+    // any previously accepted tag so a stale category can't leak into the
+    // next new prayer item they type.
+    LaunchedEffect(newTitle, newDescription) {
+        if (newTitle.isBlank() && newDescription.isBlank()) {
+            acceptedCategory = null
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -169,11 +201,34 @@ fun AddItemsToCollectionScreen(
                                     .fillMaxWidth()
                                     .heightIn(min = 80.dp)
                             )
+
+                            // ── Auto-suggested tag chips (DD §3.5.1) ─────
+                            // Only render the row when the heuristic has
+                            // produced something — hiding an empty row
+                            // keeps the card tidy while the user is still
+                            // typing their first word.
+                            if (suggestedTags.isNotEmpty()) {
+                                SuggestedTagRow(
+                                    suggestions = suggestedTags,
+                                    accepted = acceptedCategory,
+                                    onToggle = { category ->
+                                        acceptedCategory =
+                                            if (acceptedCategory == category) null
+                                            else category
+                                    }
+                                )
+                            }
+
                             Button(
                                 onClick = {
-                                    viewModel.createAndAdd(newTitle.trim(), newDescription.trim())
+                                    viewModel.createAndAdd(
+                                        title = newTitle.trim(),
+                                        description = newDescription.trim(),
+                                        category = acceptedCategory?.displayName.orEmpty()
+                                    )
                                     newTitle = ""
                                     newDescription = ""
+                                    acceptedCategory = null
                                 },
                                 enabled = newTitle.isNotBlank(),
                                 modifier = Modifier
@@ -285,6 +340,53 @@ fun AddItemsToCollectionScreen(
     }
 }
 
+/**
+ * Horizontal row of up to 3 [FilterChip]s bound to [PrayerTagger] output.
+ *
+ * Selection is single-choice: accepting chip A while chip B is already
+ * accepted swaps the selection rather than accumulating — this keeps the
+ * "first accepted tag" rule in [AddItemsViewModel.createAndAdd] unambiguous
+ * for the user. A second tap on the currently-accepted chip clears it.
+ *
+ * Accessibility: each chip publishes "Suggested tag: <Name>. Tap to apply."
+ * (or "Tap to dismiss." when accepted) so TalkBack users know the chip is
+ * a recommendation, not a selected filter.
+ */
+@Composable
+private fun SuggestedTagRow(
+    suggestions: List<PrayerTagger.SuggestedTag>,
+    accepted: PrayerTagger.Category?,
+    onToggle: (PrayerTagger.Category) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = "Suggested tags",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            suggestions.forEach { tag ->
+                val isAccepted = accepted == tag.category
+                val a11y = if (isAccepted) {
+                    "Suggested tag: ${tag.category.displayName}. Tap to dismiss."
+                } else {
+                    "Suggested tag: ${tag.category.displayName}. Tap to apply."
+                }
+                FilterChip(
+                    selected = isAccepted,
+                    onClick = { onToggle(tag.category) },
+                    label = { Text(tag.category.displayName) },
+                    modifier = Modifier.semantics { contentDescription = a11y },
+                    colors = FilterChipDefaults.filterChipColors()
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun AddableItemRow(
     item: PrayerItem,
@@ -332,6 +434,8 @@ private fun AddableItemRow(
     }
 }
 
+private const val TAG_SUGGESTION_DEBOUNCE_MS = 300L
+
 class AddItemsViewModel(
     private val collectionId: Long,
     private val collectionRepository: CollectionRepository,
@@ -359,6 +463,32 @@ class AddItemsViewModel(
     private val _selectedIds = MutableStateFlow<Set<Long>>(emptySet())
     val selectedIds: StateFlow<Set<Long>> = _selectedIds.asStateFlow()
 
+    // ── Draft state for the quick-create card ─────────────────────────────
+    // The title + description the user is currently typing, fed by the
+    // composable via [onDraftChanged]. We debounce them for 300 ms before
+    // running the regex heuristic so we don't re-tag on every keystroke —
+    // PrayerTagger is cheap, but 300 ms "feels" like the suggestion reacts
+    // to what the user just finished saying rather than every key.
+    private val _draftTitle = MutableStateFlow("")
+    private val _draftDescription = MutableStateFlow("")
+
+    val suggestedTags: StateFlow<List<PrayerTagger.SuggestedTag>> = combine(
+        _draftTitle,
+        _draftDescription
+    ) { t, d -> t to d }
+        .debounce(TAG_SUGGESTION_DEBOUNCE_MS)
+        .map { (title, desc) -> PrayerTagger.suggest(title, desc) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+    fun onDraftChanged(title: String, description: String) {
+        _draftTitle.value = title
+        _draftDescription.value = description
+    }
+
     fun toggleSelection(id: Long) {
         _selectedIds.value = _selectedIds.value.toMutableSet().apply {
             if (!add(id)) remove(id)
@@ -369,14 +499,28 @@ class AddItemsViewModel(
      * Quick-create path. Insert the new PrayerItem, then link it to the
      * collection. Done in one viewModelScope.launch so both succeed or fail
      * atomically from the UI's perspective.
+     *
+     * [category] is the display name of the tag the user accepted from the
+     * auto-suggestion row (or empty string if none accepted / a future
+     * manual picker passed through nothing). PrayerItem.category stays as
+     * the column's empty-string default when no category is chosen — no
+     * Room migration required.
      */
-    fun createAndAdd(title: String, description: String) {
+    fun createAndAdd(title: String, description: String, category: String = "") {
         if (title.isBlank()) return
         viewModelScope.launch {
             val newId = prayerRepository.addItem(
-                PrayerItem(title = title, description = description)
+                PrayerItem(
+                    title = title,
+                    description = description,
+                    category = category
+                )
             )
             collectionRepository.addItemToCollection(collectionId, newId)
+            // Reset the draft so the suggestion row doesn't linger with
+            // stale tags keyed to the prayer we just saved.
+            _draftTitle.value = ""
+            _draftDescription.value = ""
         }
     }
 

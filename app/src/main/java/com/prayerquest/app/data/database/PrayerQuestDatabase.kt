@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
         PrayerCollection::class,
         PrayerCollectionCrossRef::class,
         FamousPrayer::class,
+        BiblePrayer::class,
         PrayerRecord::class,
         UserPrayerProgress::class,
         UserStats::class,
@@ -32,10 +33,9 @@ import kotlinx.coroutines.launch
         GroupPrayerItemCrossRef::class,
         GroupPrayerActivity::class,
         NameOfGod::class,
-        Devotional::class,
         FastingSession::class
     ],
-    version = 6,
+    version = 9,
     exportSchema = true
 )
 abstract class PrayerQuestDatabase : RoomDatabase() {
@@ -44,6 +44,7 @@ abstract class PrayerQuestDatabase : RoomDatabase() {
     abstract fun prayerItemDao(): PrayerItemDao
     abstract fun prayerCollectionDao(): PrayerCollectionDao
     abstract fun famousPrayerDao(): FamousPrayerDao
+    abstract fun biblePrayerDao(): BiblePrayerDao
     abstract fun prayerRecordDao(): PrayerRecordDao
     abstract fun userPrayerProgressDao(): UserPrayerProgressDao
     abstract fun userStatsDao(): UserStatsDao
@@ -54,7 +55,6 @@ abstract class PrayerQuestDatabase : RoomDatabase() {
     abstract fun gratitudeEntryDao(): GratitudeEntryDao
     abstract fun prayerGroupDao(): PrayerGroupDao
     abstract fun nameOfGodDao(): NameOfGodDao
-    abstract fun devotionalDao(): DevotionalDao
     abstract fun fastingSessionDao(): FastingSessionDao
 
     companion object {
@@ -76,7 +76,7 @@ abstract class PrayerQuestDatabase : RoomDatabase() {
                 DATABASE_NAME
             )
                 .addCallback(SeedCallback(scope))
-                .addMigrations(MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_7_8, MIGRATION_8_9)
                 // Dev-phase policy (matches ScriptureQuest): any schema gap we
                 // haven't written an explicit migration for wipes and rebuilds.
                 // MIGRATION_4_5 still runs for v4 devices; pre-v4 installs
@@ -248,14 +248,13 @@ abstract class PrayerQuestDatabase : RoomDatabase() {
         }
 
         /**
-         * v5 → v6 — Spurgeon evening readings (2026-04-16).
+         * v5 → v6 — Devotional evening-slot columns (2026-04-16).
          *
-         * Adds three columns to `devotional` for the evening slot. All three
-         * default to empty string so legacy rows inserted by v5 (morning-only
-         * Spurgeon JSON) stay valid; the Morning-and-Evening importer fills
-         * them in on next launch. The DailyDevotionalWorker treats a blank
-         * eveningPassage as "no evening content for this day — skip the
-         * evening notification."
+         * Historical migration: added three evening-slot columns to the
+         * `devotional` table. The table itself is dropped in MIGRATION_8_9
+         * (devotional feature was cut 2026-04-17), but this migration must
+         * still run for devices coming up from v5 to v9 so the intermediate
+         * schema matches what Room expects at each version boundary.
          */
         val MIGRATION_5_6: Migration = object : Migration(5, 6) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -268,6 +267,39 @@ abstract class PrayerQuestDatabase : RoomDatabase() {
                 db.execSQL(
                     "ALTER TABLE devotional ADD COLUMN eveningPassage TEXT NOT NULL DEFAULT ''"
                 )
+            }
+        }
+
+        /**
+         * v7 → v8 — Bible prayers re-import (2026-04-17).
+         *
+         * v7 shipped the `bible_prayers` table with empty `text` fields. This
+         * migration clears the table so the idempotent `BiblePrayerImporter`
+         * re-populates it from the updated asset JSON (which now contains
+         * exact KJV verse text pulled from bibles/kjv.json).
+         *
+         * User data is untouched — `bible_prayers` is content-only, not a
+         * place we store user edits.
+         */
+        val MIGRATION_7_8: Migration = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DELETE FROM bible_prayers")
+            }
+        }
+
+        /**
+         * v8 → v9 — Devotional feature removal (2026-04-17).
+         *
+         * The Daily Devotional Card feature (Spurgeon / Bonhoeffer) was cut
+         * from the product. This migration drops the legacy `devotional`
+         * table. All evening-slot columns (added in MIGRATION_5_6) go with
+         * it. No user data is lost because the table was content-only —
+         * user-authored journal entries and gratitudes live in their own
+         * tables and are untouched.
+         */
+        val MIGRATION_8_9: Migration = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS devotional")
             }
         }
     }

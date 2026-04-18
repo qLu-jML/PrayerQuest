@@ -8,20 +8,27 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -57,15 +64,28 @@ fun SessionSummary(
     }
 
     val xpProgress = Leveling.progressWithinLevel(result.totalXp)
+    val scrollState = rememberScrollState()
+    // Only show the scroll-hint chevron when there's actually content below —
+    // on tall devices with few achievements the cards may all fit on-screen
+    // and the hint would be misleading.
+    val hasMoreBelow by remember {
+        derivedStateOf { scrollState.value < scrollState.maxValue - 4 }
+    }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
+    Column(modifier = modifier.fillMaxSize()) {
+        // Scrollable summary cards. Weight(1f) leaves room for the pinned
+        // action bar below, so the "Pray Again" / "Done" buttons are always
+        // visible (users reported thinking the TopAppBar back arrow was the
+        // only exit because those CTAs were scrolled off-screen).
+        Box(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
         // Header
         Text(
             text = "Prayer Complete!",
@@ -225,11 +245,41 @@ fun SessionSummary(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
-        // Action Buttons
+            // Scroll-hint chevron. A subtle bouncing arrow at the bottom-center
+            // of the scrollable area tells the user there's more content below —
+            // addresses feedback that the back arrow looked like the only exit.
+            if (hasMoreBelow) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 8.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                        tonalElevation = 2.dp
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.KeyboardArrowDown,
+                            contentDescription = "Scroll for more",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(4.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Pinned action bar — always visible regardless of scroll position so
+        // users never lose sight of how to exit or continue.
+        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Button(

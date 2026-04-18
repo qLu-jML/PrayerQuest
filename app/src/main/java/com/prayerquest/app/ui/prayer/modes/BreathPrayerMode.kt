@@ -64,11 +64,25 @@ private const val DEFAULT_INHALE_MILLIS = 4000L
 private const val DEFAULT_EXHALE_MILLIS = 6000L
 private const val DEFAULT_SESSION_SECONDS = 180  // 3 minutes per DD
 
+/**
+ * @param topics Optional list of prayer-item titles the session is
+ *   iterating through (e.g. a selected pack or collection). When
+ *   non-empty we HIDE the breath-prayer variant picker: the user already
+ *   committed to "Breath Prayer" when they started this session, and
+ *   forcing them to also choose a variant ("Jesus Prayer", "Taizé", etc.)
+ *   on top of a pack they picked felt like a dead control in user
+ *   testing — the banner above the mode already says "Praying for N
+ *   items" and the picker below it looked inert. Hiding it removes the
+ *   confusion. For solo breath-prayer runs (topics = null) the picker
+ *   stays, because variant choice IS the only interesting control.
+ */
 @Composable
 fun BreathPrayerMode(
     onModeComplete: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    topics: List<String>? = null
 ) {
+    val hasTopicContext = !topics.isNullOrEmpty()
     var selected by remember { mutableStateOf(BreathPrayerLibrary.default) }
     var pickerOpen by remember { mutableStateOf(false) }
     var inhaling by remember { mutableStateOf(true) }
@@ -133,24 +147,41 @@ fun BreathPrayerMode(
             }
         }
     ) {
-        // Prayer picker — compact dropdown at the top, shows tradition label
-        BreathPrayerPicker(
-            selected = selected,
-            expanded = pickerOpen,
-            onExpand = { pickerOpen = true },
-            onDismiss = { pickerOpen = false },
-            onSelect = {
-                selected = it
-                pickerOpen = false
-            }
-        )
+        // Prayer picker — compact dropdown at the top, shows tradition label.
+        // Hidden when the session is praying through a pack/collection (the
+        // banner above the mode already commits the user to "Breath Prayer";
+        // a variant picker on top of that read as a dead control). For solo
+        // runs the picker is the only interesting control, so it stays.
+        if (!hasTopicContext) {
+            BreathPrayerPicker(
+                selected = selected,
+                expanded = pickerOpen,
+                onExpand = { pickerOpen = true },
+                onDismiss = { pickerOpen = false },
+                onSelect = {
+                    selected = it
+                    pickerOpen = false
+                }
+            )
 
-        Text(
-            text = selected.tradition,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontStyle = FontStyle.Italic
-        )
+            Text(
+                text = selected.tradition,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontStyle = FontStyle.Italic
+            )
+        } else {
+            // When iterating topics, show the current focus instead — the
+            // user is breath-praying _for_ these items, so naming them keeps
+            // the screen connected to what they committed to.
+            Text(
+                text = "Breathing for: ${topics!!.joinToString(" · ").take(140)}",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontStyle = FontStyle.Italic,
+                textAlign = TextAlign.Center
+            )
+        }
 
         // Breathing circle
         BreathingCircle(inhaling = inhaling)

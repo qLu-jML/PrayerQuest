@@ -16,26 +16,28 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -43,6 +45,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -59,7 +62,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prayerquest.app.PrayerQuestApplication
-import com.prayerquest.app.data.preferences.DevotionalAuthor
 import com.prayerquest.app.data.preferences.LiturgicalCalendar
 import com.prayerquest.app.data.preferences.ReminderSlot
 import com.prayerquest.app.data.preferences.ReminderSlotConfig
@@ -74,10 +76,11 @@ import com.prayerquest.app.ui.theme.AppTheme
 import com.prayerquest.app.ui.theme.ThemeRepository
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     userPreferences: UserPreferences,
-    onNavigateBack: () -> Unit = {},  // Kept for backward compatibility but unused as top-level tab
+    onNavigateBack: () -> Unit = {},
     viewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModel.create(
             userPreferences,
@@ -96,12 +99,6 @@ fun SettingsScreen(
     val quietHoursEndMin by viewModel.quietHoursEndMin.collectAsState(initial = UserPreferences.DEFAULT_QUIET_END_MIN)
     val enabledTraditions by viewModel.enabledTraditions.collectAsState(initial = Tradition.DEFAULT)
     val disabledModes by viewModel.disabledModes.collectAsState(initial = emptySet())
-    val devotionalAuthor by viewModel.devotionalAuthor.collectAsState(initial = DevotionalAuthor.NONE)
-    val devotionalSpurgeonMin by viewModel.devotionalSpurgeonMin.collectAsState(initial = UserPreferences.DEFAULT_SPURGEON_MIN)
-    val devotionalSpurgeonEveningMin by viewModel.devotionalSpurgeonEveningMin.collectAsState(initial = UserPreferences.DEFAULT_SPURGEON_EVENING_MIN)
-    val devotionalSpurgeonMorningEnabled by viewModel.devotionalSpurgeonMorningEnabled.collectAsState(initial = true)
-    val devotionalSpurgeonEveningEnabled by viewModel.devotionalSpurgeonEveningEnabled.collectAsState(initial = true)
-    val devotionalBonhoefferMin by viewModel.devotionalBonhoefferMin.collectAsState(initial = UserPreferences.DEFAULT_BONHOEFFER_MIN)
     val liturgicalCalendar by viewModel.liturgicalCalendar.collectAsState(initial = LiturgicalCalendar.NONE)
 
     val coroutineScope = rememberCoroutineScope()
@@ -125,12 +122,25 @@ fun SettingsScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Top header
-        Text(
-            text = "Settings",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+        // Top bar with back button — returns the user to the screen they
+        // came from (Profile or Home cog). Settings is no longer a bottom-
+        // nav tab, so the back arrow is the primary way out.
+        TopAppBar(
+            title = {
+                Text(
+                    text = "Settings",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            navigationIcon = {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+            }
         )
 
         Column(
@@ -172,17 +182,11 @@ fun SettingsScreen(
             )
 
             val themes = ThemeRepository.getAllBuiltInThemes()
-            val rows = (themes.size + 1) / 2
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height((rows * 140).dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                userScrollEnabled = false
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(themes) { theme ->
+                themes.forEach { theme ->
                     ThemePreviewCard(
                         theme = theme,
                         isSelected = theme.id == selectedThemeId,
@@ -262,7 +266,7 @@ fun SettingsScreen(
             SettingsSectionHeader(title = "Quiet Hours")
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Pause notifications during this window. Daily devotional and reminders silently skip.",
+                text = "Pause notifications during this window. Reminders silently skip.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -354,79 +358,6 @@ fun SettingsScreen(
                     mode = mode,
                     enabled = mode !in disabledModes,
                     onToggle = { viewModel.setModeEnabled(mode, it) }
-                )
-            }
-
-            SectionDivider()
-
-            // ═══════════════════════════════════════════════════════════════
-            // Daily Devotional (author + times)
-            // ═══════════════════════════════════════════════════════════════
-            SettingsSectionHeader(title = "Daily Devotional")
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Receive a short daily reading from a classical author, delivered at the time you choose.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            DevotionalAuthorPicker(
-                current = devotionalAuthor,
-                onSelect = { viewModel.setDevotionalAuthor(it) }
-            )
-
-            if (devotionalAuthor == DevotionalAuthor.SPURGEON ||
-                devotionalAuthor == DevotionalAuthor.BOTH
-            ) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Spurgeon — Morning & Evening",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                Text(
-                    text = "Spurgeon's \"Morning and Evening\" has two readings per day. Toggle each on independently.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                ToggleableTimeBlock(
-                    label = "Morning reading",
-                    enabled = devotionalSpurgeonMorningEnabled,
-                    minuteOfDay = devotionalSpurgeonMin,
-                    onToggle = { viewModel.setDevotionalSpurgeonMorningEnabled(it) },
-                    onTimePicked = {
-                        viewModel.setDevotionalTime(DevotionalAuthor.SPURGEON, it)
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                ToggleableTimeBlock(
-                    label = "Evening reflection",
-                    enabled = devotionalSpurgeonEveningEnabled,
-                    minuteOfDay = devotionalSpurgeonEveningMin,
-                    onToggle = { viewModel.setDevotionalSpurgeonEveningEnabled(it) },
-                    onTimePicked = {
-                        viewModel.setDevotionalSpurgeonEveningMin(it)
-                    }
-                )
-            }
-
-            if (devotionalAuthor == DevotionalAuthor.BONHOEFFER ||
-                devotionalAuthor == DevotionalAuthor.BOTH
-            ) {
-                Spacer(modifier = Modifier.height(12.dp))
-                TimePickerField(
-                    label = "Bonhoeffer time",
-                    minuteOfDay = devotionalBonhoefferMin,
-                    onTimePicked = {
-                        viewModel.setDevotionalTime(DevotionalAuthor.BONHOEFFER, it)
-                    },
-                    modifier = Modifier.fillMaxWidth()
                 )
             }
 
@@ -597,53 +528,6 @@ private fun ReminderSlotRow(
     }
 }
 
-/**
- * Compact row combining an enable toggle + a time picker. Used for
- * Spurgeon's two daily slots (morning, evening) which can be toggled
- * independently. When disabled, the time picker is still visible but
- * dimmed to hint that the slot won't fire.
- */
-@Composable
-private fun ToggleableTimeBlock(
-    label: String,
-    enabled: Boolean,
-    minuteOfDay: Int,
-    onToggle: (Boolean) -> Unit,
-    onTimePicked: (Int) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
-            .padding(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.weight(1f)
-            )
-            Switch(
-                checked = enabled,
-                onCheckedChange = onToggle
-            )
-        }
-        if (enabled) {
-            Spacer(modifier = Modifier.height(8.dp))
-            TimePickerField(
-                label = "Time",
-                minuteOfDay = minuteOfDay,
-                onTimePicked = onTimePicked,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
 
 @Composable
 private fun TimePickerField(
@@ -758,30 +642,6 @@ private fun ModeToggleRow(
             checked = enabled,
             onCheckedChange = onToggle
         )
-    }
-}
-
-@Composable
-private fun DevotionalAuthorPicker(
-    current: DevotionalAuthor,
-    onSelect: (DevotionalAuthor) -> Unit
-) {
-    val options = listOf(
-        DevotionalAuthor.NONE to "None",
-        DevotionalAuthor.SPURGEON to "Spurgeon",
-        DevotionalAuthor.BONHOEFFER to "Bonhoeffer",
-        DevotionalAuthor.BOTH to "Both"
-    )
-    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-        options.forEachIndexed { index, (author, label) ->
-            SegmentedButton(
-                selected = current == author,
-                onClick = { onSelect(author) },
-                shape = SegmentedButtonDefaults.itemShape(index, options.size)
-            ) {
-                Text(label, fontSize = 12.sp)
-            }
-        }
     }
 }
 
@@ -978,78 +838,88 @@ private fun SettingsSectionHeader(title: String) {
     )
 }
 
+/**
+ * Theme row, single-column, ported one-to-one from ScriptureQuest's
+ * ThemeCard so PrayerQuest's palette picker renders with the same density
+ * and richness: RadioButton + name/description on top, a 10-swatch palette
+ * strip below. Each swatch surfaces one semantic slot from the theme —
+ * primary, primaryLight, primaryDark, secondary, backgroundPaper,
+ * backgroundDefault, accent, success, warning, info.
+ */
 @Composable
 private fun ThemePreviewCard(
     theme: AppTheme,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    Box(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color(theme.lightBackground))
             .clickable(onClick = onClick)
-            .padding(12.dp)
+            .border(
+                width = 2.dp,
+                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                shape = MaterialTheme.shapes.large
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        shape = MaterialTheme.shapes.large
     ) {
-        Column {
-            Text(
-                text = theme.name,
-                style = MaterialTheme.typography.labelLarge,
-                color = Color(theme.lightOnBackground),
-                fontWeight = FontWeight.Bold,
-                maxLines = 1
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color(theme.lightPrimary))
+                RadioButton(
+                    selected = isSelected,
+                    onClick = onClick
                 )
-                Box(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color(theme.lightSecondary))
-                )
-                Box(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color(theme.lightSurface))
-                        .border(1.dp, Color(theme.lightOnBackground))
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = theme.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = theme.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = theme.description,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color(theme.lightOnBackground),
-                maxLines = 2
-            )
-
-            if (isSelected) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.End)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color(theme.lightPrimary))
-                        .padding(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Selected",
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
+            // Color palette row — aligns under the name column (40.dp start
+            // inset skips the RadioButton width so the swatches lead flush
+            // with the theme name).
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 40.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                listOf(
+                    theme.primary,
+                    theme.primaryLight,
+                    theme.primaryDark,
+                    theme.secondary,
+                    theme.backgroundPaper,
+                    theme.backgroundDefault,
+                    theme.accent,
+                    theme.success,
+                    theme.warning,
+                    theme.info
+                ).forEach { color ->
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .background(color, shape = MaterialTheme.shapes.small)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.small)
                     )
                 }
             }

@@ -1,6 +1,5 @@
 package com.prayerquest.app.ui.prayer.modes
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
@@ -35,35 +34,72 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
+/**
+ * Intercession Drill — fast rhythm of praying for a handful of items in
+ * succession, 30 seconds per item with a quick note field.
+ *
+ * ### Why this exists as its own mode
+ * The other modes drop the user into a single mode for a single item.
+ * Intercession is different: it's a list-oriented cadence — bang through
+ * 5-8 people/needs quickly, logging one-line notes as you go. Timer keeps
+ * momentum so users don't fall into a 10-minute monologue on item #1.
+ *
+ * @param topics Optional list of topics to drill through. When the session
+ *   is launched from a collection or the user's active list, these are the
+ *   real items they're praying for. Null / empty falls back to the generic
+ *   placeholders below. Never empty-on-read — the defensive init at the
+ *   top of the function normalizes to a non-empty list.
+ */
 @Composable
 fun IntercessionDrillMode(
     onModeComplete: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    topics: List<String>? = null
 ) {
-    val prayerItems = listOf(
-        "Family members",
-        "Friends in need",
-        "Work colleagues",
-        "Church community",
-        "Missionaries",
-        "Healing & health"
-    )
+    // Normalize caller-supplied topics. Null OR empty falls back to the
+    // default list — we never want to render with a zero-length list, which
+    // would make `prayerItems[currentItemIndex]` throw
+    // IndexOutOfBoundsException on first frame.
+    val prayerItems = remember(topics) {
+        topics?.filter { it.isNotBlank() }
+            ?.takeIf { it.isNotEmpty() }
+            ?: listOf(
+                "Family members",
+                "Friends in need",
+                "Work colleagues",
+                "Church community",
+                "Missionaries",
+                "Healing & health"
+            )
+    }
 
     var currentItemIndex by remember { mutableIntStateOf(0) }
     var prayedItems by remember { mutableStateOf(setOf<Int>()) }
-    var quickNotes by remember { mutableStateOf(mutableMapOf<Int, String>()) }
+    // Immutable-map pattern: we REPLACE the map on each write rather than
+    // mutate in place. Previous implementation used `mutableMapOf` +
+    // `quickNotes[idx] = newText`, which doesn't trigger recomposition
+    // (the state value reference never changes) and in rare cases left the
+    // TextField reading stale text on re-entry.
+    var quickNotes by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
     var timeRemaining by remember { mutableIntStateOf(30) }
 
-    LaunchedEffect(currentItemIndex) {
+    // Guard against out-of-range reads — `currentItemIndex` should never
+    // exceed `prayerItems.size - 1` since we only advance when it's below
+    // that, but if upstream state ever gets wedged (e.g. a smaller topics
+    // list hot-swapping into a remembered index) we coerce it rather than
+    // crash.
+    val safeIndex = currentItemIndex.coerceIn(0, prayerItems.size - 1)
+    val currentItem = prayerItems[safeIndex]
+    val progress = (safeIndex + 1).toFloat() / prayerItems.size
+    val isLastItem = safeIndex >= prayerItems.size - 1
+
+    LaunchedEffect(safeIndex) {
         timeRemaining = 30
         while (timeRemaining > 0) {
             delay(1000)
             timeRemaining--
         }
     }
-
-    val currentItem = prayerItems[currentItemIndex]
-    val progress = (currentItemIndex + 1).toFloat() / prayerItems.size
 
     PrayerModeScaffold(
         modifier = modifier,
@@ -74,19 +110,26 @@ fun IntercessionDrillMode(
             // below the fold the user runs out the clock trying to find it.
             Button(
                 onClick = {
-                    prayedItems = prayedItems + currentItemIndex
-                    if (currentItemIndex < prayerItems.size - 1) {
-                        currentItemIndex++
+                    prayedItems = prayedItems + safeIndex
+                    if (!isLastItem) {
+                        currentItemIndex = safeIndex + 1
                     } else {
-                        onModeComplete(
-                            prayerItems.zip(
-                                prayerItems.indices.map { idx ->
-                                    quickNotes[idx] ?: ""
+                        // Build the transcript from whatever items + notes we
+                        // have. We iterate the list directly (no zip with
+                        // indices) — simpler and no intermediate
+                        // Pair-destructuring lambda.
+                        val transcript = buildString {
+                            prayerItems.forEachIndexed { idx, item ->
+                                val note = quickNotes[idx].orEmpty()
+                                if (idx > 0) append("\n")
+                                if (note.isNotEmpty()) {
+                                    append(item).append(": ").append(note)
+                                } else {
+                                    append(item)
                                 }
-                            ).joinToString("\n") { (item, note) ->
-                                if (note.isNotEmpty()) "$item: $note" else item
                             }
-                        )
+                        }
+                        onModeComplete(transcript)
                     }
                 },
                 modifier = Modifier
@@ -100,7 +143,7 @@ fun IntercessionDrillMode(
                     modifier = Modifier.padding(end = 8.dp)
                 )
                 Text(
-                    text = if (currentItemIndex < prayerItems.size - 1) "Prayed & Next" else "Complete Drill",
+                    text = if (!isLastItem) "Prayed & Next" else "Complete Drill",
                     style = MaterialTheme.typography.labelLarge
                 )
             }
@@ -122,7 +165,7 @@ fun IntercessionDrillMode(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Item ${currentItemIndex + 1}/${prayerItems.size}",
+                    text = "Item ${safeIndex + 1}/${prayerItems.size}",
                     style = MaterialTheme.typography.labelMedium
                 )
                 Text(
@@ -179,9 +222,10 @@ fun IntercessionDrillMode(
                 style = MaterialTheme.typography.labelMedium
             )
             OutlinedTextField(
-                value = quickNotes[currentItemIndex] ?: "",
+                value = quickNotes[safeIndex].orEmpty(),
                 onValueChange = { newText ->
-                    quickNotes[currentItemIndex] = newText
+                    // Replace the map so Compose observes the change.
+                    quickNotes = quickNotes + (safeIndex to newText)
                 },
                 modifier = Modifier
                     .fillMaxWidth()

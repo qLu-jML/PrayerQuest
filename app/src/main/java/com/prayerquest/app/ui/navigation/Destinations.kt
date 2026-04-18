@@ -73,6 +73,21 @@ object Routes {
     fun prayerSession(mode: String, collectionId: Long? = null): String =
         "prayer_session/$mode?collectionId=${collectionId ?: NO_COLLECTION}"
 
+    /**
+     * List picker — shown between the Mode Picker and the Session when the
+     * user hasn't already chosen a collection. Offers three buckets:
+     *   1. "General Prayers" — their global active list (no collection filter)
+     *   2. Any private prayer collection they've created
+     *   3. A prayer group's shared requests (routes through Group Detail)
+     *
+     * The chosen mode name is carried through as a path arg so the screen
+     * can hand it off to [prayerSession]. When the user is already inside a
+     * collection (e.g. launched from Collection Detail), callers skip this
+     * screen and jump straight to the session — the list is already implicit.
+     */
+    const val PRAYER_LIST_PICKER = "prayer_list_picker/{mode}"
+    fun prayerListPicker(mode: String): String = "prayer_list_picker/$mode"
+
     const val COLLECTION_DETAIL = "collection_detail/{collectionId}"
     const val CREATE_COLLECTION = "create_collection"
     const val EDIT_COLLECTION = "edit_collection/{collectionId}"
@@ -80,9 +95,20 @@ object Routes {
     fun addItemsToCollection(collectionId: Long): String =
         "add_items_to_collection/$collectionId"
     const val FAMOUS_PRAYER_DETAIL = "famous_prayer/{prayerId}"
+    const val BIBLE_PRAYER_DETAIL = "bible_prayer/{prayerId}"
     const val ANSWERED_PRAYERS = "answered_prayers"
     const val GRATITUDE_LOG = "gratitude_log"
     const val GRATITUDE_CATALOGUE = "gratitude_catalogue"
+
+    /**
+     * Gratitude Speed Round (DD §3.6) — 60-second rapid-fire gratitude
+     * logger. Distinct route from [GRATITUDE_LOG] because the UX shape is
+     * totally different (single-screen, no per-entry photo picker, no
+     * category selector, live timer) and its back-stack semantics diverge:
+     * the user explicitly wants "back" to drop them back on the Log screen
+     * they came from, not wipe the staged entries list.
+     */
+    const val GRATITUDE_SPEED_ROUND = "gratitude_speed_round"
     const val GROUP_DETAIL = "group_detail/{groupId}"
     const val CREATE_GROUP = "create_group"
     const val JOIN_GROUP = "join_group"
@@ -96,4 +122,41 @@ object Routes {
      * different headlines per entry point, move to a query arg.
      */
     const val PAYWALL = "paywall"
+
+    /**
+     * Big Celebration Moment (DD §3.5.2) — full-screen modal that plays when
+     * a prayer is marked Answered (not just PartiallyAnswered). Callers reach
+     * it by navigating to [answeredCelebration] after checking
+     * [com.prayerquest.app.data.repository.MarkAnsweredResult.wasNewlyAnswered]
+     * so re-marking an already-answered prayer never replays the celebration.
+     *
+     * The screen itself schedules the +365-day anniversary worker in a
+     * LaunchedEffect so the celebration view is the single write-point for
+     * both the confetti UI and the anniversary follow-up.
+     */
+    const val ANSWERED_CELEBRATION = "answered_celebration/{prayerId}"
+    fun answeredCelebration(prayerId: Long): String =
+        "answered_celebration/$prayerId"
+
+    // ═══════════════════════════════════════════
+    // CRISIS PRAYER MODE (DD §3.10)
+    // ═══════════════════════════════════════════
+    //
+    // Intentionally a separate route tree from the regular prayer session
+    // flow. Crisis Prayer does NOT award XP, does NOT advance streaks, and
+    // must not share a back-stack entry with a session ViewModel that
+    // might. Keeping the routes distinct means the NavHost entries wire
+    // to dedicated screens with no GamificationRepository dependency.
+
+    /** Root Crisis screen — three-tile hub reached from the Home "In distress?" link. */
+    const val CRISIS_PRAYER = "crisis_prayer"
+
+    /** Paged Psalms reader inside Crisis Prayer Mode. */
+    const val CRISIS_PSALMS = "crisis_psalms"
+
+    /** Restricted Jesus-Prayer breath variant, 4-in/6-out. */
+    const val CRISIS_BREATH = "crisis_breath"
+
+    /** Crisis resources list (988 / Samaritans / Lifeline). */
+    const val CRISIS_RESOURCES = "crisis_resources"
 }

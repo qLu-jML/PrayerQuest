@@ -1,0 +1,16 @@
+{
+  "id": "holy_week",
+  "name": "Holy Week — Walking With Jesus to the Cross",
+  "emoji": "🕊️",
+  "category": "Seasonal",
+  "description": "One prayer for each day of Holy Week, Palm Sunday through Holy Saturday, walking the Passion narrative with Jesus.",
+  "prayers": [
+    { "title": "Palm Sunday — Hosanna in the highest", "description": "Read Matthew 21:1-11. Welcome Jesus into your own life today as King, the way the crowds welcomed Him into Jerusalem — and ask Him to reign over every place you would rather guard.", "category": "Palm Sunday" },
+    { "title": "Holy Monday — Cleanse the temple of my heart", "description": "Read Matthew 21:12-17. Invite Jesus to overturn whatever in your heart is not meant to be there — and to restore His house as a house of prayer in you.", "category": "Holy Monday" },
+    { "title": "Holy Tuesday — Teach me, Lord", "description": "Read Matthew 24-25 (the Olivet Discourse). Sit at Jesus' feet as He teaches about the end of the age. Ask for wisdom to watch, to love, and to be ready.", "category": "Holy Tuesday" },
+    { "title": "Spy Wednesday — Keep me faithful", "description": "Read Matthew 26:14-16. Pray honestly against the Judas in your own heart — the quiet places that would sell Jesus short for comfort, approval, or fear.", "category": "Spy Wednesday" },
+    { "title": "Maundy Thursday — This is my body, broken for you", "description": "Read John 13 and Matthew 26:17-46. Kneel at the Last Supper and Gethsemane. Thank Jesus for washing feet and for praying, 'Not my will but thine.' Ask Him for courage to pray the same prayer in your own garden.", "category": "Maundy Thursday" },
+    { "title": "Good Friday — At the foot of the cross", "description": "Read John 19. Stay at the cross without hurrying. Let its weight, its love, and its finished work settle into your soul. 'It is finished' is spoken over you today.", "category": "Good Friday" },
+    { "title": "Holy Saturday — Waiting in the silence", "description": "Read Matthew 27:57-66. Today is the long silence between cross and resurrection. Sit with Jesus in the tomb. Bring Him the parts of your life that feel buried — and wait in hope.", "category": "Holy Saturday" }
+  ]
+}

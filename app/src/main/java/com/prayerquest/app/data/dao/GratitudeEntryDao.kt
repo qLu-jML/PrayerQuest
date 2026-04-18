@@ -64,4 +64,33 @@ interface GratitudeEntryDao {
 
     @Query("SELECT * FROM gratitude_entries WHERE text LIKE '%' || :query || '%'")
     fun search(query: String): Flow<List<GratitudeEntry>>
+
+    /**
+     * Case-insensitive keyword search (debounced from the ViewModel) backing
+     * the Gratitude Catalogue search field. Uses the Flow-returning form so
+     * results update live if an entry is edited in another tab. The `LIKE`
+     * predicate is fine here because `gratitude_entries.text` is short and
+     * the table never grows past a few thousand rows for a heavy user.
+     */
+    @Query("SELECT * FROM gratitude_entries WHERE text LIKE '%' || :query || '%' COLLATE NOCASE ORDER BY timestamp DESC")
+    fun searchEntries(query: String): Flow<List<GratitudeEntry>>
+
+    /**
+     * Per-day entry histogram that feeds the calendar heat-map at the top
+     * of the Gratitude Catalogue. Returned rows are `(date, count)` pairs
+     * ordered ascending by date so the ViewModel can drop them straight
+     * into a `Map<LocalDate, Int>` keyed by ISO `yyyy-MM-dd`.
+     */
+    @Query("SELECT date AS day, COUNT(*) AS entryCount FROM gratitude_entries GROUP BY date ORDER BY date ASC")
+    fun observeDateCounts(): Flow<List<GratitudeDateCount>>
 }
+
+/**
+ * Projection row for [GratitudeEntryDao.observeDateCounts]. Kept next to the
+ * DAO so Room treats the column names as authoritative — `day` must match
+ * the aliased `date` column and `entryCount` must match the aliased count.
+ */
+data class GratitudeDateCount(
+    val day: String,        // yyyy-MM-dd
+    val entryCount: Int
+)

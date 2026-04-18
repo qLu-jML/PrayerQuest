@@ -20,6 +20,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -191,6 +192,67 @@ class PrayerGroupRepository(
         return if (memberId > 0) group.id else null
     }
 
+    /**
+     * Is the current user the creator of this group? Used by the UI to
+     * decide whether to offer the destructive "Delete Group" action
+     * alongside "Leave Group". A missing auth manager or a null
+     * currentUserId falls back to comparing against the local pseudo-user
+     * "local_user" — that's what createGroup stamps on [PrayerGroup.createdBy]
+     * for offline-only sessions.
+     */
+    fun isGroupCreator(group: PrayerGroup): Boolean {
+        val uid = authManager?.currentUserId ?: "local_user"
+        return group.createdBy == uid
+    }
+
+    /**
+     * Delete a group as its creator — tears down the group for EVERY
+     * member, not just the caller. This is a destructive admin action and
+     * is the other option (alongside "Leave") offered to group creators.
+     *
+     * Steps:
+     *  1. If signed-in and the group was synced, delete the full cloud
+     *     document + all its subcollections via [FirestoreGroupService.deleteEntireGroup].
+     *     That cascade also clears the creator's own `/userGroups` ref.
+     *     Other members' `/userGroups` refs are cleaned inside the cloud
+     *     cascade so their Groups list stops showing the group on next
+     *     snapshot.
+     *  2. Clear all local Room rows scoped to this groupId.
+     *
+     * Safe to call on offline-only groups — the cloud step becomes a no-op
+     * and local rows are still wiped.
+     */
+    suspend fun deleteGroupAsCreator(groupId: Long): Result<Unit> {
+        val group = groupDao.getGroupById(groupId)
+            ?: return Result.failure(IllegalStateException("Group $groupId not found"))
+
+        if (!isGroupCreator(group)) {
+            return Result.failure(
+                IllegalStateException("Only the creator can delete this group")
+            )
+        }
+
+        // 1. Cloud cascade (best-effort — a failure still lets the local
+        //    delete proceed so the user isn't stuck looking at a group
+        //    they can't actually use).
+        if (isCloudEnabled && group.firestoreId != null && firestoreService != null) {
+            try {
+                firestoreService.deleteEntireGroup(group.firestoreId)
+            } catch (e: Exception) {
+                Log.e(TAG, "Firestore deleteEntireGroup failed for ${group.firestoreId}", e)
+            }
+        }
+
+        // 2. Local cascade in invariant-preserving order.
+        groupDao.deleteActivityForGroup(groupId)
+        groupDao.deleteCrossRefsForGroup(groupId)
+        groupDao.deleteGroupPrayerItemsForGroup(groupId)
+        groupDao.deleteMembersForGroup(groupId)
+        groupDao.deleteGroupById(groupId)
+
+        return Result.success(Unit)
+    }
+
     suspend fun leaveGroup(groupId: Long, userId: String? = null) {
         val uid = userId ?: authManager?.currentUserId ?: "local_user"
         val group = groupDao.getGroupById(groupId)
@@ -357,6 +419,47 @@ class PrayerGroupRepository(
     fun observeRecentActivity(groupId: Long): Flow<List<GroupPrayerActivity>> {
         val weekAgo = System.currentTimeMillis() - WEEK_MS
         return groupDao.observeRecentActivity(groupId, weekAgo)
+    }
+
+    // --- Manual refresh (one-shot pull) ---
+
+    /**
+     * Fire a single pull from Firestore into Room, bypassing the snapshot
+     * listener cadence. Used by the Groups screen's pull-to-refresh /
+     * refresh button as an escape hatch when the user thinks the list is
+     * stale (e.g. they joined a group on another device moments ago and
+     * don't want to wait for the real-time listener to reconnect).
+     *
+     * Safe to call at any time. No-ops when the user is signed out or
+     * Firestore isn't available.
+     */
+    suspend fun refreshFromCloud(): Result<Int> {
+        if (!isCloudEnabled || firestoreService == null || authManager == null) {
+            return Result.success(0)
+        }
+        val userId = authManager.currentUserId ?: return Result.success(0)
+        return try {
+            // One-shot take from the cold side of the callbackFlow — we
+            // grab the first emission, upsert it, and return. The ongoing
+            // snapshot listener on [startCloudMirror] continues to handle
+            // live updates after this function returns.
+            val pulled = firestoreService.observeUserGroups(userId).first()
+            for (cloudGroup in pulled) {
+                val localId = upsertCloudGroup(cloudGroup, userId)
+                // Also pull items + members for each group so detail screens
+                // aren't blank right after a manual refresh.
+                val cloudItems = firestoreService
+                    .observeGroupPrayerItems(cloudGroup.firestoreId)
+                    .first()
+                for (item in cloudItems) {
+                    upsertCloudItem(item, localId)
+                }
+            }
+            Result.success(pulled.size)
+        } catch (e: Exception) {
+            Log.e(TAG, "Manual refresh failed", e)
+            Result.failure(e)
+        }
     }
 
     // --- Cloud Mirror (Real-Time Snapshot Listeners) ---

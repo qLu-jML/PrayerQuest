@@ -4,18 +4,22 @@ Condensed working context for any Claude session operating on this codebase. The
 
 ## Stack
 - Kotlin 2.2.10, Jetpack Compose (Material 3), Room 2.7.1 + KSP, WorkManager, DataStore, SpeechRecognizer/TTS, AdMob, Google Play Billing.
-- Firebase (BOM 34.12.0): Firestore, Auth, Cloud Messaging, Cloud Functions. Used for Prayer Groups + Prayer Partners only; all solo features are 100% offline.
+- Firebase (BOM 34.12.0): Firestore, **Auth via Google Sign-In**, Cloud Messaging, Cloud Functions. Used for Prayer Groups + Prayer Partners only; all solo features are 100% offline.
 - minSdk 24, compileSdk 36, targetSdk 36, JVM 17.
 - Base package: `com.prayerquest.app`
 - Sibling reference codebase: `../ScriptureQuest/` — adapt patterns, don't reinvent.
+
+## Offline-first + optional sign-in (architectural principle)
+The entire app works 100% offline with no account. Prayer modes, gamification, gratitude, answered prayers, fasting, library, crisis mode, onboarding — all run against Room + WorkManager, no network, no sign-in required. **Prayer Groups and Prayer Partners are the only features that require the network, and they are strictly optional.** Signing in with Google (via `FirebaseAuthManager`) is deferred until the user actively tries to use Groups/Partners — never during onboarding, never as a blocking step. When signed in, the app pulls group data from Firestore and pushes local actions back up; when signed out, Group/Partner UI is replaced with a sign-in prompt and the rest of the app is unaffected. Never gate any solo feature behind sign-in.
 
 ## Architectural decisions of record
 - **Manual DI via `AppContainer`** (no Hilt). ViewModels use companion `Factory` classes.
 - **Repository pattern** with `Flow`-returning queries. ViewModels combine flows into atomic UiState.
 - **StreakData owns `hearts` and `freezes`** — not UserStats. Streak-protection logic reads/writes from StreakData. (Decision of 2026-04-16.)
 - **Prayer Groups use real-time Firestore snapshot listeners**, not manual refresh. Repository owns listener lifecycle. Firestore's offline cache is the offline story. (Decision of 2026-04-16.)
+- **Prayer Groups/Partners are gated behind Google Sign-In** via `FirebaseAuthManager`. Signing in is optional and deferred — only prompted when the user opens the Groups/Partners tab. The rest of the app never prompts for sign-in. (Supersedes earlier DD language about anonymous auth; DD §3.7.1 updated 2026-04-18.)
 - **Singleton rows** for UserStats (id=1) and StreakData (id=1), seeded via INSERT OR IGNORE in the Room SeedCallback.
-- **Idempotent imports**: Famous Prayers / Names of God / Devotional / Suggested-pack importers are safe to re-run.
+- **Idempotent imports**: Famous Prayers / Names of God / Suggested-pack importers are safe to re-run.
 - **GamificationRepository.onPrayerSessionCompleted()** is the hot path. Gratitude logging, Examen completion, and Group prayer activity all feed the same path.
 
 ## PrayerMode enum (10 MVP modes)
@@ -37,7 +41,7 @@ Canonical values — do not add others without updating the DD:
 - `GratitudeBlastMode` — absorbed into Gratitude Section as "Speed Round"; no longer a standalone prayer mode
 
 ## Room schema
-- Current DB version: **5** (bumped for StreakData hearts/freezes migration + NameOfGod + Devotional + FastingSession).
+- Current DB version: **9** (v8→v9 drops the legacy `devotional` table; earlier bumps were for StreakData hearts/freezes + NameOfGod + FastingSession + onboarding/quest columns).
 - All migrations are explicit in `PrayerQuestDatabase.kt`. No `fallbackToDestructiveMigration()` in shipped builds.
 - Schema export is ON (`$projectDir/schemas`).
 
@@ -45,13 +49,13 @@ Canonical values — do not add others without updating the DD:
 - **Sprint 1** — Schema + cleanup: *in progress*
 - **Sprint 2** — Firestore real-time refactor: pending
 - **Sprint 3** — 5 new prayer modes + Netflix-shelf Mode Picker: pending
-- **Sprint 4** — Onboarding + Settings + Notifications (Quiet Hours, personalities, Devotional worker): pending
+- **Sprint 4** — Onboarding + Settings + Notifications (Quiet Hours, personalities): pending
 - **Sprint 5** — Home + Library + Gratitude polish (Names of God tab, Speed Round, Crisis Mode, Big Celebration, auto-tagging): pending
-- **Sprint 6** — Asset authoring (devotionals, names of god, breath prayers, rosary, daily office, disclaimer): pending
+- **Sprint 6** — Asset authoring (names of god, breath prayers, rosary, daily office, seasonal packs, disclaimer): pending
 - **Sprint 7** (optional) — v1.1 groundwork stubs (Fasting UI, Testimony Book, Prayer Partners)
 
 ## Release phasing
-- **v1.0 (Phase 4a)**: solo features, Gratitude, Library, Answered Prayers, Big Celebration, Crisis, Fasting, Daily Devotional, Liturgical Calendar, Notifications + Quiet Hours, 8-step Onboarding, localization strings externalized.
+- **v1.0 (Phase 4a)**: solo features, Gratitude, Library, Answered Prayers, Big Celebration, Crisis, Fasting, Liturgical Calendar, Notifications + Quiet Hours, 7-step Onboarding, localization strings externalized.
 - **v1.1 (Phase 4b)**: Firebase Groups + Prayer Partners full rollout, Memory & Legacy (Year in Review, Testimony Book PDF, On This Day, Time Capsule).
 
 ## File conventions
@@ -62,7 +66,7 @@ Canonical values — do not add others without updating the DD:
 - Screens: `ui/screen/<Name>Screen.kt` for bottom-nav destinations; `ui/<feature>/<Name>Screen.kt` for feature sub-screens
 - Prayer modes: `ui/prayer/modes/<ModeName>Mode.kt` — one composable per mode, accepting `PrayerSessionViewModel`
 - Importers / loaders: `data/prayer/`
-- Assets: `app/src/main/assets/<category>/*.json` (prayers, names, devotionals, packs, rosary, daily_office, gratitude, legal)
+- Assets: `app/src/main/assets/<category>/*.json` (prayers, names, packs, rosary, daily_office, gratitude, legal)
 
 ## Code standards
 - Compose for all UI, StateFlow for state, sealed `UiState` interfaces.

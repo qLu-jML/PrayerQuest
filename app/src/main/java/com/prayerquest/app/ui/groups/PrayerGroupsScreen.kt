@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -84,10 +86,22 @@ fun PrayerGroupsScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
+                },
+                // Manual refresh — real-time Firestore listeners still run
+                // via the application-scoped mirror, but early builds had a
+                // window where the list looked empty after sign-in until
+                // the first snapshot landed. The explicit Refresh button
+                // gives users an escape hatch if they ever see stale state.
+                actions = {
+                    if (authState is AuthState.SignedIn) {
+                        IconButton(onClick = { viewModel.refreshFromCloud() }) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Refresh groups"
+                            )
+                        }
+                    }
                 }
-                // No sync/refresh action: Firestore snapshot listeners
-                // mirror cloud → Room in real time, and the Firestore cache
-                // covers offline reads. See PrayerGroupRepository.startCloudMirror.
             )
 
             // Sign-in banner (if not signed in)
@@ -132,20 +146,47 @@ fun PrayerGroupsScreen(
 
             // Transient info message (e.g. sign-in result). Real-time group
             // changes don't need a banner — they just appear in the list.
+            // Error messages here can be long (ApiException status codes +
+            // remediation hints) so let them wrap fully and give the user a
+            // dismiss button instead of truncating with labelSmall.
             if (infoMessage.isNotEmpty()) {
+                val isError = infoMessage.startsWith("Google Sign-In failed", ignoreCase = true) ||
+                    infoMessage.startsWith("Firebase auth failed", ignoreCase = true) ||
+                    infoMessage.startsWith("Sign-in failed", ignoreCase = true)
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
                     shape = MaterialTheme.shapes.small,
-                    color = MaterialTheme.colorScheme.surfaceVariant
+                    color = if (isError) MaterialTheme.colorScheme.errorContainer
+                            else MaterialTheme.colorScheme.surfaceVariant
                 ) {
-                    Text(
-                        text = infoMessage,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(8.dp)
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(
+                            text = infoMessage,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (isError) MaterialTheme.colorScheme.onErrorContainer
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(
+                            onClick = { viewModel.dismissInfoMessage() },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Dismiss",
+                                modifier = Modifier.size(16.dp),
+                                tint = if (isError) MaterialTheme.colorScheme.onErrorContainer
+                                       else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -366,15 +407,13 @@ class PrayerGroupsViewModel(
     private val _infoMessage = MutableStateFlow("")
     val infoMessage: StateFlow<String> = _infoMessage
 
-    init {
-        // Open Firestore snapshot listeners for the lifetime of this
-        // ViewModel. The repository observes authState internally, so this
-        // call is a no-op until the user signs in and tears itself down
-        // automatically on sign-out. Cancellation is scope-driven —
-        // viewModelScope gets cancelled when the Groups screen leaves the
-        // back stack, at which point every listener is detached.
-        groupRepository.startCloudMirror(viewModelScope)
-    }
+    // No startCloudMirror here: the cloud → Room mirror is owned by
+    // AppContainer and bound to the application scope so listeners run for
+    // the full app lifetime, not just while the Groups screen is on
+    // screen. That fixes the "blank list after sign-in" bug where the
+    // previous viewModelScope-bound mirror only started when the user
+    // opened Groups and sometimes didn't land a snapshot before the
+    // screen composed.
 
     fun getMemberCount(groupId: Long): Flow<Int> =
         groupRepository.observeMembers(groupId).map { it.size }
@@ -392,8 +431,37 @@ class PrayerGroupsViewModel(
                 // No explicit sync call: the authState emission will trigger
                 // startCloudMirror's collector to attach listeners automatically.
             } else {
-                _infoMessage.value = "Sign-in failed: ${signInResult.exceptionOrNull()?.message}"
+                // FirebaseAuthManager now returns a message already prefixed
+                // with "Google Sign-In failed (code X): <hint>" or "Firebase
+                // auth failed: ..." — pass it through verbatim so the user
+                // sees the real status code and remediation hint.
+                _infoMessage.value = signInResult.exceptionOrNull()?.message
+                    ?: "Sign-in failed (unknown error)."
             }
+        }
+    }
+
+    /** Clears the transient info/error banner. */
+    fun dismissInfoMessage() {
+        _infoMessage.value = ""
+    }
+
+    /**
+     * Manual refresh — one-shot pull from Firestore into Room. Backs the
+     * Refresh button in the top bar. Real-time snapshot listeners are
+     * still active via AppContainer; this is purely an escape hatch for
+     * "I don't want to wait for the listener to reconnect."
+     */
+    fun refreshFromCloud() {
+        viewModelScope.launch {
+            val result = groupRepository.refreshFromCloud()
+            _infoMessage.value = result.fold(
+                onSuccess = { n ->
+                    if (n == 0) "No synced groups yet — create or join one below."
+                    else "Refreshed $n group${if (n == 1) "" else "s"}."
+                },
+                onFailure = { "Refresh failed: ${it.message ?: "unknown error"}." }
+            )
         }
     }
 

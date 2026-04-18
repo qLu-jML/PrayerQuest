@@ -1,0 +1,352 @@
+[
+  {
+    "id": "yhwh",
+    "name": "YHWH",
+    "transliteration": "Yahweh",
+    "language": "Hebrew",
+    "meaning": "The covenant name of God, often rendered LORD in English Bibles. It points to His self-existent, eternal, and unchanging nature.",
+    "scriptureReference": "Exodus 3:14",
+    "scriptureText": "And God said unto Moses, I AM THAT I AM: and he said, Thus shalt thou say unto the children of Israel, I AM hath sent me unto you.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "adonai",
+    "name": "Adonai",
+    "transliteration": "Adonai",
+    "language": "Hebrew",
+    "meaning": "Lord or Master — the One we gladly serve. It speaks of God's sovereign authority and our trusting submission.",
+    "scriptureReference": "Psalm 8:1",
+    "scriptureText": "O LORD our Lord, how excellent is thy name in all the earth! who hast set thy glory above the heavens.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "elohim",
+    "name": "Elohim",
+    "transliteration": "Elohim",
+    "language": "Hebrew",
+    "meaning": "The mighty Creator — a plural form of majesty for the one true God. It frames every page of Scripture, from Genesis 1:1 onward.",
+    "scriptureReference": "Genesis 1:1",
+    "scriptureText": "In the beginning God created the heaven and the earth.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "el-shaddai",
+    "name": "El-Shaddai",
+    "transliteration": "El Shaddai",
+    "language": "Hebrew",
+    "meaning": "God Almighty — the all-sufficient One. He is enough for every need you bring Him today.",
+    "scriptureReference": "Genesis 17:1",
+    "scriptureText": "I am the Almighty God; walk before me, and be thou perfect.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "el-elyon",
+    "name": "El Elyon",
+    "transliteration": "El Elyon",
+    "language": "Hebrew",
+    "meaning": "God Most High — exalted above all powers, nations, and circumstances. Nothing rises above His throne.",
+    "scriptureReference": "Genesis 14:18",
+    "scriptureText": "And Melchizedek king of Salem brought forth bread and wine: and he was the priest of the most high God.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "el-olam",
+    "name": "El Olam",
+    "transliteration": "El Olam",
+    "language": "Hebrew",
+    "meaning": "The Everlasting God — from eternity to eternity. His faithfulness outlasts every season you will ever walk through.",
+    "scriptureReference": "Genesis 21:33",
+    "scriptureText": "And Abraham planted a grove in Beersheba, and called there on the name of the LORD, the everlasting God.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "el-roi",
+    "name": "El Roi",
+    "transliteration": "El Roi",
+    "language": "Hebrew",
+    "meaning": "The God Who Sees. When Hagar felt invisible in the wilderness, God met her — and He sees you too.",
+    "scriptureReference": "Genesis 16:13",
+    "scriptureText": "And she called the name of the LORD that spake unto her, Thou God seest me: for she said, Have I also here looked after him that seeth me?",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "jehovah-jireh",
+    "name": "Jehovah-Jireh",
+    "transliteration": "YHWH Yireh",
+    "language": "Hebrew",
+    "meaning": "The LORD Will Provide. On the mountain where Abraham obeyed, God supplied the ram — and He still provides today.",
+    "scriptureReference": "Genesis 22:14",
+    "scriptureText": "And Abraham called the name of that place Jehovahjireh: as it is said to this day, In the mount of the LORD it shall be seen.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "jehovah-rapha",
+    "name": "Jehovah-Rapha",
+    "transliteration": "YHWH Rapha",
+    "language": "Hebrew",
+    "meaning": "The LORD Who Heals. He restores body, mind, and heart — sometimes miraculously, always tenderly.",
+    "scriptureReference": "Exodus 15:26",
+    "scriptureText": "...If thou wilt diligently hearken to the voice of the LORD thy God, and wilt do that which is right in his sight, and wilt give ear to his commandments, and keep all his statutes, I will put none of these diseases upon thee, which I have brought upon the Egyptians: for I am the LORD that healeth thee.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "jehovah-shalom",
+    "name": "Jehovah-Shalom",
+    "transliteration": "YHWH Shalom",
+    "language": "Hebrew",
+    "meaning": "The LORD Is Peace. Gideon built an altar by this name, and this same peace guards your heart in Christ.",
+    "scriptureReference": "Judges 6:24",
+    "scriptureText": "Then Gideon built an altar there unto the LORD, and called it Jehovahshalom: unto this day it is yet in Ophrah of the Abiezrites.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "jehovah-nissi",
+    "name": "Jehovah-Nissi",
+    "transliteration": "YHWH Nissi",
+    "language": "Hebrew",
+    "meaning": "The LORD Is My Banner. He is the rallying point in every battle — victory belongs to Him, and He fights for you.",
+    "scriptureReference": "Exodus 17:15",
+    "scriptureText": "And Moses built an altar, and called the name of it Jehovahnissi.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "jehovah-rohi",
+    "name": "Jehovah-Rohi",
+    "transliteration": "YHWH Ro'i",
+    "language": "Hebrew",
+    "meaning": "The LORD Is My Shepherd. He leads, feeds, and restores your soul — you lack nothing under His care.",
+    "scriptureReference": "Psalm 23:1",
+    "scriptureText": "The LORD is my shepherd; I shall not want.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "jehovah-tsidkenu",
+    "name": "Jehovah-Tsidkenu",
+    "transliteration": "YHWH Tsidkenu",
+    "language": "Hebrew",
+    "meaning": "The LORD Our Righteousness. He is not only righteous in Himself — He becomes our righteousness through Christ.",
+    "scriptureReference": "Jeremiah 23:6",
+    "scriptureText": "In his days Judah shall be saved, and Israel shall dwell safely: and this is his name whereby he shall be called, THE LORD OUR RIGHTEOUSNESS.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "jehovah-shammah",
+    "name": "Jehovah-Shammah",
+    "transliteration": "YHWH Shammah",
+    "language": "Hebrew",
+    "meaning": "The LORD Is There. God's abiding presence is the city's true name — and the promise that He is with you now.",
+    "scriptureReference": "Ezekiel 48:35",
+    "scriptureText": "It was round about eighteen thousand measures: and the name of the city from that day shall be, The LORD is there.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "jehovah-mekaddishkem",
+    "name": "Jehovah-Mekaddishkem",
+    "transliteration": "YHWH M'Kaddesh",
+    "language": "Hebrew",
+    "meaning": "The LORD Who Sanctifies You. He sets His people apart and shapes them into His own likeness.",
+    "scriptureReference": "Leviticus 20:8",
+    "scriptureText": "And ye shall keep my statutes, and do them: I am the LORD which sanctify you.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "lord-of-hosts",
+    "name": "Lord of Hosts",
+    "transliteration": "YHWH Tseva'ot",
+    "language": "Hebrew",
+    "meaning": "Commander of the heavenly armies. The One who holds galaxies also leads the rescue on your behalf.",
+    "scriptureReference": "1 Samuel 17:45",
+    "scriptureText": "Then said David to the Philistine, Thou comest to me with a sword, and with a spear, and with a shield: but I come to thee in the name of the LORD of hosts, the God of the armies of Israel, whom thou hast defied.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "holy-one-of-israel",
+    "name": "Holy One of Israel",
+    "transliteration": "Qadosh Yisra'el",
+    "language": "Hebrew",
+    "meaning": "The utterly pure and set-apart God of His covenant people — holy, holy, holy, and near to those who call on Him.",
+    "scriptureReference": "Isaiah 41:14",
+    "scriptureText": "Fear not, thou worm Jacob, and ye men of Israel; I will help thee, saith the LORD, and thy redeemer, the Holy One of Israel.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "i-am",
+    "name": "I AM",
+    "transliteration": "Ehyeh Asher Ehyeh",
+    "language": "Hebrew",
+    "meaning": "The self-existent One — outside of time, never diminished, always present tense. He simply IS.",
+    "scriptureReference": "Exodus 3:14",
+    "scriptureText": "And God said unto Moses, I AM THAT I AM: and he said, Thus shalt thou say unto the children of Israel, I AM hath sent me unto you.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "rock",
+    "name": "The Rock",
+    "transliteration": "Tsur",
+    "language": "Hebrew",
+    "meaning": "Unshakable refuge — stable, trustworthy, and strong under every weight you bring to Him.",
+    "scriptureReference": "Psalm 18:2",
+    "scriptureText": "The LORD is my rock, and my fortress, and my deliverer; my God, my strength, in whom I will trust; my buckler, and the horn of my salvation, and my high tower.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "redeemer",
+    "name": "Redeemer",
+    "transliteration": "Go'el",
+    "language": "Hebrew",
+    "meaning": "The kinsman who buys back what was lost. He ransomed your life at the highest price — and He is still redeeming your story.",
+    "scriptureReference": "Job 19:25",
+    "scriptureText": "For I know that my redeemer liveth, and that he shall stand at the latter day upon the earth.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "prince-of-peace",
+    "name": "Prince of Peace",
+    "transliteration": "Sar Shalom",
+    "language": "Hebrew",
+    "meaning": "The Messiah who reigns in peace — wholeness, reconciliation, and quiet for your soul.",
+    "scriptureReference": "Isaiah 9:6",
+    "scriptureText": "For unto us a child is born, unto us a son is given: and the government shall be upon his shoulder: and his name shall be called Wonderful, Counsellor, The mighty God, The everlasting Father, The Prince of Peace.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "wonderful-counselor",
+    "name": "Wonderful Counselor",
+    "transliteration": "Pele Yo'etz",
+    "language": "Hebrew",
+    "meaning": "Perfect wisdom, tender guidance. Every decision and tangled question finds light in Him.",
+    "scriptureReference": "Isaiah 9:6",
+    "scriptureText": "For unto us a child is born, unto us a son is given: and the government shall be upon his shoulder: and his name shall be called Wonderful, Counsellor, The mighty God, The everlasting Father, The Prince of Peace.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "everlasting-father",
+    "name": "Everlasting Father",
+    "transliteration": "Avi-Ad",
+    "language": "Hebrew",
+    "meaning": "Father of eternity — a love that began before time and will never fade. You are deeply held.",
+    "scriptureReference": "Isaiah 9:6",
+    "scriptureText": "For unto us a child is born, unto us a son is given: and the government shall be upon his shoulder: and his name shall be called Wonderful, Counsellor, The mighty God, The everlasting Father, The Prince of Peace.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "ancient-of-days",
+    "name": "Ancient of Days",
+    "transliteration": "Attiq Yomin",
+    "language": "Aramaic",
+    "meaning": "Enthroned before time began. He judges justly and reigns forever — the outcome of history is already in His hand.",
+    "scriptureReference": "Daniel 7:9",
+    "scriptureText": "I beheld till the thrones were cast down, and the Ancient of days did sit, whose garment was white as snow, and the hair of his head like the pure wool: his throne was like the fiery flame, and his wheels as burning fire.",
+    "tradition": "Aramaic"
+  },
+  {
+    "id": "abba",
+    "name": "Abba",
+    "transliteration": "Abba",
+    "language": "Aramaic",
+    "meaning": "Father — the intimate word a child cries out. Through Jesus, you can approach God with that same closeness.",
+    "scriptureReference": "Romans 8:15",
+    "scriptureText": "For ye have not received the spirit of bondage again to fear; but ye have received the Spirit of adoption, whereby we cry, Abba, Father.",
+    "tradition": "Aramaic"
+  },
+  {
+    "id": "immanuel",
+    "name": "Immanuel",
+    "transliteration": "Immanu'el",
+    "language": "Hebrew",
+    "meaning": "God With Us. The God of the universe stepped into our flesh — He is not far off, He is near.",
+    "scriptureReference": "Matthew 1:23",
+    "scriptureText": "Behold, a virgin shall be with child, and shall bring forth a son, and they shall call his name Emmanuel, which being interpreted is, God with us.",
+    "tradition": "Hebrew"
+  },
+  {
+    "id": "alpha-and-omega",
+    "name": "Alpha and Omega",
+    "transliteration": "Alpha kai Omega",
+    "language": "Greek",
+    "meaning": "The First and the Last, the Beginning and the End. Every chapter of your life is framed by Him.",
+    "scriptureReference": "Revelation 22:13",
+    "scriptureText": "I am Alpha and Omega, the beginning and the end, the first and the last.",
+    "tradition": "Greek"
+  },
+  {
+    "id": "good-shepherd",
+    "name": "The Good Shepherd",
+    "transliteration": "Ho Poimen Ho Kalos",
+    "language": "Greek",
+    "meaning": "The Shepherd who lays down His life for the sheep. He knows you by name and never abandons His own.",
+    "scriptureReference": "John 10:11",
+    "scriptureText": "I am the good shepherd: the good shepherd giveth his life for the sheep.",
+    "tradition": "Greek"
+  },
+  {
+    "id": "lamb-of-god",
+    "name": "Lamb of God",
+    "transliteration": "Amnos tou Theou",
+    "language": "Greek",
+    "meaning": "The spotless sacrifice who takes away the sin of the world. In Him, guilt is fully and forever answered.",
+    "scriptureReference": "John 1:29",
+    "scriptureText": "The next day John seeth Jesus coming unto him, and saith, Behold the Lamb of God, which taketh away the sin of the world.",
+    "tradition": "Greek"
+  },
+  {
+    "id": "bread-of-life",
+    "name": "Bread of Life",
+    "transliteration": "Ho Artos tes Zoes",
+    "language": "Greek",
+    "meaning": "Daily sustenance for the soul. Whoever comes to Him is truly fed.",
+    "scriptureReference": "John 6:35",
+    "scriptureText": "And Jesus said unto them, I am the bread of life: he that cometh to me shall never hunger; and he that believeth on me shall never thirst.",
+    "tradition": "Greek"
+  },
+  {
+    "id": "light-of-the-world",
+    "name": "Light of the World",
+    "transliteration": "To Phos tou Kosmou",
+    "language": "Greek",
+    "meaning": "The light no darkness can overcome. Walking with Him, you will never have to walk in the dark.",
+    "scriptureReference": "John 8:12",
+    "scriptureText": "Then spake Jesus again unto them, saying, I am the light of the world: he that followeth me shall not walk in darkness, but shall have the light of life.",
+    "tradition": "Greek"
+  },
+  {
+    "id": "way-truth-life",
+    "name": "The Way, the Truth, and the Life",
+    "transliteration": "He Hodos, He Aletheia, He Zoe",
+    "language": "Greek",
+    "meaning": "The one road home to the Father. Jesus is not only the guide — He is the path, the truth, and the very life we seek.",
+    "scriptureReference": "John 14:6",
+    "scriptureText": "Jesus saith unto him, I am the way, the truth, and the life: no man cometh unto the Father, but by me.",
+    "tradition": "Greek"
+  },
+  {
+    "id": "advocate",
+    "name": "Advocate",
+    "transliteration": "Parakletos",
+    "language": "Greek",
+    "meaning": "The one called alongside — our defender, comforter, and helper. When you stumble, He intercedes for you.",
+    "scriptureReference": "1 John 2:1",
+    "scriptureText": "My little children, these things write I unto you, that ye sin not. And if any man sin, we have an advocate with the Father, Jesus Christ the righteous.",
+    "tradition": "Greek"
+  },
+  {
+    "id": "king-of-kings",
+    "name": "King of Kings",
+    "transliteration": "Basileus Basileon",
+    "language": "Greek",
+    "meaning": "Above every earthly throne and unseen power. His kingdom has no end, and His rule is perfectly just.",
+    "scriptureReference": "Revelation 19:16",
+    "scriptureText": "And he hath on his vesture and on his thigh a name written, KING OF KINGS, AND LORD OF LORDS.",
+    "tradition": "Greek"
+  },
+  {
+    "id": "rabboni",
+    "name": "Rabboni",
+    "transliteration": "Rabbouni",
+    "language": "Aramaic",
+    "meaning": "My Master, my Teacher. The word Mary Magdalene whispered at the empty tomb — a name of recognition and love.",
+    "scriptureReference": "John 20:16",
+    "scriptureText": "Jesus saith unto her, Mary. She turned herself, and saith unto him, Rabboni; which is to say, Master.",
+    "tradition": "Aramaic"
+  }
+]

@@ -38,6 +38,16 @@ interface UserStatsDao {
     @Query("UPDATE user_stats SET totalGratitudePhotos = totalGratitudePhotos + 1 WHERE id = 1")
     suspend fun incrementGratitudePhotos()
 
+    /**
+     * Absolute setter for the user's current consecutive-gratitude-days
+     * counter. Updated once per gratitude-log call from
+     * [com.prayerquest.app.data.repository.GamificationRepository.onGratitudeLogged]
+     * after it diffs today's gratitude count against the previous logged
+     * date. Backs the `gratitude_7` / `gratitude_30` badge checks (DD §3.6).
+     */
+    @Query("UPDATE user_stats SET consecutiveGratitudeDays = :days WHERE id = 1")
+    suspend fun setConsecutiveGratitudeDays(days: Int)
+
     @Query("UPDATE user_stats SET totalGroupPrayersLogged = totalGroupPrayersLogged + 1 WHERE id = 1")
     suspend fun incrementGroupPrayers()
 

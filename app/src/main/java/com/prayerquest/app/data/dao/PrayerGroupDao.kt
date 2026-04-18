@@ -170,6 +170,28 @@ interface PrayerGroupDao {
 
     @Query("DELETE FROM group_prayer_activity WHERE userId = :userId")
     suspend fun deleteActivityForUser(userId: String)
+
+    // --- Per-group Cascade Delete (admin "delete group" flow) ---
+    // Used when a group creator tears down a group for everyone. Run in
+    // the order: activity → cross refs → items → members → group itself,
+    // so foreign-key-ish invariants stay coherent even if we ever add
+    // proper FK constraints later. (Currently these tables don't enforce
+    // FKs at the SQLite level, but the order is still the right mental
+    // model and cheap to maintain.)
+    @Query("DELETE FROM group_prayer_activity WHERE groupId = :groupId")
+    suspend fun deleteActivityForGroup(groupId: Long)
+
+    @Query("DELETE FROM group_prayer_item_cross_ref WHERE groupId = :groupId")
+    suspend fun deleteCrossRefsForGroup(groupId: Long)
+
+    @Query("DELETE FROM group_prayer_items WHERE groupId = :groupId")
+    suspend fun deleteGroupPrayerItemsForGroup(groupId: Long)
+
+    @Query("DELETE FROM prayer_group_members WHERE groupId = :groupId")
+    suspend fun deleteMembersForGroup(groupId: Long)
+
+    @Query("DELETE FROM prayer_groups WHERE id = :groupId")
+    suspend fun deleteGroupById(groupId: Long)
 }
 
 /**

@@ -1,10 +1,5 @@
 package com.prayerquest.app.ui.screen
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,8 +17,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Button
@@ -32,7 +25,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -73,9 +65,8 @@ import com.prayerquest.app.ui.theme.SuccessGreen
  *
  * Sections:
  * 1. Profile header card (level, name, title, XP progress)
- * 2. "The Science Behind PrayerQuest" expandable card (10+ entries)
- * 3. Lifetime stats grid
- * 4. Achievement categories with progress bars
+ * 2. Lifetime stats grid
+ * 3. Achievement categories with progress bars
  */
 @Composable
 fun ProfileScreen(
@@ -154,11 +145,6 @@ private fun ProfileContent(
         //    scrolling — same position ScriptureQuest uses for its donate card.
         item {
             DonateCard(modifier = Modifier.padding(horizontal = 8.dp))
-        }
-
-        // 3. Science section
-        item {
-            ScienceCard()
         }
 
         // 3. Lifetime stats
@@ -415,167 +401,7 @@ private fun ProfileHeaderCard(stats: UserStats) {
 }
 
 // ═══════════════════════════════════════════════════════
-// SECTION 2: SCIENCE CARD
-// ═══════════════════════════════════════════════════════
-
-@Composable
-private fun ScienceCard() {
-    var isExpanded by remember { mutableStateOf(false) }
-
-    val scienceEntries = listOf(
-        ScienceEntry(
-            title = "Guided ACTS",
-            citation = "Implementation Intentions (Gollwitzer, 1999)",
-            description = "Structuring prayers (Adoration, Confession, Thanksgiving, Supplication) creates mental frameworks that improve prayer consistency and emotional regulation."
-        ),
-        ScienceEntry(
-            title = "Voice Recording",
-            citation = "Production Effect (MacLeod et al., 2010)",
-            description = "Speaking prayers aloud engages motor cortex and auditory processing, enhancing memory retention and emotional depth compared to silent reading."
-        ),
-        ScienceEntry(
-            title = "Prayer Journal",
-            citation = "Expressive Writing (Pennebaker, 1997)",
-            description = "Writing about prayers and reflections improves emotional processing and provides a record of answered prayers, strengthening faith narratives."
-        ),
-        ScienceEntry(
-            title = "Gratitude Blast",
-            citation = "Gratitude Psychology (Emmons & McCullough, 2003)",
-            description = "Regularly recording gratitude increases positive affect, life satisfaction, and resilience. Visual gratitude logs boost dopamine and motivation."
-        ),
-        ScienceEntry(
-            title = "Intercession Drill",
-            citation = "Intercessory Prayer Research",
-            description = "Praying for others activates empathy networks and reduces self-focused rumination. Structured intercessory prayer targets specific people systematically."
-        ),
-        ScienceEntry(
-            title = "Scripture Soak",
-            citation = "Lectio Divina Tradition",
-            description = "Meditative scripture reading (read, reflect, respond, rest) engages multiple neural networks and integrates cognitive and contemplative processing."
-        ),
-        ScienceEntry(
-            title = "Contemplative Silence",
-            citation = "Centering Prayer (Keating, 1986)",
-            description = "Silent meditation reduces mind-wandering and activates the default mode network, fostering spiritual insight and emotional regulation."
-        ),
-        ScienceEntry(
-            title = "Flash-Pray",
-            citation = "Habit Loop (Duhigg, 2012)",
-            description = "Short, frequent prayers become automatic habits through repeated cue-response cycles, integrating spirituality into daily life naturally."
-        ),
-        ScienceEntry(
-            title = "Streaks",
-            citation = "Habit Formation (Lally et al., 2010)",
-            description = "66+ consecutive days of prayer builds stable neural pathways. Visual streaks leverage loss aversion to maintain motivation."
-        ),
-        ScienceEntry(
-            title = "XP & Gamification",
-            citation = "Self-Determination Theory (Deci & Ryan, 1985)",
-            description = "Autonomy, competence, and relatedness drive intrinsic motivation. XP rewards and achievement recognition sustain prayer engagement long-term."
-        )
-    )
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "The Science Behind PrayerQuest",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(onClick = { isExpanded = !isExpanded }) {
-                    Icon(
-                        imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                        contentDescription = "Toggle science section"
-                    )
-                }
-            }
-
-            AnimatedVisibility(
-                visible = isExpanded,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        scienceEntries.forEachIndexed { index, entry ->
-                            if (index > 0) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(vertical = 12.dp),
-                                    color = MaterialTheme.colorScheme.surfaceVariant
-                                )
-                            }
-                            ScienceEntryRow(entry = entry)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-data class ScienceEntry(
-    val title: String,
-    val citation: String,
-    val description: String
-)
-
-@Composable
-private fun ScienceEntryRow(entry: ScienceEntry) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Text(
-                text = "🧠",
-                fontSize = 20.sp,
-                modifier = Modifier.padding(top = 2.dp)
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = entry.title,
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = entry.citation,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
-        Text(
-            text = entry.description,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-// ═══════════════════════════════════════════════════════
-// SECTION 3: LIFETIME STATS
+// SECTION 2: LIFETIME STATS
 // ═══════════════════════════════════════════════════════
 
 @Composable

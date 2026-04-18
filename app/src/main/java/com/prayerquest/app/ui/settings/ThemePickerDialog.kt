@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.prayerquest.app.ui.theme.AppTheme
+import com.prayerquest.app.ui.theme.darken
+import com.prayerquest.app.ui.theme.lighten
 
 @Composable
 fun ThemePickerDialog(
@@ -182,37 +184,30 @@ fun ThemePickerDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    // Create custom theme with minimal required data
-                    // Derive other colors from primary/secondary/background
+                    // Map the 3 user-picked colors onto the 10-slot
+                    // AppColorScheme schema — derive primaryLight/Dark by
+                    // lightening/darkening primary, reuse secondary for
+                    // success/warning-ish slots, and pair background with
+                    // a slightly tinted default. The full Material mapping
+                    // is then derived by AppTheme.toMaterialLight/Dark().
+                    val primary = Color(selectedPrimaryColor.value)
+                    val secondary = Color(selectedSecondaryColor.value)
+                    val background = Color(selectedBackgroundColor.value)
                     val customTheme = AppTheme(
                         id = "custom_${System.currentTimeMillis()}",
                         name = themeName.value,
                         description = "Custom theme",
                         isBuiltIn = false,
-                        lightPrimary = selectedPrimaryColor.value,
-                        lightOnPrimary = 0xFFFFFFFF,
-                        lightPrimaryContainer = lighten(selectedPrimaryColor.value, 0.3f),
-                        lightOnPrimaryContainer = 0xFF2D2B29,
-                        lightSecondary = selectedSecondaryColor.value,
-                        lightOnSecondary = 0xFFFFFFFF,
-                        lightSecondaryContainer = lighten(selectedSecondaryColor.value, 0.3f),
-                        lightBackground = selectedBackgroundColor.value,
-                        lightSurface = 0xFFFFFFFF,
-                        lightOnBackground = 0xFF2D2B29,
-                        lightOnSurface = 0xFF2D2B29,
-                        lightSurfaceVariant = lighten(selectedBackgroundColor.value, 0.2f),
-                        darkPrimary = lighten(selectedPrimaryColor.value, 0.4f),
-                        darkOnPrimary = 0xFF0D1B2A,
-                        darkPrimaryContainer = selectedPrimaryColor.value,
-                        darkOnPrimaryContainer = 0xFFE8E6F0,
-                        darkSecondary = lighten(selectedSecondaryColor.value, 0.3f),
-                        darkOnSecondary = 0xFF0D1B2A,
-                        darkSecondaryContainer = selectedSecondaryColor.value,
-                        darkBackground = 0xFF1A1A2E,
-                        darkSurface = 0xFF222240,
-                        darkOnBackground = 0xFFE8E6F0,
-                        darkOnSurface = 0xFFE8E6F0,
-                        darkSurfaceVariant = 0xFF2E2E50
+                        primary = primary,
+                        primaryLight = primary.lighten(0.3f),
+                        primaryDark = primary.darken(0.3f),
+                        secondary = secondary,
+                        backgroundPaper = background,
+                        backgroundDefault = background.darken(0.06f),
+                        accent = secondary.lighten(0.1f),
+                        success = Color(0xFF43A047),
+                        warning = Color(0xFFFBC02D),
+                        info = primary
                     )
                     onSaveTheme(customTheme)
                 }
@@ -282,18 +277,5 @@ private fun ColorButton(
             )
             .clickable(onClick = onClick)
     )
-}
-
-// Helper to lighten a color
-private fun lighten(color: Long, factor: Float): Long {
-    val r = (color shr 16) and 0xFF
-    val g = (color shr 8) and 0xFF
-    val b = color and 0xFF
-
-    val newR = ((r + (255 - r) * factor).toInt()).coerceIn(0, 255)
-    val newG = ((g + (255 - g) * factor).toInt()).coerceIn(0, 255)
-    val newB = ((b + (255 - b) * factor).toInt()).coerceIn(0, 255)
-
-    return (0xFFL shl 24) or (newR.toLong() shl 16) or (newG.toLong() shl 8) or newB.toLong()
 }
 

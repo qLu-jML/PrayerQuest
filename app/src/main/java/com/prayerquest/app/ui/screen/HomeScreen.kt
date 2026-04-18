@@ -8,6 +8,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,16 +50,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prayerquest.app.PrayerQuestApplication
 import com.prayerquest.app.ads.BannerAdView
 import com.prayerquest.app.data.entity.DailyQuest
 import com.prayerquest.app.data.repository.DashboardData
+import com.prayerquest.app.domain.liturgical.LiturgicalDay
+import com.prayerquest.app.domain.liturgical.LiturgicalSeason
 import com.prayerquest.app.domain.model.Leveling
 import com.prayerquest.app.ui.home.HomeUiState
 import com.prayerquest.app.ui.home.HomeViewModel
 import com.prayerquest.app.ui.home.HomeViewModelFactory
 import com.prayerquest.app.ui.theme.FlameRed
+import com.prayerquest.app.ui.theme.StainedGlassAmber
+import com.prayerquest.app.ui.theme.StainedGlassViolet
 import com.prayerquest.app.ui.theme.SuccessGreen
 import com.prayerquest.app.ui.theme.WarningGold
 
@@ -78,11 +85,23 @@ fun HomeScreen(
     onStartPrayer: () -> Unit = {},
     onLogGratitude: () -> Unit = {},
     onPrayerGroups: () -> Unit = {},
-    onOpenSettings: () -> Unit = {}
+    onOpenSettings: () -> Unit = {},
+    // DD §3.10 — low-profile "In distress? Crisis Prayer →" link surfaces
+    // the Crisis Prayer Mode without calling attention to itself. Default
+    // no-op for previews / tests that don't wire navigation.
+    onCrisisPrayer: () -> Unit = {},
+    // DD §3.5.4 — tapping the liturgical-day card should open the Library.
+    // Library auto-pins the seasonal pack for Advent/Lent/HolyWeek; this
+    // callback is a no-op default so previews and tests don't need to wire
+    // navigation.
+    onLiturgicalTap: () -> Unit = {}
 ) {
     val app = LocalContext.current.applicationContext as PrayerQuestApplication
     val viewModel: HomeViewModel = viewModel(
-        factory = HomeViewModelFactory(app.container.gamificationRepository)
+        factory = HomeViewModelFactory(
+            app.container.gamificationRepository,
+            app.container.userPreferences
+        )
     )
     val uiState by viewModel.uiState.collectAsState(HomeUiState.Loading)
 
@@ -98,10 +117,13 @@ fun HomeScreen(
             HomeUiState.Loading -> LoadingPlaceholder()
             is HomeUiState.Ready -> HomeContent(
                     dashboard = state.dashboard,
+                    liturgicalDay = state.liturgicalDay,
                     onStartPrayer = onStartPrayer,
                     onLogGratitude = onLogGratitude,
                     onPrayerGroups = onPrayerGroups,
-                    onOpenSettings = onOpenSettings
+                    onOpenSettings = onOpenSettings,
+                    onCrisisPrayer = onCrisisPrayer,
+                    onLiturgicalTap = onLiturgicalTap
                 )
         }
     }
@@ -122,10 +144,13 @@ private fun LoadingPlaceholder() {
 @Composable
 private fun HomeContent(
     dashboard: DashboardData,
+    liturgicalDay: LiturgicalDay?,
     onStartPrayer: () -> Unit,
     onLogGratitude: () -> Unit,
     onPrayerGroups: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    onCrisisPrayer: () -> Unit,
+    onLiturgicalTap: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -144,6 +169,19 @@ private fun HomeContent(
             )
         }
 
+        // 1b. Liturgical day card — renders only when the user has opted in
+        //     to a calendar (Western/Eastern) in onboarding or settings. When
+        //     the preference is NONE, [liturgicalDay] is null and we render
+        //     nothing so non-liturgical users see no regression.
+        if (liturgicalDay != null) {
+            item {
+                LiturgicalCard(
+                    day = liturgicalDay,
+                    onClick = onLiturgicalTap
+                )
+            }
+        }
+
         // 2. Level card
         item {
             LevelCard(
@@ -153,9 +191,16 @@ private fun HomeContent(
             )
         }
 
-        // 3. Start Prayer CTA
+        // 3. Start Prayer CTA + subtle Crisis Prayer link beneath it.
+        //    DD §3.10: the link is intentionally low-profile — findable but
+        //    not attention-grabbing. It sits under the primary CTA rather
+        //    than in its own card so the Home shelf isn't crowded with
+        //    "help" language on a normal good day.
         item {
-            StartPrayerCard(onStartPrayer = onStartPrayer)
+            StartPrayerCard(
+                onStartPrayer = onStartPrayer,
+                onCrisisPrayer = onCrisisPrayer
+            )
         }
 
         // 4. Daily Quests
@@ -358,7 +403,10 @@ private fun LevelCard(
 // ═══════════════════════════════════════════════════════
 
 @Composable
-private fun StartPrayerCard(onStartPrayer: () -> Unit) {
+private fun StartPrayerCard(
+    onStartPrayer: () -> Unit,
+    onCrisisPrayer: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -387,6 +435,28 @@ private fun StartPrayerCard(onStartPrayer: () -> Unit) {
                     .height(48.dp)
             ) {
                 Text("Start Prayer")
+            }
+
+            // Subtle "In distress? Crisis Prayer →" link per DD §3.10.
+            // Deliberately presented as text-only on a clickable surface
+            // (not a button) so it reads as a quiet offering, not a
+            // shouting help-button. Padding on the clickable Box gives a
+            // finger-friendly tap target (~48dp tall with the text inside)
+            // so fingers can find it under stress without hunting.
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(onClick = onCrisisPrayer)
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
+                    .semantics {
+                        contentDescription = "In distress? Open Crisis Prayer"
+                    }
+            ) {
+                Text(
+                    text = "In distress? Crisis Prayer →",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+                )
             }
         }
     }
@@ -562,6 +632,103 @@ private fun TotalTile(
             )
         }
     }
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 1b: LITURGICAL DAY CARD
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Small, subtle card showing the current liturgical day and season.
+ *
+ * Rendered only when the user has selected a liturgical tradition in
+ * onboarding / settings. The visual language is a gentle stained-glass hint —
+ * a thin violet leading bar plus a warm amber dot for the feast/season,
+ * over a [MaterialTheme.colorScheme.surfaceVariant] tile. Dark-mode safe
+ * because the accent colors are constants and the background is themed.
+ *
+ * The card is clickable; tapping routes to the Library where the matching
+ * seasonal pack (if any) is pinned at the top of the Collections shelf.
+ */
+@Composable
+private fun LiturgicalCard(
+    day: LiturgicalDay,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Thin stained-glass leading bar — violet stripe + amber dot on
+            // top. Keeps the accent subtle at ~4dp wide.
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .width(6.dp)
+                    .height(40.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(StainedGlassAmber)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .height(32.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(StainedGlassViolet)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = day.dayName,
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = day.season.displayName(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Human-readable label for a [LiturgicalSeason]. Kept as a file-local
+ * extension so it isn't part of the engine's public surface area — the
+ * engine deals in enum values; the UI layer picks how to render them.
+ */
+private fun LiturgicalSeason.displayName(): String = when (this) {
+    LiturgicalSeason.ADVENT -> "Advent"
+    LiturgicalSeason.CHRISTMAS -> "Christmas"
+    LiturgicalSeason.EPIPHANY -> "Epiphany"
+    LiturgicalSeason.ORDINARY_TIME -> "Ordinary Time"
+    LiturgicalSeason.LENT -> "Lent"
+    LiturgicalSeason.HOLY_WEEK -> "Holy Week"
+    LiturgicalSeason.EASTER -> "Easter"
+    LiturgicalSeason.PENTECOST -> "Pentecost"
+    LiturgicalSeason.ORDINARY_TIME_2 -> "Ordinary Time"
 }
 
 // ═══════════════════════════════════════════════════════

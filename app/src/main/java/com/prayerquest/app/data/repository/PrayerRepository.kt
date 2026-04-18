@@ -1,9 +1,11 @@
 package com.prayerquest.app.data.repository
 
+import com.prayerquest.app.data.dao.BiblePrayerDao
 import com.prayerquest.app.data.dao.FamousPrayerDao
 import com.prayerquest.app.data.dao.PrayerItemDao
 import com.prayerquest.app.data.dao.PrayerRecordDao
 import com.prayerquest.app.data.dao.UserPrayerProgressDao
+import com.prayerquest.app.data.entity.BiblePrayer
 import com.prayerquest.app.data.entity.FamousPrayer
 import com.prayerquest.app.data.entity.PrayerItem
 import com.prayerquest.app.data.entity.PrayerRecord
@@ -17,7 +19,8 @@ class PrayerRepository(
     private val prayerItemDao: PrayerItemDao,
     private val prayerRecordDao: PrayerRecordDao,
     private val userPrayerProgressDao: UserPrayerProgressDao,
-    private val famousPrayerDao: FamousPrayerDao? = null
+    private val famousPrayerDao: FamousPrayerDao? = null,
+    private val biblePrayerDao: BiblePrayerDao? = null
 ) {
 
     // --- Prayer Items ---
@@ -38,13 +41,40 @@ class PrayerRepository(
     suspend fun updateItem(item: PrayerItem) = prayerItemDao.update(item)
     suspend fun deleteItem(item: PrayerItem) = prayerItemDao.delete(item)
 
-    /** Mark a prayer as answered with optional testimony. */
-    suspend fun markAnswered(id: Long, testimony: String? = null) {
+    /**
+     * Mark a prayer as answered with optional testimony.
+     *
+     * Returns a [MarkAnsweredResult] describing the transition so callers
+     * can decide whether to trigger the Big Celebration Moment (DD §3.5.2).
+     *
+     * The key field is [MarkAnsweredResult.wasNewlyAnswered]: true only
+     * when the item was NOT already in the "Answered" state prior to this
+     * call. That gates:
+     *  - the full-screen celebration modal (no celebration for items
+     *    that were imported already-answered or re-flagged answered
+     *    after a reactivate/re-answer round-trip on the same day);
+     *  - the +365 day anniversary worker (same logic — only schedule for
+     *    a *new* Answered transition).
+     *
+     * Single write-point for Answered → the celebration screen and the
+     * anniversary worker both read from this result to stay consistent.
+     */
+    suspend fun markAnswered(id: Long, testimony: String? = null): MarkAnsweredResult {
+        val existing = prayerItemDao.getById(id)
+        val originalStatus = existing?.status
+        val answeredAtMs = System.currentTimeMillis()
         prayerItemDao.updateStatus(
             id = id,
             status = PrayerItem.STATUS_ANSWERED,
-            answeredAt = System.currentTimeMillis(),
+            answeredAt = answeredAtMs,
             testimony = testimony
+        )
+        return MarkAnsweredResult(
+            prayerItemId = id,
+            originalStatus = originalStatus,
+            answeredAtMs = answeredAtMs,
+            wasNewlyAnswered = originalStatus != null &&
+                    originalStatus != PrayerItem.STATUS_ANSWERED
         )
     }
 
@@ -62,9 +92,47 @@ class PrayerRepository(
         prayerItemDao.updateStatus(id = id, status = PrayerItem.STATUS_ACTIVE)
     }
 
+    /**
+     * Return value for [markAnswered]. All fields are plain data so
+     * callers can inspect the transition outside of a coroutine.
+     *
+     * @property prayerItemId     The item that was marked answered.
+     * @property originalStatus   Status on disk immediately before this call;
+     *                            null only if the row didn't exist (caller
+     *                            should treat as a no-op in that case).
+     * @property answeredAtMs     Epoch-ms timestamp written to the row. The
+     *                            anniversary worker uses this to compute the
+     *                            +365 day target.
+     * @property wasNewlyAnswered True iff this call flipped the status from
+     *                            non-Answered → Answered. Gate for the
+     *                            Big Celebration Moment + anniversary.
+     */
+    data class MarkAnsweredResult(
+        val prayerItemId: Long,
+        val originalStatus: String?,
+        val answeredAtMs: Long,
+        val wasNewlyAnswered: Boolean
+    )
+
     // --- Famous Prayers ---
     fun observeAllFamousPrayers(): Flow<List<FamousPrayer>> =
         famousPrayerDao?.observeAll() ?: kotlinx.coroutines.flow.flowOf(emptyList())
+
+    suspend fun getFamousPrayer(id: String): FamousPrayer? = famousPrayerDao?.getById(id)
+
+    suspend fun incrementFamousPrayerPrayedCount(id: String) {
+        famousPrayerDao?.incrementPrayedCount(id)
+    }
+
+    // --- Bible Prayers ---
+    fun observeAllBiblePrayers(): Flow<List<BiblePrayer>> =
+        biblePrayerDao?.observeAll() ?: kotlinx.coroutines.flow.flowOf(emptyList())
+
+    suspend fun getBiblePrayer(id: String): BiblePrayer? = biblePrayerDao?.getById(id)
+
+    suspend fun incrementBiblePrayerPrayedCount(id: String) {
+        biblePrayerDao?.incrementPrayedCount(id)
+    }
 
     // --- Prayer Records ---
     suspend fun recordSession(record: PrayerRecord): Long = prayerRecordDao.insert(record)

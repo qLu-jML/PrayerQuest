@@ -18,15 +18,6 @@ enum class ThemeMode {
 }
 
 /**
- * Which classical devotional author the user wants delivered each day.
- * Configured in onboarding step 5 and editable in Settings. [NONE] disables the
- * DailyDevotionalWorker entirely.
- */
-enum class DevotionalAuthor {
-    NONE, SPURGEON, BONHOEFFER, BOTH
-}
-
-/**
  * Liturgical calendar preference. If the user selects [NONE], Home hides the
  * liturgical day indicator and seasonal packs do not auto-surface.
  */
@@ -65,6 +56,16 @@ class UserPreferences(private val context: Context) {
         private val GRATITUDE_GOAL = intPreferencesKey("gratitude_goal")
         private val IS_PREMIUM = booleanPreferencesKey("is_premium")
         private val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+        private val HAS_SEEN_PRAYER_MODE_TUTORIAL = booleanPreferencesKey("has_seen_prayer_mode_tutorial")
+
+        /**
+         * Set (CSV-encoded) of [PrayerMode] names the user has already seen
+         * the per-mode intro overlay for. Stored as CSV of enum names so the
+         * store stays human-readable and schema-evolvable — same pattern as
+         * [DISABLED_MODES]. Names that no longer resolve (e.g. a mode renamed
+         * between versions) are silently dropped on read.
+         */
+        private val SEEN_MODE_TUTORIALS = stringPreferencesKey("seen_mode_tutorials")
         private val DISPLAY_NAME = stringPreferencesKey("display_name")
 
         // Prayer-mode visibility state (Sprint 3). Persisted as CSV of enum
@@ -90,23 +91,6 @@ class UserPreferences(private val context: Context) {
         private val REMINDER_MIDDAY = stringPreferencesKey("reminder_midday")
         private val REMINDER_EVENING = stringPreferencesKey("reminder_evening")
 
-        // Devotional author selection + per-author delivery time. Spurgeon gets
-        // TWO slots — morning AND evening — to match his original
-        // "Morning and Evening" book structure (one reading in the morning, one
-        // in the evening). Each slot has its own time and its own enable flag
-        // so a user can opt in to just one half. Bonhoeffer is a single evening
-        // slot.
-        //
-        // Historical note: the original `devotional_spurgeon_min` key predated
-        // the morning/evening split. We preserve its value as the morning slot
-        // to keep DataStore upgrades from nuking user-chosen times.
-        private val DEVOTIONAL_AUTHOR = stringPreferencesKey("devotional_author")
-        private val DEVOTIONAL_SPURGEON_MIN = intPreferencesKey("devotional_spurgeon_min")           // morning (legacy key)
-        private val DEVOTIONAL_SPURGEON_EVENING_MIN = intPreferencesKey("devotional_spurgeon_evening_min")
-        private val DEVOTIONAL_SPURGEON_MORNING_ENABLED = booleanPreferencesKey("devotional_spurgeon_morning_enabled")
-        private val DEVOTIONAL_SPURGEON_EVENING_ENABLED = booleanPreferencesKey("devotional_spurgeon_evening_enabled")
-        private val DEVOTIONAL_BONHOEFFER_MIN = intPreferencesKey("devotional_bonhoeffer_min")
-
         // Liturgical calendar preference (seasonal packs, day indicator).
         private val LITURGICAL_CALENDAR = stringPreferencesKey("liturgical_calendar")
 
@@ -118,10 +102,6 @@ class UserPreferences(private val context: Context) {
         const val DEFAULT_MORNING_MIN = 7 * 60 + 30        // 07:30
         const val DEFAULT_MIDDAY_MIN = 12 * 60 + 30        // 12:30
         const val DEFAULT_EVENING_MIN = 20 * 60            // 20:00
-
-        const val DEFAULT_SPURGEON_MIN = 7 * 60            // 07:00 (morning)
-        const val DEFAULT_SPURGEON_EVENING_MIN = 20 * 60   // 20:00 (evening — pairs with book structure)
-        const val DEFAULT_BONHOEFFER_MIN = 20 * 60         // 20:00
 
         // Reminder personality defaults. Warm, slightly different tone per
         // slot so the three reminders don't feel like spam. DD §3.2 step 6
@@ -158,6 +138,35 @@ class UserPreferences(private val context: Context) {
 
     val onboardingCompleted: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[ONBOARDING_COMPLETED] ?: false
+    }
+
+    /**
+     * One-shot flag for the first-time prayer-mode tutorial. Flipped to true
+     * the first time the user either finishes or dismisses the walkthrough on
+     * the Mode Picker. Defaults to false so every new install sees it once.
+     */
+    val hasSeenPrayerModeTutorial: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[HAS_SEEN_PRAYER_MODE_TUTORIAL] ?: false
+    }
+
+    /**
+     * The set of modes whose per-mode intro overlay the user has already
+     * dismissed. PrayerSessionScreen consults this each time a session
+     * engages a new mode — if the current mode is missing from the set, we
+     * render the short "how this mode works" sheet once, then persist that
+     * mode to the set so it never re-renders.
+     */
+    val seenModeTutorials: Flow<Set<PrayerMode>> = context.dataStore.data.map { preferences ->
+        val csv = preferences[SEEN_MODE_TUTORIALS]
+        if (csv.isNullOrBlank()) {
+            emptySet()
+        } else {
+            csv.split(",")
+                .mapNotNull { raw ->
+                    runCatching { PrayerMode.valueOf(raw.trim()) }.getOrNull()
+                }
+                .toSet()
+        }
     }
 
     val displayName: Flow<String> = context.dataStore.data.map { preferences ->
@@ -252,39 +261,6 @@ class UserPreferences(private val context: Context) {
             )
         }
 
-    val devotionalAuthor: Flow<DevotionalAuthor> = context.dataStore.data.map { preferences ->
-        val raw = preferences[DEVOTIONAL_AUTHOR] ?: DevotionalAuthor.NONE.name
-        runCatching { DevotionalAuthor.valueOf(raw) }.getOrDefault(DevotionalAuthor.NONE)
-    }
-
-    /**
-     * Spurgeon MORNING reminder time. Historically this was simply "Spurgeon
-     * time" — we preserve the key so a user who already picked a time before
-     * the evening split shipped keeps that choice exactly where it was.
-     */
-    val devotionalSpurgeonMin: Flow<Int> = context.dataStore.data.map { preferences ->
-        preferences[DEVOTIONAL_SPURGEON_MIN] ?: DEFAULT_SPURGEON_MIN
-    }
-
-    /** Spurgeon EVENING reminder time. Defaults to 20:00. */
-    val devotionalSpurgeonEveningMin: Flow<Int> = context.dataStore.data.map { preferences ->
-        preferences[DEVOTIONAL_SPURGEON_EVENING_MIN] ?: DEFAULT_SPURGEON_EVENING_MIN
-    }
-
-    /** Whether Spurgeon's MORNING reminder fires. Defaults ON when author = Spurgeon/Both. */
-    val devotionalSpurgeonMorningEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[DEVOTIONAL_SPURGEON_MORNING_ENABLED] ?: true
-    }
-
-    /** Whether Spurgeon's EVENING reminder fires. Defaults ON when author = Spurgeon/Both. */
-    val devotionalSpurgeonEveningEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[DEVOTIONAL_SPURGEON_EVENING_ENABLED] ?: true
-    }
-
-    val devotionalBonhoefferMin: Flow<Int> = context.dataStore.data.map { preferences ->
-        preferences[DEVOTIONAL_BONHOEFFER_MIN] ?: DEFAULT_BONHOEFFER_MIN
-    }
-
     val liturgicalCalendar: Flow<LiturgicalCalendar> = context.dataStore.data.map { preferences ->
         val raw = preferences[LITURGICAL_CALENDAR] ?: LiturgicalCalendar.NONE.name
         runCatching { LiturgicalCalendar.valueOf(raw) }.getOrDefault(LiturgicalCalendar.NONE)
@@ -335,6 +311,29 @@ class UserPreferences(private val context: Context) {
     suspend fun setOnboardingCompleted(completed: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[ONBOARDING_COMPLETED] = completed
+        }
+    }
+
+    suspend fun setHasSeenPrayerModeTutorial(seen: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[HAS_SEEN_PRAYER_MODE_TUTORIAL] = seen
+        }
+    }
+
+    /**
+     * Mark a single mode as seen. Idempotent — re-marking an already-seen
+     * mode is a no-op. The read-modify-write is safe because DataStore
+     * [edit] serializes concurrent edits on the same DataStore instance.
+     */
+    suspend fun markModeTutorialSeen(mode: PrayerMode) {
+        context.dataStore.edit { preferences ->
+            val currentCsv = preferences[SEEN_MODE_TUTORIALS].orEmpty()
+            val current = currentCsv.split(",")
+                .mapNotNull { raw -> runCatching { PrayerMode.valueOf(raw.trim()) }.getOrNull() }
+                .toMutableSet()
+            if (current.add(mode)) {
+                preferences[SEEN_MODE_TUTORIALS] = current.joinToString(",") { it.name }
+            }
         }
     }
 
@@ -398,51 +397,6 @@ class UserPreferences(private val context: Context) {
         context.dataStore.edit { preferences ->
             preferences[key] =
                 "${config.enabled}|${config.minuteOfDay.coerceIn(0, 1439)}|$cleanPersonality"
-        }
-    }
-
-    suspend fun setDevotionalAuthor(author: DevotionalAuthor) {
-        context.dataStore.edit { preferences ->
-            preferences[DEVOTIONAL_AUTHOR] = author.name
-        }
-    }
-
-    suspend fun setDevotionalTime(author: DevotionalAuthor, minuteOfDay: Int) {
-        val safeMin = minuteOfDay.coerceIn(0, 1439)
-        context.dataStore.edit { preferences ->
-            when (author) {
-                DevotionalAuthor.SPURGEON -> preferences[DEVOTIONAL_SPURGEON_MIN] = safeMin
-                DevotionalAuthor.BONHOEFFER -> preferences[DEVOTIONAL_BONHOEFFER_MIN] = safeMin
-                DevotionalAuthor.BOTH, DevotionalAuthor.NONE -> {
-                    // BOTH/NONE aren't time slots — callers should pass a
-                    // specific author. Silently no-op rather than throwing so
-                    // a mis-wired UI doesn't crash the user.
-                }
-            }
-        }
-    }
-
-    /**
-     * Write the Spurgeon evening reminder time. Paired with
-     * [setDevotionalTime] (which writes the morning slot) so a user can
-     * configure Morning and Evening & Evening independently.
-     */
-    suspend fun setDevotionalSpurgeonEveningMin(minuteOfDay: Int) {
-        val safeMin = minuteOfDay.coerceIn(0, 1439)
-        context.dataStore.edit { preferences ->
-            preferences[DEVOTIONAL_SPURGEON_EVENING_MIN] = safeMin
-        }
-    }
-
-    suspend fun setDevotionalSpurgeonMorningEnabled(enabled: Boolean) {
-        context.dataStore.edit { preferences ->
-            preferences[DEVOTIONAL_SPURGEON_MORNING_ENABLED] = enabled
-        }
-    }
-
-    suspend fun setDevotionalSpurgeonEveningEnabled(enabled: Boolean) {
-        context.dataStore.edit { preferences ->
-            preferences[DEVOTIONAL_SPURGEON_EVENING_ENABLED] = enabled
         }
     }
 

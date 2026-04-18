@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -21,10 +20,10 @@ import com.prayerquest.app.PrayerQuestApplication
 import com.prayerquest.app.data.entity.PrayerItem
 import com.prayerquest.app.data.repository.PrayerRepository
 import com.prayerquest.app.ui.theme.SuccessGreen
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -37,10 +36,22 @@ fun AnsweredPrayerDetailScreen(
 ) {
     val app = LocalContext.current.applicationContext as PrayerQuestApplication
     val viewModel: AnsweredPrayerDetailViewModel = viewModel(
-        factory = AnsweredPrayerDetailViewModel.Factory(app.container.prayerRepository)
+        // VM key includes prayerId so swapping between two answered prayers
+        // in the same back stack composes a fresh VM rather than reusing
+        // the first one's state.
+        key = "answered-$prayerId",
+        factory = AnsweredPrayerDetailViewModel.Factory(
+            app.container.prayerRepository,
+            prayerId
+        )
     )
 
-    val prayer by viewModel.prayer.collectAsState(initial = null)
+    val uiState by viewModel.uiState.collectAsState()
+    // Flatten the sealed state to the legacy `prayer` nullable so the existing
+    // body below (which threads `prayer!!` in several places) keeps compiling.
+    // Null means "still loading" OR "not found" — the Box below the body
+    // disambiguates by reading uiState directly.
+    val prayer = (uiState as? AnsweredPrayerDetailViewModel.UiState.Loaded)?.prayer
 
     if (prayer != null && prayer!!.status == PrayerItem.STATUS_ANSWERED) {
         val dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault())
@@ -277,15 +288,33 @@ fun AnsweredPrayerDetailScreen(
             }
         }
     } else {
-        // Loading or not found state
+        // Loading or not-found state. Previously this showed an infinite
+        // spinner when `prayer` was null because `prayer` came from an
+        // `emptyFlow()` that never emitted — so we never transitioned out
+        // of the null branch. Now we disambiguate via the sealed uiState:
+        //  - Loading: show spinner
+        //  - NotFound or Loaded-but-not-ANSWERED: show explicit error
         Box(
-            modifier = modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize().padding(24.dp),
             contentAlignment = Alignment.Center
         ) {
-            if (prayer == null) {
-                CircularProgressIndicator()
-            } else {
-                Text("Prayer not found or not answered")
+            when (uiState) {
+                AnsweredPrayerDetailViewModel.UiState.Loading -> CircularProgressIndicator()
+                else -> Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Prayer not found",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                    Text(
+                        text = "We couldn't load this answered prayer. It may have been reactivated or removed.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Button(onClick = onNavigateBack) { Text("Go Back") }
+                }
             }
         }
     }
@@ -293,12 +322,33 @@ fun AnsweredPrayerDetailScreen(
 
 class AnsweredPrayerDetailViewModel(
     private val prayerRepository: PrayerRepository,
-    savedStateHandle: SavedStateHandle = SavedStateHandle()
+    private val prayerId: Long
 ) : ViewModel() {
 
-    private val prayerId: Long = savedStateHandle["prayerId"] ?: 0L
+    /**
+     * Three-state load result. Previously the VM exposed an `emptyFlow()`
+     * for the prayer, which never emitted — so the screen's "null means
+     * loading" check held forever, and every tap into an answered prayer
+     * showed an infinite spinner. Now we actually observe the row via
+     * the repository and surface a proper NotFound state when the id
+     * doesn't resolve.
+     */
+    sealed interface UiState {
+        data object Loading : UiState
+        data class Loaded(val prayer: PrayerItem) : UiState
+        data object NotFound : UiState
+    }
 
-    val prayer: Flow<PrayerItem?> = emptyFlow()
+    private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            prayerRepository.observeItem(prayerId).collect { row ->
+                _uiState.value = if (row != null) UiState.Loaded(row) else UiState.NotFound
+            }
+        }
+    }
 
     fun playVoiceNote() {
         viewModelScope.launch {
@@ -307,11 +357,12 @@ class AnsweredPrayerDetailViewModel(
     }
 
     class Factory(
-        private val prayerRepository: PrayerRepository
+        private val prayerRepository: PrayerRepository,
+        private val prayerId: Long
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return AnsweredPrayerDetailViewModel(prayerRepository) as T
+            return AnsweredPrayerDetailViewModel(prayerRepository, prayerId) as T
         }
     }
 }

@@ -104,4 +104,26 @@ object Achievements {
     /** All achievements in a given category. */
     fun byCategory(category: AchievementCategory): List<AchievementDef> =
         ALL.filter { it.category == category }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Answered-prayer milestone aliases (DD §3.5.2 Big Celebration Moment)
+    //
+    // The Big Celebration wiring spec refers to these by the canonical
+    // names FIRST_ANSWERED, FAITHFUL_10, FAITHFUL_50. They already ship
+    // under category-based IDs (`answered_1` / `answered_10` / `answered_50`
+    // — which is the shape our `evaluateAchievements()` loop expects), so
+    // rather than duplicate rows we expose the DD-level names as constants
+    // that point at the existing entries. Call-sites that want to unlock
+    // "FIRST_ANSWERED" resolve it through here so the mapping stays in one
+    // place and the Achievements catalog stays canonical.
+    // ─────────────────────────────────────────────────────────────────────
+
+    /** "First prayer marked answered" milestone. */
+    val FIRST_ANSWERED: AchievementDef get() = byId("answered_1")!!
+
+    /** "10 answered prayers" — Faithful Witness milestone. */
+    val FAITHFUL_10: AchievementDef get() = byId("answered_10")!!
+
+    /** "50 answered prayers" — Testimony Builder milestone. */
+    val FAITHFUL_50: AchievementDef get() = byId("answered_50")!!
 }

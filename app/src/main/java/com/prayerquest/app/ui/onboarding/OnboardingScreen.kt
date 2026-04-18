@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material3.Button
@@ -37,6 +38,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
@@ -44,7 +46,6 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -62,7 +63,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.prayerquest.app.data.preferences.DevotionalAuthor
 import com.prayerquest.app.data.preferences.LiturgicalCalendar
 import com.prayerquest.app.domain.model.Tradition
 import com.prayerquest.app.notifications.rememberNotificationPermissionState
@@ -84,18 +84,17 @@ private const val STEP_WELCOME = 0
 private const val STEP_NAME_GOAL = 1
 private const val STEP_TRADITIONS = 2
 private const val STEP_LITURGICAL = 3
-private const val STEP_DEVOTIONAL = 4
-private const val STEP_REMINDERS = 5
-private const val STEP_FIRST_COLLECTION = 6
-private const val STEP_FIRST_GRATITUDE = 7
-private const val TOTAL_STEPS = 8
+private const val STEP_REMINDERS = 4
+private const val STEP_FIRST_COLLECTION = 5
+private const val STEP_FIRST_GRATITUDE = 6
+private const val TOTAL_STEPS = 7
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Main Onboarding Screen
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * 8-step data-collecting onboarding flow (DD §3.2). Unlike the old tutorial
+ * 7-step data-collecting onboarding flow (DD §3.2). Unlike the old tutorial
  * carousel, every step persists a real preference or seeds a real piece of
  * data. The user can go back at any time and their earlier answers survive.
  *
@@ -123,18 +122,23 @@ fun OnboardingScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(
-                onClick = { if (step > 0) step-- },
-                enabled = step > 0
-            ) {
-                Text(
-                    text = if (step > 0) "Back" else "",
-                    color = Ink.copy(alpha = if (step > 0) 0.7f else 0f),
-                    fontSize = 14.sp
-                )
+            // Always-visible back arrow. On step 0 we keep the slot but hide
+            // the icon so the layout stays balanced; on every other step it's
+            // a proper IconButton with the ArrowBack glyph (per user feedback:
+            // "add visible back arrows to the onboarding screens").
+            Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                if (step > 0) {
+                    IconButton(onClick = { step-- }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Ink.copy(alpha = 0.75f)
+                        )
+                    }
+                }
             }
             Spacer(modifier = Modifier.weight(1f))
             ProgressDots(
@@ -147,25 +151,39 @@ fun OnboardingScreen(
             // gratitude = blank-and-skipped) so skipping any of them is safe.
             // On the final step Skip = commit with whatever's filled in + go
             // home; on earlier steps it just advances to the next step.
+            // Per user feedback: this used to be a low-contrast TextButton that
+            // users didn't notice. Now it's an OutlinedButton with Indigo700
+            // border + bold label so it reads as a real affordance.
             if (step in STEP_NAME_GOAL..STEP_FIRST_GRATITUDE) {
-                TextButton(onClick = {
-                    if (step == TOTAL_STEPS - 1) {
-                        scope.launch {
-                            viewModel.completeOnboarding()
-                            onNavigateToHome()
+                OutlinedButton(
+                    onClick = {
+                        if (step == TOTAL_STEPS - 1) {
+                            scope.launch {
+                                viewModel.completeOnboarding()
+                                onNavigateToHome()
+                            }
+                        } else {
+                            step = minOf(step + 1, TOTAL_STEPS - 1)
                         }
-                    } else {
-                        step = minOf(step + 1, TOTAL_STEPS - 1)
-                    }
-                }) {
+                    },
+                    border = androidx.compose.foundation.BorderStroke(
+                        width = 1.5.dp,
+                        color = Indigo700.copy(alpha = 0.6f)
+                    ),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                        horizontal = 14.dp,
+                        vertical = 4.dp
+                    )
+                ) {
                     Text(
                         text = "Skip",
-                        color = Ink.copy(alpha = 0.5f),
-                        fontSize = 14.sp
+                        color = Indigo700,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             } else {
-                Spacer(modifier = Modifier.width(64.dp))  // balance the row
+                Spacer(modifier = Modifier.width(48.dp))  // balance the row
             }
         }
 
@@ -203,20 +221,6 @@ fun OnboardingScreen(
                         current = answers.liturgicalCalendar,
                         onSelect = viewModel::setLiturgicalCalendar
                     )
-                    STEP_DEVOTIONAL -> DevotionalStep(
-                        author = answers.devotionalAuthor,
-                        spurgeonMorningMin = answers.spurgeonMin,
-                        spurgeonEveningMin = answers.spurgeonEveningMin,
-                        spurgeonMorningEnabled = answers.spurgeonMorningEnabled,
-                        spurgeonEveningEnabled = answers.spurgeonEveningEnabled,
-                        bonhoefferMin = answers.bonhoefferMin,
-                        onAuthorChange = viewModel::setDevotionalAuthor,
-                        onSpurgeonMorningMinChange = viewModel::setSpurgeonMin,
-                        onSpurgeonEveningMinChange = viewModel::setSpurgeonEveningMin,
-                        onSpurgeonMorningEnabledChange = viewModel::setSpurgeonMorningEnabled,
-                        onSpurgeonEveningEnabledChange = viewModel::setSpurgeonEveningEnabled,
-                        onBonhoefferMinChange = viewModel::setBonhoefferMin
-                    )
                     STEP_REMINDERS -> RemindersStep(
                         morningEnabled = answers.morningEnabled,
                         morningMin = answers.morningMin,
@@ -239,11 +243,30 @@ fun OnboardingScreen(
                         name = answers.firstCollectionName,
                         description = answers.firstCollectionDescription,
                         onNameChange = viewModel::setFirstCollectionName,
-                        onDescriptionChange = viewModel::setFirstCollectionDescription
+                        onDescriptionChange = viewModel::setFirstCollectionDescription,
+                        onSkipToApp = {
+                            // User wants to just enter the app. Commit now
+                            // with whatever defaults are in place — we'll
+                            // seed the starter collection with the placeholder
+                            // name and nothing more — and jump home.
+                            scope.launch {
+                                viewModel.completeOnboarding()
+                                onNavigateToHome()
+                            }
+                        }
                     )
                     STEP_FIRST_GRATITUDE -> FirstGratitudeStep(
                         text = answers.firstGratitudeText,
-                        onTextChange = viewModel::setFirstGratitudeText
+                        onTextChange = viewModel::setFirstGratitudeText,
+                        onSkipToApp = {
+                            // Skip gratitude and enter the app. Identical to
+                            // the primary button except no gratitude is saved
+                            // (the VM already handles blank text gracefully).
+                            scope.launch {
+                                viewModel.completeOnboarding()
+                                onNavigateToHome()
+                            }
+                        }
                     )
                 }
             }
@@ -382,17 +405,27 @@ private fun NameAndGoalStep(
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        FlowRow(
+        // Fixed 4-column × 2-row grid. FlowRow packed pills of uneven widths
+        // ("3 min" vs "60 min") which made each row look ragged; giving every
+        // pill an equal weight in a Row lines them up perfectly.
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            listOf(3, 5, 10, 15, 20, 30, 45, 60).forEach { option ->
-                GoalPill(
-                    value = option,
-                    isSelected = goalMinutes == option,
-                    onClick = { onGoalChange(option) }
-                )
+            listOf(3, 5, 10, 15, 20, 30, 45, 60).chunked(4).forEach { rowOptions ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    rowOptions.forEach { option ->
+                        GoalPill(
+                            value = option,
+                            isSelected = goalMinutes == option,
+                            onClick = { onGoalChange(option) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
             }
         }
 
@@ -408,17 +441,23 @@ private fun NameAndGoalStep(
 }
 
 @Composable
-private fun GoalPill(value: Int, isSelected: Boolean, onClick: () -> Unit) {
+private fun GoalPill(
+    value: Int,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     // clip must come BEFORE clickable so the ripple respects the rounded shape,
     // and clickable must come BEFORE padding so the whole pill is tappable.
     Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
+        modifier = modifier
+            .height(44.dp)
+            .clip(RoundedCornerShape(14.dp))
             .background(
                 if (isSelected) Indigo700 else Indigo700.copy(alpha = 0.1f)
             )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
     ) {
         Text(
             text = "$value min",
@@ -533,172 +572,7 @@ private fun LiturgicalStep(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Step 5 — Devotional Author
-// ═══════════════════════════════════════════════════════════════════════════
-
-@Composable
-private fun DevotionalStep(
-    author: DevotionalAuthor,
-    spurgeonMorningMin: Int,
-    spurgeonEveningMin: Int,
-    spurgeonMorningEnabled: Boolean,
-    spurgeonEveningEnabled: Boolean,
-    bonhoefferMin: Int,
-    onAuthorChange: (DevotionalAuthor) -> Unit,
-    onSpurgeonMorningMinChange: (Int) -> Unit,
-    onSpurgeonEveningMinChange: (Int) -> Unit,
-    onSpurgeonMorningEnabledChange: (Boolean) -> Unit,
-    onSpurgeonEveningEnabledChange: (Boolean) -> Unit,
-    onBonhoefferMinChange: (Int) -> Unit
-) {
-    StepScaffold(
-        iconTint = Gold700,
-        title = "A daily\ndevotional?",
-        subtitle = "A short classical reading each morning or evening"
-    ) {
-        val options = listOf(
-            DevotionalAuthor.NONE to "None",
-            DevotionalAuthor.SPURGEON to "Spurgeon",
-            DevotionalAuthor.BONHOEFFER to "Bonhoeffer",
-            DevotionalAuthor.BOTH to "Both"
-        )
-        // "Bonhoeffer" is 10 chars — at 12sp in a quarter-width segment it wraps
-        // to two lines ("Bonhoeff | er") and blows up that one button's height,
-        // visually breaking the pill row. Drop to 11sp + force single line +
-        // no soft-wrap. All four labels fit cleanly even on narrow phones.
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            options.forEachIndexed { index, (value, label) ->
-                SegmentedButton(
-                    selected = author == value,
-                    onClick = { onAuthorChange(value) },
-                    shape = SegmentedButtonDefaults.itemShape(index, options.size)
-                ) {
-                    Text(
-                        text = label,
-                        fontSize = 11.sp,
-                        maxLines = 1,
-                        softWrap = false
-                    )
-                }
-            }
-        }
-
-        if (author == DevotionalAuthor.SPURGEON || author == DevotionalAuthor.BOTH) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Spurgeon's "Morning and Evening" gives two readings per day.
-            // Each half has its own time picker AND an independent enable
-            // toggle so a user who only wants the evening reading (or the
-            // morning) isn't woken at the other slot.
-            ToggleableTimeBlock(
-                label = "Spurgeon morning reading",
-                enabled = spurgeonMorningEnabled,
-                minuteOfDay = spurgeonMorningMin,
-                onEnabledChange = onSpurgeonMorningEnabledChange,
-                onMinuteChange = onSpurgeonMorningMinChange
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            ToggleableTimeBlock(
-                label = "Spurgeon evening reading",
-                enabled = spurgeonEveningEnabled,
-                minuteOfDay = spurgeonEveningMin,
-                onEnabledChange = onSpurgeonEveningEnabledChange,
-                onMinuteChange = onSpurgeonEveningMinChange
-            )
-        }
-
-        if (author == DevotionalAuthor.BONHOEFFER || author == DevotionalAuthor.BOTH) {
-            Spacer(modifier = Modifier.height(12.dp))
-            TimeBlock(
-                label = "Bonhoeffer delivery time",
-                minuteOfDay = bonhoefferMin,
-                onChange = onBonhoefferMinChange
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = when (author) {
-                DevotionalAuthor.NONE ->
-                    "Pick later in Settings if you change your mind."
-                DevotionalAuthor.SPURGEON ->
-                    "Charles Spurgeon's Morning and Evening — 365 public-domain readings in two daily slots."
-                DevotionalAuthor.BONHOEFFER ->
-                    "Dietrich Bonhoeffer's evening reflections — deep, challenging companion."
-                DevotionalAuthor.BOTH ->
-                    "Two voices across the day. Spurgeon morning + evening plus a Bonhoeffer reflection."
-            },
-            fontSize = 13.sp,
-            color = Ink.copy(alpha = 0.6f),
-            textAlign = TextAlign.Center,
-            lineHeight = 18.sp
-        )
-    }
-}
-
-/**
- * Compact time block with an inline enable switch. Used for the Spurgeon
- * morning and evening slots where each half can be turned off independently.
- * Keeps the layout flat (no nested cards) so the onboarding step stays
- * scannable.
- */
-@Composable
-private fun ToggleableTimeBlock(
-    label: String,
-    enabled: Boolean,
-    minuteOfDay: Int,
-    onEnabledChange: (Boolean) -> Unit,
-    onMinuteChange: (Int) -> Unit
-) {
-    val context = LocalContext.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = label,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = Ink
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            TextButton(
-                onClick = {
-                    TimePickerDialog(
-                        context,
-                        { _, h, m -> onMinuteChange(h * 60 + m) },
-                        minuteOfDay / 60,
-                        minuteOfDay % 60,
-                        false
-                    ).show()
-                },
-                enabled = enabled,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    horizontal = 0.dp, vertical = 2.dp
-                )
-            ) {
-                Text(
-                    text = formatTime(minuteOfDay),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (enabled) Gold700 else Ink.copy(alpha = 0.4f)
-                )
-            }
-        }
-        Switch(
-            checked = enabled,
-            onCheckedChange = onEnabledChange
-        )
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Step 6 — Reminders + Quiet Hours + POST_NOTIFICATIONS prompt
+// Step 5 — Reminders + Quiet Hours + POST_NOTIFICATIONS prompt
 // ═══════════════════════════════════════════════════════════════════════════
 
 @Composable
@@ -738,7 +612,7 @@ private fun RemindersStep(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "We need permission to send reminders and your devotional.",
+                        text = "We need permission to send prayer reminders.",
                         fontSize = 13.sp,
                         color = Ink.copy(alpha = 0.7f)
                     )
@@ -870,7 +744,7 @@ private fun ReminderRow(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Step 7 — First Prayer Collection
+// Step 6 — First Prayer Collection
 // ═══════════════════════════════════════════════════════════════════════════
 
 @Composable
@@ -878,12 +752,13 @@ private fun FirstCollectionStep(
     name: String,
     description: String,
     onNameChange: (String) -> Unit,
-    onDescriptionChange: (String) -> Unit
+    onDescriptionChange: (String) -> Unit,
+    onSkipToApp: () -> Unit
 ) {
     StepScaffold(
         iconTint = GratitudeGreen,
         title = "Your first\nprayer list",
-        subtitle = "A place to gather the people and things on your heart"
+        subtitle = "Create one now, or jump straight into the app"
     ) {
         TextField(
             value = name,
@@ -901,23 +776,41 @@ private fun FirstCollectionStep(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "You can add prayer items to this list as soon as you're inside the app.",
+            text = "Tap Next below to create this list, or skip and add lists later from inside the app.",
             fontSize = 13.sp,
             color = Ink.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,
             lineHeight = 18.sp
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        // Prominent "no thanks, just let me in" escape hatch. Matches feedback
+        // that some users want to poke around the app before committing to a
+        // list structure.
+        OutlinedButton(
+            onClick = onSkipToApp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Text(
+                text = "Skip — take me into the app",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Step 8 — First Gratitude Entry (optional)
+// Step 7 — First Gratitude Entry (optional)
 // ═══════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun FirstGratitudeStep(
     text: String,
-    onTextChange: (String) -> Unit
+    onTextChange: (String) -> Unit,
+    onSkipToApp: () -> Unit
 ) {
     StepScaffold(
         iconTint = GratitudeGreen,
@@ -941,6 +834,24 @@ private fun FirstGratitudeStep(
             textAlign = TextAlign.Center,
             lineHeight = 18.sp
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        // Prominent in-content skip. The small "Skip" link in the top bar was
+        // easy to miss; users asked for a clearly labeled button on the step
+        // itself that ends onboarding without pressuring them to type a
+        // gratitude entry right now.
+        OutlinedButton(
+            onClick = onSkipToApp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Text(
+                text = "Skip for now — begin praying",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
 
@@ -1009,31 +920,6 @@ private fun StepScaffold(
 // ═══════════════════════════════════════════════════════════════════════════
 // Time picker button (12-hour format) and helpers
 // ═══════════════════════════════════════════════════════════════════════════
-
-@Composable
-private fun TimeBlock(
-    label: String,
-    minuteOfDay: Int,
-    onChange: (Int) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            fontSize = 14.sp,
-            color = Ink.copy(alpha = 0.8f),
-            modifier = Modifier.weight(1f)
-        )
-        TimeButton(
-            label = "At",
-            minuteOfDay = minuteOfDay,
-            onChange = onChange,
-            modifier = Modifier.width(140.dp)
-        )
-    }
-}
 
 @Composable
 private fun TimeButton(

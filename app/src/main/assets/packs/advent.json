@@ -1,0 +1,24 @@
+{
+  "id": "advent",
+  "name": "Advent — Waiting for the Light",
+  "emoji": "🕯️",
+  "category": "Seasonal",
+  "description": "Four weeks of hope, longing, and quiet preparation for the coming of Christ. Mix ancient antiphons with fresh prayers for the season of expectant waiting.",
+  "prayers": [
+    { "title": "Light the candle of Hope", "description": "Pause at the first candle of Advent. Ask God to rekindle hope in every place it has grown dim — in your home, your nation, and your own heart.", "category": "Hope" },
+    { "title": "Light the candle of Peace", "description": "Ask the Prince of Peace to still what is anxious within you, and to send His peace into a world straining for good news.", "category": "Peace" },
+    { "title": "Light the candle of Joy", "description": "Ask God for joy that does not depend on circumstance — the deep, settled joy of knowing Christ has come and is coming again.", "category": "Joy" },
+    { "title": "Light the candle of Love", "description": "Thank God that His love took on flesh. Ask Him to let His love flow through you to the people who will cross your path today.", "category": "Love" },
+    { "title": "A prayer for waiting well", "description": "Sit in the quiet of Advent. Tell God what you are waiting for, and ask Him to teach you the slow, trusting patience of Mary and Simeon.", "category": "Waiting" },
+    { "title": "Prepare the way of the Lord", "description": "Pray through John the Baptist's cry: where does your heart need smoothing, lowering, or lifting to receive Christ more fully?", "category": "Preparation" },
+    { "title": "Mary's Magnificat", "description": "Pray Luke 1:46-55 slowly as your own song. Ask God to magnify Himself in the small, hidden details of your life.", "category": "Praise" },
+    { "title": "O Sapientia — O Wisdom", "description": "Ancient antiphon for Dec 17. 'O Wisdom, coming from the mouth of the Most High, reaching from one end to the other, mightily and sweetly ordering all things — come and teach us the way of prudence.'", "category": "Antiphon" },
+    { "title": "O Adonai — O Lord of Israel", "description": "Ancient antiphon for Dec 18. 'O Adonai, Leader of Israel, You appeared to Moses in the fire of the burning bush and gave him the Law on Sinai — come and redeem us with an outstretched arm.'", "category": "Antiphon" },
+    { "title": "O Radix Jesse — O Root of Jesse", "description": "Ancient antiphon for Dec 19. 'O Root of Jesse, standing as a sign among the peoples — come and save us, and do not delay.'", "category": "Antiphon" },
+    { "title": "O Clavis David — O Key of David", "description": "Ancient antiphon for Dec 20. 'O Key of David, and Scepter of the house of Israel — come and lead the prisoner from the dungeon, and those who sit in darkness and the shadow of death.'", "category": "Antiphon" },
+    { "title": "O Oriens — O Dayspring", "description": "Ancient antiphon for Dec 21. 'O Dayspring, Brightness of the everlasting light, Sun of justice — come and enlighten those who sit in darkness and in the shadow of death.'", "category": "Antiphon" },
+    { "title": "O Rex Gentium — O King of the Nations", "description": "Ancient antiphon for Dec 22. 'O King of the Nations, the desired of all peoples, the cornerstone that binds all things into one — come and save the creatures You fashioned from dust.'", "category": "Antiphon" },
+    { "title": "O Emmanuel — O God With Us", "description": "Ancient antiphon for Dec 23. 'O Emmanuel, our King and Lawgiver, the expectation and salvation of the nations — come and save us, O Lord our God.'", "category": "Antiphon" },
+    { "title": "Christmas Eve — Pray for the world He came to save", "description": "On this holy night, lift up the whole aching world before the Child of Bethlehem. Pray for those who feel forgotten this Christmas.", "category": "Intercession" }
+  ]
+}

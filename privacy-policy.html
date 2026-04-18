@@ -104,9 +104,9 @@
     <p class="topnav"><a href="index.html">&larr; Home</a> <a href="delete-account.html">Delete your account</a></p>
 
     <h1>PrayerQuest Privacy Policy</h1>
-    <p class="subtitle">Effective Date: April 16, 2026 &nbsp;|&nbsp; Last Updated: April 16, 2026</p>
+    <p class="subtitle">Effective Date: April 16, 2026 &nbsp;|&nbsp; Last Updated: April 18, 2026</p>
 
-    <p>PrayerQuest ("the App," "we," "us," or "our") is a gamified prayer-habit application for Android developed by Nathan DeBruler. This policy explains what data the App collects, where it is stored, which third-party services it is shared with, and what choices you have over your data.</p>
+    <p>PrayerQuest ("the App," "we," "us," or "our") is a gamified prayer-habit application for Android developed by Nathan DeBruler, operating as a sole developer. For the purposes of the EU General Data Protection Regulation, the UK GDPR, and the Swiss Federal Act on Data Protection, <strong>Nathan DeBruler is the data controller</strong> for personal data processed through the App. This policy explains what data the App collects, where it is stored, which third-party services it is shared with, and what choices you have over your data.</p>
 
     <p>PrayerQuest is designed to be offline-first: personal prayer items, journal entries, gratitude entries, photos, voice transcriptions, and gamification progress are stored on your device and never transmitted to us. However, some features &mdash; most importantly Prayer Groups &mdash; and several Google services embedded in the App do transmit data off your device. This policy describes both categories in full.</p>
 
@@ -152,7 +152,7 @@
                 <td>Google AdMob (Google LLC)</td>
             </tr>
             <tr>
-                <td>Subscription status</td>
+                <td>Purchase status for the ad-free upgrade (monthly subscription, annual subscription, or one-time purchase for the life of the app)</td>
                 <td>Collected</td>
                 <td>Google Play Billing (Google LLC)</td>
             </tr>
@@ -197,7 +197,7 @@
         <li>"I prayed for this" activity (which user prayed for which item and when)</li>
     </ul>
     <p>Prayer Groups are strictly <strong>invite-only</strong>: there is no public directory, and groups can only be joined by entering the correct invite code. Anyone who possesses the invite code can join &mdash; treat invite codes like passwords and share them only with people you trust.</p>
-    <p>Group data is encrypted in transit (HTTPS/TLS) and at rest using Google's default encryption. It is <strong>not</strong> end-to-end encrypted, meaning it could in theory be accessed by Google under the terms of their privacy policy and applicable law. Your private prayer journal entries and personal (non-group) prayer items are <strong>never</strong> transmitted to Firestore.</p>
+    <p>Group data is encrypted in transit (HTTPS/TLS) and at rest using Google's default encryption. It is <strong>not</strong> end-to-end encrypted, meaning it is accessible to Google as the infrastructure provider, subject to Google's contractual commitments to us, Google's own privacy policy, and applicable law. Your private prayer journal entries and personal (non-group) prayer items are <strong>never</strong> transmitted to Firestore or to any other server.</p>
     <p>This data is subject to the <a href="https://firebase.google.com/terms" target="_blank" rel="noopener">Google Firebase Terms of Service</a> and <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.</p>
 
     <h2>4. Data Collected Automatically</h2>
@@ -226,17 +226,32 @@
         <li>Approximate location derived from IP address</li>
         <li>Ad impressions, clicks, and other ad-interaction events</li>
     </ul>
-    <p>Premium subscribers do not see ads and are not subject to this collection. You can also reset or limit use of your Advertising ID in <strong>Android Settings &rsaquo; Google &rsaquo; Ads</strong>.</p>
+    <p>Users who have purchased any of the ad-free options (monthly, annual, or one-time) do not see ads and are not subject to this collection. You can also reset or limit use of your Advertising ID in <strong>Android Settings &rsaquo; Google &rsaquo; Ads</strong>.</p>
 
     <h3>4.4 Google Play Billing</h3>
-    <p>If you subscribe to PrayerQuest Premium, Google Play Billing handles all payment processing. We receive confirmation of your subscription status from Google; we never see your payment card number, CVV, or billing address.</p>
+    <p>PrayerQuest offers three ad-free upgrade options, all handled by Google Play Billing:</p>
+    <ul>
+        <li><strong>Monthly subscription</strong> ($2.99 / month)</li>
+        <li><strong>Annual subscription</strong> ($14.99 / year)</li>
+        <li><strong>One-time purchase</strong> ($24.99, ad-free for the life of the app)</li>
+    </ul>
+    <p>Google Play Billing handles all payment processing. We receive confirmation of your purchase or subscription status from Google; <strong>we never see your payment card number, CVV, or billing address.</strong> If you cancel a subscription or request a refund, that is handled entirely through your Google Play account. The one-time purchase keeps PrayerQuest ad-free for as long as the App continues to be available on the Google Play Store and supported by the developer.</p>
+
+    <h3>4.5 Consent Management for Users in the EEA, UK, and Switzerland</h3>
+    <p>If you are located in the European Economic Area, the United Kingdom, or Switzerland, PrayerQuest uses <strong>Google's User Messaging Platform (UMP)</strong> to present a consent dialog on first launch (and whenever Google requires a refresh). This dialog lets you choose whether Google AdMob and Google's other advertising and analytics partners may process your data to deliver <em>personalized</em> ads and analytics, or only <em>non-personalized</em> ads and analytics.</p>
+    <ul>
+        <li>If you <strong>consent</strong>, Google and its partners may use your Advertising ID, approximate location, and ad-interaction data to personalize the ads you see.</li>
+        <li>If you <strong>decline</strong>, you will still see ads in the free tier, but they will be non-personalized (contextual only). Firebase Analytics will likewise operate in a reduced-measurement mode that does not rely on identifiers for advertising.</li>
+        <li>You can change your choice at any time from <strong>Settings &rsaquo; Privacy &rsaquo; Ad & analytics preferences</strong> inside the App, which re-opens the same consent dialog.</li>
+    </ul>
+    <p>This mechanism is how we comply with the GDPR, the UK GDPR, and the Swiss Federal Act on Data Protection for advertising-related processing. Users outside these regions are not shown the UMP dialog; the information in §4.1 and §4.3 applies to them by default, subject to the opt-out controls described in §8.</p>
 
     <h2>5. Information We Do NOT Collect</h2>
     <ul>
         <li>We do not require you to create an account to use PrayerQuest's core features (personal prayer, gratitude, library, gamification). Signing in is required only for Prayer Groups.</li>
         <li>We do not read, analyze, mine, or sell the content of your prayers, journal entries, gratitude notes, voice transcriptions, or photos. Ever.</li>
         <li>We do not operate our own servers or databases. All data that leaves your device is handled by Google via Firebase, AdMob, or Play Billing.</li>
-        <li>We do not use your data for AI training or profiling beyond the personalized-advertising inferences made by Google AdMob in the free tier.</li>
+        <li>We, the developer, do not use your data to train AI models or build advertising profiles. Personalized advertising in the free tier is handled by Google AdMob under Google's own terms (see §4.3 and §4.5) &mdash; you can opt out of personalized ads at any time.</li>
         <li>We do not collect your precise location, contacts, calendar, SMS, call logs, health data, or installed-app list.</li>
         <li>We do not record or upload raw audio. Voice-to-text uses Android's built-in <code>SpeechRecognizer</code> API, which may use your device's Google speech service; PrayerQuest itself only receives and stores the transcribed text.</li>
     </ul>
@@ -246,8 +261,8 @@
         <li><strong>To operate the App:</strong> storing your local prayer items, tracking gamification progress, delivering notifications you've opted into.</li>
         <li><strong>To enable Prayer Groups:</strong> authenticating you with Google, synchronizing shared prayer requests between group members.</li>
         <li><strong>To diagnose and fix problems:</strong> Firebase Analytics and crash events help us spot bugs and improve stability.</li>
-        <li><strong>To show ads (free tier):</strong> Google AdMob serves advertisements. Upgrading to Premium removes ads entirely.</li>
-        <li><strong>To process subscriptions:</strong> Google Play Billing handles Premium subscription status.</li>
+        <li><strong>To show ads (free tier):</strong> Google AdMob serves advertisements. Upgrading via any of the ad-free options (monthly, annual, or one-time) removes ads entirely.</li>
+        <li><strong>To process purchases and subscriptions:</strong> Google Play Billing handles your purchase or subscription status for the ad-free upgrade.</li>
     </ul>
 
     <h2>7. Data Sharing and Third Parties</h2>
@@ -259,24 +274,57 @@
     </ul>
 
     <h2>8. Your Rights and Choices</h2>
+
+    <h3>8.1 Universal Controls (available to all users)</h3>
     <ul>
         <li><strong>Delete your account and cloud data:</strong> follow the instructions on our <a href="delete-account.html">Account Deletion</a> page. You can do this from inside the App (Settings &rsaquo; Account &rsaquo; Delete My Account) or by emailing us.</li>
         <li><strong>Leave a group or delete a shared prayer request:</strong> both are available at any time from within the App.</li>
         <li><strong>Delete all local data:</strong> in Android Settings, go to Apps &rsaquo; PrayerQuest &rsaquo; Storage &rsaquo; Clear storage, or uninstall the App.</li>
-        <li><strong>Remove ads:</strong> upgrade to PrayerQuest Premium.</li>
-        <li><strong>Reset or opt out of personalized ads:</strong> Android Settings &rsaquo; Google &rsaquo; Ads.</li>
-        <li><strong>Disable Firebase Analytics:</strong> an in-app toggle will be added in a future release; in the meantime, contact us to request an opt-out and we will honor it for your account / install.</li>
+        <li><strong>Remove ads:</strong> choose any of the ad-free options ($2.99/month, $14.99/year, or a single $24.99 purchase that keeps the App ad-free for the life of the app).</li>
+        <li><strong>Manage ads and analytics consent</strong> (EEA/UK/Switzerland): open <strong>Settings &rsaquo; Privacy &rsaquo; Ad & analytics preferences</strong> to revisit the UMP consent dialog described in §4.5.</li>
+        <li><strong>Reset or opt out of personalized ads</strong> (all regions): Android Settings &rsaquo; Google &rsaquo; Ads.</li>
+        <li><strong>Opt out of Firebase Analytics:</strong> open <strong>Settings &rsaquo; Privacy &rsaquo; Ad & analytics preferences</strong> inside the App to disable analytics event collection. If the toggle is not yet available in your installed version, email us and we will honor the opt-out for your install.</li>
         <li><strong>Notifications:</strong> you control notification categories inside the App, and can disable them entirely from Android system settings.</li>
     </ul>
+
+    <h3>8.2 Your Rights in the United Kingdom, EEA, and Switzerland (GDPR / UK GDPR / FADP)</h3>
+    <p>If you are located in the UK, the European Economic Area, or Switzerland, data protection law gives you the following rights regarding personal data we process about you:</p>
+    <ul>
+        <li><strong>Right of access</strong> &mdash; you can ask us to confirm what personal data we hold about you and request a copy of it.</li>
+        <li><strong>Right to rectification</strong> &mdash; you can ask us to correct inaccurate or incomplete personal data.</li>
+        <li><strong>Right to erasure ("right to be forgotten")</strong> &mdash; you can ask us to delete your personal data. The in-App account deletion flow satisfies this right for your Firebase Auth account and Firestore data; contact us if you want us to confirm deletion has completed.</li>
+        <li><strong>Right to restriction of processing</strong> &mdash; you can ask us to pause processing of your data in certain circumstances (e.g., while we investigate a correction request).</li>
+        <li><strong>Right to data portability</strong> &mdash; you can ask us to provide your personal data in a structured, commonly used, machine-readable format. Because most of your data (prayer journal, gratitudes, photos) lives only on your device, you already have full access to it via the Android file system, and the App's forthcoming "Export my data" feature will provide a JSON bundle of cloud-held Group data on request.</li>
+        <li><strong>Right to object</strong> &mdash; you can object to processing of your personal data based on our legitimate interests, and to processing for direct marketing purposes (PrayerQuest does not engage in direct marketing).</li>
+        <li><strong>Right to withdraw consent</strong> &mdash; where we rely on consent (e.g., personalized advertising via the UMP dialog), you can withdraw that consent at any time via Settings &rsaquo; Privacy. Withdrawing consent does not affect the lawfulness of prior processing.</li>
+        <li><strong>Right to lodge a complaint</strong> &mdash; you have the right to lodge a complaint with your local data protection authority (e.g., the UK ICO, the Irish DPC, the Swiss FDPIC, or the supervisory authority in your EU member state).</li>
+    </ul>
+    <p>The legal bases on which we process your personal data are: (a) <strong>consent</strong> for personalized ads and analytics in the EEA/UK/Switzerland; (b) <strong>performance of a contract</strong> for Group-related data (so we can provide the Group service you asked for); (c) our <strong>legitimate interests</strong> in keeping the App stable and secure (crash and performance diagnostics); and (d) <strong>compliance with legal obligations</strong>, where applicable.</p>
+    <p>To exercise any of these rights, contact us at the email address in §13. We will respond within one month. We may need to verify your identity before acting on a request.</p>
+
+    <h3>8.3 Your Rights in California (CCPA/CPRA)</h3>
+    <p>If you are a California resident, the California Consumer Privacy Act as amended by the CPRA gives you the following rights regarding personal information:</p>
+    <ul>
+        <li><strong>Right to know</strong> the categories and specific pieces of personal information we have collected about you, the sources, the business purposes, and the categories of third parties we disclose it to. (All of the above is set out in §1 and §§3&ndash;4 of this policy.)</li>
+        <li><strong>Right to delete</strong> personal information we have collected from you. Use the in-App Delete My Account flow, or email us.</li>
+        <li><strong>Right to correct</strong> inaccurate personal information we maintain about you.</li>
+        <li><strong>Right to limit use and disclosure of sensitive personal information.</strong> PrayerQuest does not use or disclose any sensitive personal information beyond what is necessary to provide the services you requested.</li>
+        <li><strong>Right to non-discrimination</strong> &mdash; we will not deny service, charge you more, or provide a lower quality of service because you exercised any of these rights.</li>
+    </ul>
+    <p><strong>No "sale" or "sharing" of personal information.</strong> PrayerQuest does <em>not</em> sell your personal information and does not "share" it for cross-context behavioral advertising as those terms are defined by the CPRA. Ads shown in the free tier via Google AdMob are served based on in-app signals and (for users who consent) the Advertising ID; we do not authorize Google or any other third party to use data collected through PrayerQuest to build cross-site behavioral profiles of you. We have not sold or shared the personal information of California residents in the preceding 12 months, nor do we intend to.</p>
+    <p>To exercise these rights, contact us at the email address in §13. We will verify your identity by matching the email address you contact us from against the Google account you used to sign in (if applicable).</p>
 
     <h2>9. Data Retention</h2>
     <p>Local data is retained on your device until you delete it or uninstall the App. Prayer Groups data in Firestore is retained for as long as the group exists; once deleted from the group or via account deletion, it is removed from Google's active systems immediately and from Google's encrypted backups within approximately 180 days per Google's standard timeline. Firebase Analytics data is retained per Google's default retention (currently 14 months for event-level data).</p>
 
     <h2>10. Children's Privacy</h2>
-    <p>PrayerQuest is not directed at children under the age of 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information through Prayer Groups, please contact us and we will delete it promptly.</p>
+    <p>PrayerQuest is not directed at children under the age of 13, and we do not knowingly collect personal information from children under 13 in compliance with the U.S. Children's Online Privacy Protection Act (COPPA). In the European Economic Area, the United Kingdom, and Switzerland, the age at which a child can consent to processing of personal data in connection with an online service is set by local law and ranges from 13 to 16 depending on the country; where the applicable age is higher than 13, parental or guardian consent is required below that age. If you are a parent or guardian and believe your child has provided us with personal information through Prayer Groups or Prayer Partners, please contact us using the email address in §13 and we will delete the information and any associated Firebase Auth account promptly.</p>
+    <p>PrayerQuest does not knowingly sell, share, or use the personal information of anyone under 16 for personalized advertising.</p>
 
-    <h2>11. International Users</h2>
-    <p>PrayerQuest uses Google services. Your data may therefore be processed on servers operated by Google anywhere in the world, subject to Google's infrastructure and applicable data-transfer frameworks. By using Prayer Groups, you consent to this processing.</p>
+    <h2>11. International Users and Cross-Border Data Transfers</h2>
+    <p>PrayerQuest uses Google services (Firebase, AdMob, Google Play Billing). Your personal data may therefore be processed on servers operated by Google anywhere in the world, including in the United States and other jurisdictions that may not offer an equivalent level of data protection to your home country.</p>
+    <p>Where personal data is transferred out of the UK, EEA, or Switzerland, Google relies on transfer mechanisms recognized under the GDPR / UK GDPR / FADP (such as the EU-U.S. Data Privacy Framework, the UK Extension to the EU-U.S. Data Privacy Framework, the Swiss-U.S. Data Privacy Framework, and/or Standard Contractual Clauses). You can review Google's current transfer disclosures at <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">policies.google.com/privacy</a> and at <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">firebase.google.com/support/privacy</a>.</p>
+    <p>The legal bases for this processing are those set out in §8.2. If you are not comfortable with these transfers, you can avoid them entirely by not using Prayer Groups or Prayer Partners and (in the EEA/UK/Switzerland) by declining the UMP consent dialog, which limits advertising- and analytics-related processing to the non-personalized minimum.</p>
 
     <h2>12. Changes to This Policy</h2>
     <p>We may update this Privacy Policy from time to time. When we do, the "Last Updated" date above will change. For material changes, we will notify you in-App. Your continued use of PrayerQuest after a change constitutes acceptance of the updated policy.</p>

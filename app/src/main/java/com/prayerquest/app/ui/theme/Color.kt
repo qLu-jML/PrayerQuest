@@ -59,3 +59,11 @@ val GratitudeGold = Color(0xFFFFD54F)
 // Group section accent
 val CommunityBlue = Color(0xFF42A5F5)
 val CommunityTeal = Color(0xFF26A69A)
+
+// ────────────────────────────────────────────────────────────────────────────
+// LITURGICAL ACCENTS — used by the Home Liturgical Day card and the Library
+// seasonal-pack pin. Deliberately muted so they read as "a stained-glass hint"
+// rather than "kitsch cathedral". DD §3.5.4 calls for subtle, not loud.
+// ────────────────────────────────────────────────────────────────────────────
+val StainedGlassViolet = Color(0xFF6A4FA8)   // Deep jewel-tone violet
+val StainedGlassAmber = Color(0xFFE6B93A)    // Warm candle-glow amber

@@ -17,19 +17,27 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.prayerquest.app.PrayerQuestApplication
 import com.prayerquest.app.data.preferences.UserPreferences
+import com.prayerquest.app.ui.celebration.AnsweredCelebrationScreen
 import com.prayerquest.app.ui.collections.AddItemsToCollectionScreen
 import com.prayerquest.app.ui.collections.CollectionDetailScreen
 import com.prayerquest.app.ui.collections.CreateCollectionScreen
+import com.prayerquest.app.ui.crisis.CrisisBreathPrayerScreen
+import com.prayerquest.app.ui.crisis.CrisisPrayerScreen
+import com.prayerquest.app.ui.crisis.CrisisPsalmsReaderScreen
+import com.prayerquest.app.ui.crisis.CrisisResourcesScreen
 import com.prayerquest.app.ui.gratitude.GratitudeCatalogueScreen
 import com.prayerquest.app.ui.gratitude.GratitudeLogScreen
+import com.prayerquest.app.ui.gratitude.GratitudeSpeedRoundScreen
 import com.prayerquest.app.ui.groups.AddGroupPrayerScreen
 import com.prayerquest.app.ui.groups.CreateGroupScreen
 import com.prayerquest.app.ui.groups.GroupDetailScreen
 import com.prayerquest.app.ui.groups.JoinGroupScreen
 import com.prayerquest.app.ui.groups.PrayerGroupsScreen
 import com.prayerquest.app.ui.library.AnsweredPrayerDetailScreen
+import com.prayerquest.app.ui.library.BiblePrayerDetailScreen
 import com.prayerquest.app.ui.library.FamousPrayerDetailScreen
 import com.prayerquest.app.ui.prayer.ModePickerScreen
+import com.prayerquest.app.ui.prayer.PrayerListPickerScreen
 import com.prayerquest.app.ui.prayer.PrayerSessionScreen
 import com.prayerquest.app.ui.premium.PremiumPaywallScreen
 import com.prayerquest.app.ui.screen.HomeScreen
@@ -111,6 +119,27 @@ fun PrayerQuestNavHost(
                     },
                     onOpenSettings = {
                         navController.navigate("settings")
+                    },
+                    onCrisisPrayer = {
+                        // Routes to the Crisis Prayer hub. Not in the
+                        // regular prayer-session route tree — Crisis flow
+                        // lives in its own set of routes so a distracted
+                        // tap on Back never lands on Session summary with
+                        // a "You earned XP!" toast.
+                        navController.navigate(Routes.CRISIS_PRAYER)
+                    },
+                    onLiturgicalTap = {
+                        // Route to the Library tab. LibraryViewModel already
+                        // knows today's liturgical season via UserPreferences +
+                        // LiturgicalCalendar.today(), so the seasonal pack is
+                        // pinned at the top of the Collections shelf on arrival.
+                        navController.navigate(TopLevelDestination.LIBRARY.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 )
             }
@@ -119,10 +148,12 @@ fun PrayerQuestNavHost(
                 // Pray tab IS the Mode Picker — no intermediate "modes with a
                 // button that opens the real picker" screen. onBackClick is
                 // null because this is a bottom-nav root (users exit via the
-                // bar, not a back arrow).
+                // bar, not a back arrow). After picking a mode we route to
+                // the list picker so the user can choose which pool of
+                // prayers to focus on (general, a collection, or a group).
                 ModePickerScreen(
                     onModePicked = { mode ->
-                        navController.navigate(Routes.prayerSession(mode.name))
+                        navController.navigate(Routes.prayerListPicker(mode.name))
                     }
                 )
             }
@@ -134,6 +165,9 @@ fun PrayerQuestNavHost(
                     },
                     onNavigateToFamousPrayerDetail = { prayerId ->
                         navController.navigate("famous_prayer/$prayerId")
+                    },
+                    onNavigateToBiblePrayerDetail = { prayerId ->
+                        navController.navigate("bible_prayer/$prayerId")
                     },
                     onNavigateToAnsweredPrayerDetail = { prayerId ->
                         navController.navigate("answered_prayer/$prayerId")
@@ -174,7 +208,8 @@ fun PrayerQuestNavHost(
             // Home cog icon — it's not a bottom-nav tab anymore.
             composable("settings") {
                 SettingsScreen(
-                    userPreferences = userPreferences
+                    userPreferences = userPreferences,
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 
@@ -193,21 +228,106 @@ fun PrayerQuestNavHost(
             ) { backStackEntry ->
                 val collectionArg = backStackEntry.arguments?.getLong("collectionId")
                     ?: Routes.NO_COLLECTION
+                val hasCollectionContext = collectionArg >= 0
                 ModePickerScreen(
                     onBackClick = { navController.popBackStack() },
                     onModePicked = { mode ->
                         // Replace the picker in the back stack so Back from a
                         // session returns to wherever the user started (Home,
                         // Collections Detail, etc.), not to the picker they
-                        // just cleared. Forward the collection context so the
-                        // session prays that collection's items.
+                        // just cleared.
+                        //
+                        // Two flows:
+                        //   1. Collection already chosen (launched from a
+                        //      Collection Detail "Pray this" button) → skip
+                        //      the list picker and go straight to the session.
+                        //   2. No collection context (Home "Start Prayer") →
+                        //      route through the list picker so the user can
+                        //      choose general / a collection / a group.
+                        if (hasCollectionContext) {
+                            navController.navigate(
+                                Routes.prayerSession(
+                                    mode = mode.name,
+                                    collectionId = collectionArg
+                                )
+                            ) {
+                                popUpTo(Routes.PRAYER_MODE_PICKER) { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate(Routes.prayerListPicker(mode.name)) {
+                                popUpTo(Routes.PRAYER_MODE_PICKER) { inclusive = true }
+                            }
+                        }
+                    }
+                )
+            }
+
+            composable(
+                route = Routes.PRAYER_LIST_PICKER,
+                arguments = listOf(
+                    navArgument("mode") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val modeArg = backStackEntry.arguments?.getString("mode").orEmpty()
+                PrayerListPickerScreen(
+                    chosenModeName = modeArg,
+                    onBackClick = { navController.popBackStack() },
+                    onGeneralPrayers = {
+                        // Pop the list picker off the stack before launching
+                        // the session so Back from Session summary returns the
+                        // user to Home / Pray tab, not back into the picker.
+                        navController.navigate(Routes.prayerSession(modeArg)) {
+                            popUpTo(Routes.PRAYER_LIST_PICKER) { inclusive = true }
+                        }
+                    },
+                    onCollectionPicked = { collectionId ->
                         navController.navigate(
-                            Routes.prayerSession(
-                                mode = mode.name,
-                                collectionId = collectionArg.takeIf { it >= 0 }
-                            )
+                            Routes.prayerSession(modeArg, collectionId)
                         ) {
-                            popUpTo(Routes.PRAYER_MODE_PICKER) { inclusive = true }
+                            popUpTo(Routes.PRAYER_LIST_PICKER) { inclusive = true }
+                        }
+                    },
+                    onAddItemsToCollection = { collectionId ->
+                        // User tapped an empty collection and chose "Add
+                        // Prayers". Pop the list picker so that after they
+                        // finish adding items, Back lands them on wherever
+                        // they came from (Home / Pray tab) instead of the
+                        // stale picker that no longer reflects their edits.
+                        navController.navigate(
+                            Routes.addItemsToCollection(collectionId)
+                        ) {
+                            popUpTo(Routes.PRAYER_LIST_PICKER) { inclusive = true }
+                        }
+                    },
+                    onBrowseLibrary = {
+                        // "General Prayers" was empty and the user chose
+                        // to browse the Library. Jump to the bottom-nav
+                        // Library tab using the same popUpTo/saveState
+                        // dance bottom-nav clicks use, so the tab's scroll
+                        // state is restored and the stack stays clean.
+                        navController.navigate(TopLevelDestination.LIBRARY.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onCreateCollection = {
+                        // Drop the user straight into the new-collection
+                        // sheet. Pop the list picker so Back from the
+                        // sheet returns to wherever they started.
+                        navController.navigate(Routes.CREATE_COLLECTION) {
+                            popUpTo(Routes.PRAYER_LIST_PICKER) { inclusive = true }
+                        }
+                    },
+                    onGroupPicked = { groupId ->
+                        // Groups aren't a native session scope yet — route to
+                        // the group detail where the user can pick a specific
+                        // shared request and pray it. Pop the list picker so
+                        // the back stack stays tidy.
+                        navController.navigate("group_detail/$groupId") {
+                            popUpTo(Routes.PRAYER_LIST_PICKER) { inclusive = true }
                         }
                     }
                 )
@@ -295,6 +415,21 @@ fun PrayerQuestNavHost(
             }
 
             // ═══════════════════════════════════════════
+            // BIBLE PRAYER DETAIL
+            // ═══════════════════════════════════════════
+
+            composable(
+                route = Routes.BIBLE_PRAYER_DETAIL,
+                arguments = listOf(navArgument("prayerId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val prayerId = backStackEntry.arguments?.getString("prayerId") ?: ""
+                BiblePrayerDetailScreen(
+                    prayerId = prayerId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // ═══════════════════════════════════════════
             // ANSWERED PRAYER DETAIL
             // ═══════════════════════════════════════════
 
@@ -318,12 +453,28 @@ fun PrayerQuestNavHost(
                     onNavigateBack = { navController.popBackStack() },
                     onGratitudeSaved = { _ -> navController.popBackStack() },
                     onNavigateToPaywall = { navController.navigate(Routes.PAYWALL) },
+                    onNavigateToSpeedRound = {
+                        navController.navigate(Routes.GRATITUDE_SPEED_ROUND)
+                    },
                 )
             }
 
             composable(Routes.GRATITUDE_CATALOGUE) {
                 GratitudeCatalogueScreen(
                     onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Speed Round is a sibling of the Log screen — navigating back
+            // pops straight to wherever Speed Round was launched from (the
+            // Log screen today, but we also expose it from Home CTAs later).
+            // Finishing the round also just pops, and the Log screen's
+            // gratitude-count badge refreshes via its Flow subscription, so
+            // there's no explicit state-hand-off needed here.
+            composable(Routes.GRATITUDE_SPEED_ROUND) {
+                GratitudeSpeedRoundScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onCompleted = { _, _, _ -> navController.popBackStack() }
                 )
             }
 
@@ -382,6 +533,74 @@ fun PrayerQuestNavHost(
             // entry point.
             composable(Routes.PAYWALL) {
                 PremiumPaywallScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // ═══════════════════════════════════════════
+            // BIG CELEBRATION MOMENT (DD §3.5.2)
+            //
+            // Full-screen modal that plays when a prayer is marked Answered.
+            // Callers only navigate here after confirming wasNewlyAnswered,
+            // so re-marking an already-answered prayer (or importing one
+            // already in the Answered state) never triggers the celebration.
+            // onDismiss pops the back stack so the user returns to whichever
+            // screen marked the prayer — typically Answered Prayer Detail or
+            // a prayer item detail sheet.
+            // ═══════════════════════════════════════════
+
+            composable(
+                route = Routes.ANSWERED_CELEBRATION,
+                arguments = listOf(navArgument("prayerId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val prayerId = backStackEntry.arguments?.getLong("prayerId") ?: 0L
+                AnsweredCelebrationScreen(
+                    prayerId = prayerId,
+                    onDismiss = { navController.popBackStack() }
+                )
+            }
+
+            // ═══════════════════════════════════════════
+            // CRISIS PRAYER MODE (DD §3.10)
+            //
+            // Its own route subtree so none of the screens here share a
+            // back-stack entry with PrayerSessionViewModel (the owner of
+            // the regular XP-awarding finalization path). If a user hits
+            // Back from any crisis sub-screen they land on the Crisis hub,
+            // and from there Back lands on Home — never on a session
+            // summary, never on a "great job!" celebration.
+            // ═══════════════════════════════════════════
+
+            composable(Routes.CRISIS_PRAYER) {
+                CrisisPrayerScreen(
+                    onOpenPsalms = { navController.navigate(Routes.CRISIS_PSALMS) },
+                    onOpenBreath = { navController.navigate(Routes.CRISIS_BREATH) },
+                    onOpenResources = { navController.navigate(Routes.CRISIS_RESOURCES) },
+                    onReturnHome = {
+                        // Pop back to the Home tab without replaying the
+                        // Crisis entry fade — the user asked to leave.
+                        navController.popBackStack(
+                            route = TopLevelDestination.HOME.route,
+                            inclusive = false
+                        )
+                    }
+                )
+            }
+
+            composable(Routes.CRISIS_PSALMS) {
+                CrisisPsalmsReaderScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(Routes.CRISIS_BREATH) {
+                CrisisBreathPrayerScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(Routes.CRISIS_RESOURCES) {
+                CrisisResourcesScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

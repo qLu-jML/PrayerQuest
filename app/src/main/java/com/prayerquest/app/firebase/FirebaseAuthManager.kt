@@ -74,13 +74,19 @@ class FirebaseAuthManager(context: Context) {
     /**
      * Handles the result from the Google Sign-In Activity.
      * Call this from your ActivityResultLauncher callback.
+     *
+     * Surfaces the ApiException statusCode and a human-readable hint so the
+     * UI can show the user what's actually wrong. By far the most common
+     * cause of failure on a fresh Firebase project is statusCode 10
+     * (DEVELOPER_ERROR) — the SHA-1 fingerprint of the APK's signing key
+     * hasn't been registered on the Firebase project for this package name.
      */
     suspend fun handleSignInResult(result: ActivityResult): Result<FirebaseUser> {
         return try {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             val account = task.getResult(ApiException::class.java)
             val idToken = account?.idToken
-                ?: return Result.failure(Exception("No ID token received"))
+                ?: return Result.failure(Exception("No ID token received from Google"))
 
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             val authResult = auth.signInWithCredential(credential).await()
@@ -90,12 +96,35 @@ class FirebaseAuthManager(context: Context) {
             Log.d(TAG, "Sign-in successful: ${user.displayName}")
             Result.success(user)
         } catch (e: ApiException) {
-            Log.e(TAG, "Google Sign-In failed: ${e.statusCode}", e)
-            Result.failure(Exception("Google Sign-In failed: ${e.message}"))
+            val code = e.statusCode
+            val hint = describeSignInStatusCode(code)
+            Log.e(TAG, "Google Sign-In failed: statusCode=$code ($hint)", e)
+            Result.failure(Exception("Google Sign-In failed (code $code): $hint"))
         } catch (e: Exception) {
             Log.e(TAG, "Firebase auth failed", e)
-            Result.failure(e)
+            Result.failure(Exception("Firebase auth failed: ${e.message ?: e.javaClass.simpleName}"))
         }
+    }
+
+    /**
+     * Map Google Sign-In / Common Status Codes to user-actionable hints.
+     * Numeric codes are from com.google.android.gms.common.api.CommonStatusCodes
+     * and com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes.
+     */
+    private fun describeSignInStatusCode(code: Int): String = when (code) {
+        10 -> "DEVELOPER_ERROR — this APK's SHA-1 isn't registered in the " +
+            "Firebase project. Add the debug+release SHA-1s to the Firebase " +
+            "console for com.prayerquest.app, re-download google-services.json, " +
+            "and rebuild."
+        12500 -> "SIGN_IN_FAILED — Google Play Services could not complete sign-in " +
+            "(often SHA-1 / package-name mismatch or Play Services out of date)."
+        12501 -> "SIGN_IN_CANCELLED — user dismissed the account picker."
+        12502 -> "SIGN_IN_CURRENTLY_IN_PROGRESS — another sign-in is already running."
+        7 -> "NETWORK_ERROR — check your internet connection."
+        8 -> "INTERNAL_ERROR — Google Play Services hiccup; try again."
+        16 -> "API_NOT_CONNECTED — Google Play Services is missing or out of date."
+        17 -> "CANCELED — sign-in was cancelled."
+        else -> "Unknown error."
     }
 
     /**

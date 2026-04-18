@@ -34,16 +34,40 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
+/**
+ * @param topics Optional list of prayer-item titles the session is
+ *   iterating through (e.g. a selected pack or collection). When
+ *   present, the Supplication phase prompt names the items explicitly
+ *   instead of the generic "What are your needs?" — by the time the
+ *   user reaches phase 4 they may have forgotten what they committed
+ *   to pray for, so we restate it. The banner at the top of the
+ *   session screen also lists items, but the banner is tiny and
+ *   easy to miss. Null/empty leaves the generic prompt in place.
+ */
 @Composable
 fun GuidedActsMode(
     onModeComplete: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    topics: List<String>? = null
 ) {
+    val supplicationPrompt = remember(topics) {
+        val items = topics.orEmpty().filter { it.isNotBlank() }
+        if (items.isEmpty()) {
+            "Ask for help and guidance. What are your needs?"
+        } else {
+            // Trim to keep the container readable — the banner above
+            // already carries the full list for very long packs.
+            val preview = items.take(5).joinToString(" · ")
+            val extra = items.size - 5
+            val tail = if (extra > 0) " · +$extra more" else ""
+            "Bring these to God: $preview$tail"
+        }
+    }
     val phases = listOf(
         ActsPhase("Adoration", "Express love and praise to God. What attributes of God inspire you most?"),
         ActsPhase("Confession", "Admit struggles and shortcomings. Where do you need grace?"),
         ActsPhase("Thanksgiving", "Give thanks for blessings. What has God provided?"),
-        ActsPhase("Supplication", "Ask for help and guidance. What are your needs?")
+        ActsPhase("Supplication", supplicationPrompt)
     )
 
     var currentPhaseIndex by remember { mutableIntStateOf(0) }

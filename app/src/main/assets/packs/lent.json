@@ -1,0 +1,22 @@
+{
+  "id": "lent",
+  "name": "Lent — Return to the Lord",
+  "emoji": "✝️",
+  "category": "Seasonal",
+  "description": "Forty days of repentance, fasting, and honest self-examination. Echoes the Daily Examen and prepares the heart for the joy of Easter.",
+  "prayers": [
+    { "title": "Ash Wednesday — Remember you are dust", "description": "Begin Lent with Psalm 90:12 — 'So teach us to number our days, that we may apply our hearts unto wisdom.' Ask God to give you a tender, truthful heart for this season.", "category": "Repentance" },
+    { "title": "Pray Psalm 51 — Create in me a clean heart", "description": "Pray David's great psalm of repentance slowly, line by line. Name what you need God to wash, restore, and renew.", "category": "Repentance" },
+    { "title": "Examen — What am I clinging to?", "description": "Ask the Holy Spirit to show you the one thing you are most reluctant to release this Lent. Bring it honestly before God.", "category": "Examen" },
+    { "title": "Prayer for the fast", "description": "If you are fasting this Lent — from food, media, or a comfort — dedicate it to the Lord. Ask Him to meet you in the empty place.", "category": "Fasting" },
+    { "title": "Pray for the hungry", "description": "Lent turns fasting outward. Pray for those who are hungry not by choice, and ask God how your fast might feed someone else.", "category": "Compassion" },
+    { "title": "Jesus in the wilderness", "description": "Meditate on Matthew 4:1-11. Where are you being tested? Ask Jesus to give you His words of Scripture in your own wilderness.", "category": "Temptation" },
+    { "title": "Kyrie eleison — Lord, have mercy", "description": "Pray the ancient cry slowly: Lord, have mercy. Christ, have mercy. Lord, have mercy. Let it carry what you cannot put into words.", "category": "Mercy" },
+    { "title": "A prayer for humility", "description": "Read Philippians 2:5-11. Ask God to form in you the mind of Christ — the same humble, self-giving love.", "category": "Humility" },
+    { "title": "Prayer for an enemy", "description": "Bring before God someone who has hurt you. Ask Him, as Jesus did from the cross, to teach you to forgive.", "category": "Forgiveness" },
+    { "title": "The prayer of the tax collector", "description": "Pray Luke 18:13 over and over: 'God be merciful to me a sinner.' Do not hurry past it.", "category": "Repentance" },
+    { "title": "Pruned to bear more fruit", "description": "Read John 15:1-8. Ask God what He is pruning in you — and thank Him that pruning is a sign of His tender care, not His displeasure.", "category": "Sanctification" },
+    { "title": "Prayer for the Church in suffering", "description": "Lent joins the cross of Christ with the ongoing cross of His body. Pray for believers in persecuted regions this day.", "category": "Intercession" },
+    { "title": "Longing for Easter", "description": "Without denying the weight of Lent, lift your eyes to the resurrection that is coming. Ask God for hope to sustain you through the season.", "category": "Hope" }
+  ]
+}

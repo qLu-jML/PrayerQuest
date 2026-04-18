@@ -25,6 +25,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,24 +35,31 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.prayerquest.app.PrayerQuestApplication
 import com.prayerquest.app.domain.model.PrayerMode
 import com.prayerquest.app.domain.model.Tradition
 import com.prayerquest.app.domain.model.isVisibleFor
+import kotlinx.coroutines.launch
 
 /**
  * The "Netflix of Prayer Modes" (DD §3.1.3). Replaces the old cycle-through-
@@ -84,11 +93,23 @@ fun ModePickerScreen(
 ) {
     val app = LocalContext.current.applicationContext as PrayerQuestApplication
     val prefs = app.container.userPreferences
+    val scope = rememberCoroutineScope()
 
     val enabledTraditions by prefs.enabledTraditions
         .collectAsState(initial = Tradition.DEFAULT)
     val disabledModes by prefs.disabledModes
         .collectAsState(initial = emptySet())
+
+    // Tutorial state. `null` while the flag is loading so the overlay doesn't
+    // briefly flash on screens where the user has already seen it.
+    val hasSeenTutorialInitial: Boolean? = null
+    val hasSeenTutorial by prefs.hasSeenPrayerModeTutorial
+        .collectAsState(initial = hasSeenTutorialInitial)
+    // Local override — once the user dismisses or finishes the walkthrough we
+    // flip this so the overlay disappears immediately, without waiting for the
+    // DataStore write + Flow to round-trip.
+    var tutorialDismissed by remember { mutableStateOf(false) }
+    val showTutorial = hasSeenTutorial == false && !tutorialDismissed
 
     // Bucket all modes into: visible (respect tradition + override) vs hidden
     // (tradition-opted-out AND user hasn't force-enabled it).
@@ -107,6 +128,7 @@ fun ModePickerScreen(
     // screen (not persisted; it's a browsing action, not a preference).
     var exploreExpanded by remember { mutableStateOf(false) }
 
+    Box(modifier = modifier.fillMaxSize()) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -127,7 +149,7 @@ fun ModePickerScreen(
                 }
             )
         },
-        modifier = modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -167,7 +189,188 @@ fun ModePickerScreen(
             item { Spacer(Modifier.height(24.dp)) }
         }
     }
+
+        // Full-screen first-time walkthrough. Dim the scaffold behind it and
+        // intercept all touches so the user can only advance/dismiss via the
+        // overlay's own buttons. Dismissal flips both the local toggle (so the
+        // overlay disappears right now) AND persists the flag (so we don't
+        // show it again on next launch).
+        if (showTutorial) {
+            PrayerModeTutorialOverlay(
+                onDismiss = {
+                    tutorialDismissed = true
+                    scope.launch { prefs.setHasSeenPrayerModeTutorial(true) }
+                }
+            )
+        }
+    }
 }
+
+/**
+ * Full-screen walkthrough shown the first time the user lands on the Mode
+ * Picker. Four steps explain what prayer modes are, how the shelves work,
+ * and that switching between modes is always available. Both "Skip" and
+ * "Got it" paths persist the seen flag so it never reappears.
+ */
+@Composable
+private fun PrayerModeTutorialOverlay(
+    onDismiss: () -> Unit
+) {
+    val steps = remember { tutorialSteps() }
+    var stepIndex by remember { mutableIntStateOf(0) }
+    val current = steps[stepIndex]
+    val isLast = stepIndex == steps.lastIndex
+
+    // Full-screen scrim. Semi-transparent so the picker subtly shows through,
+    // reinforcing that the tutorial is about that screen. `clickable` with a
+    // no-op intercepts any tap that isn't on our buttons so the scaffold
+    // behind can't be interacted with accidentally.
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.78f))
+            .clickable(enabled = true, onClick = {}),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Top bar — Skip aligned to the right
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(
+                        text = "Skip",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+
+            // Center content — emoji, title, body
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(horizontal = 8.dp)
+            ) {
+                Text(
+                    text = current.emoji,
+                    fontSize = 72.sp
+                )
+                Text(
+                    text = current.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = current.body,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.White.copy(alpha = 0.85f),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // Bottom — page dots + primary action
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    steps.forEachIndexed { index, _ ->
+                        val active = index == stepIndex
+                        Box(
+                            modifier = Modifier
+                                .size(if (active) 10.dp else 8.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(
+                                    if (active) Color.White
+                                    else Color.White.copy(alpha = 0.35f)
+                                )
+                        )
+                    }
+                }
+                Button(
+                    onClick = {
+                        if (isLast) onDismiss() else stepIndex++
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color.Black
+                    ),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text(
+                        text = if (isLast) "Got it — let's pray" else "Next",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                if (stepIndex > 0) {
+                    TextButton(onClick = { stepIndex-- }) {
+                        Text(
+                            text = "Back",
+                            color = Color.White.copy(alpha = 0.8f),
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                } else {
+                    // Reserve the same vertical space so the layout doesn't
+                    // jump when the Back button appears on step 2+.
+                    Spacer(Modifier.height(40.dp))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * One frame of the first-time walkthrough. Kept as a tiny data holder so
+ * [tutorialSteps] reads like a prose outline rather than deeply nested
+ * Composable calls.
+ */
+private data class TutorialStep(
+    val emoji: String,
+    val title: String,
+    val body: String
+)
+
+private fun tutorialSteps(): List<TutorialStep> = listOf(
+    TutorialStep(
+        emoji = "🙏",
+        title = "Welcome to Prayer Modes",
+        body = "Each mode is a different way to pray — quick breath prayers, guided walkthroughs, voice-recorded reflections, and more. Pick whatever fits your moment."
+    ),
+    TutorialStep(
+        emoji = "📚",
+        title = "Shelves by style",
+        body = "Modes are grouped into Quick, Guided, Expressive, and Traditional shelves. Swipe a shelf to see more — there's always more than one way to approach God."
+    ),
+    TutorialStep(
+        emoji = "🔄",
+        title = "Switch anytime",
+        body = "There's no wrong choice. Start in one mode today, try another tomorrow — every session earns XP and keeps your streak alive."
+    ),
+    TutorialStep(
+        emoji = "✨",
+        title = "You're ready",
+        body = "Tap any mode card to begin. You'll pick which prayers to focus on next — your own list, a group, or a general time with God."
+    )
+)
 
 @Composable
 private fun HeaderBlurb() {

@@ -347,18 +347,11 @@ class FirestoreGroupService {
      * Uses a collection group query on the members subcollection.
      */
     fun observeUserGroups(userId: String): Flow<List<FirestoreGroup>> = callbackFlow {
-        // First get group IDs where user is a member
-        val memberListener = db.collectionGroup(MEMBERS_SUBCOLLECTION)
-            .whereEqualTo("__name__", userId)
-
-        // We need a different approach — query members where doc ID = userId
-        // Firestore doesn't support doc ID queries in collectionGroup easily,
-        // so we'll store a userId field in member docs for querying.
-        // For now, let's use a simpler approach: store group memberships
-        // in a user-level collection too.
-
-        // Simplified approach: listen to groups where user is a member
-        // by querying the user's membership documents
+        // Listen to groups where user is a member by querying the user's
+        // membership mirror documents under /userGroups/{uid}/groups/{groupId}.
+        // (A collectionGroup query on "members" with FieldPath.documentId()
+        // would require a full document path, not just the UID, so we keep
+        // a per-user membership collection instead.)
         val userGroupsRef = db.collection(USER_GROUPS_COLLECTION)
             .document(userId)
             .collection("groups")
@@ -582,8 +575,14 @@ class FirestoreGroupService {
 
     /**
      * Delete an entire group and all its subcollections.
+     *
+     * Exposed for use by [PrayerGroupRepository.deleteGroupAsCreator] so
+     * group admins can tear down a group for everyone, not just leave it
+     * themselves. Callers must gate this on the current user actually
+     * being the creator — Firestore security rules do the same check
+     * server-side, but the UI should fail fast rather than round-trip.
      */
-    private suspend fun deleteEntireGroup(groupId: String) {
+    suspend fun deleteEntireGroup(groupId: String) {
         val groupRef = db.collection(GROUPS_COLLECTION).document(groupId)
 
         // Delete members subcollection

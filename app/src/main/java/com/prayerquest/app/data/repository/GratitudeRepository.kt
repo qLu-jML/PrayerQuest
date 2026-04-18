@@ -1,5 +1,6 @@
 package com.prayerquest.app.data.repository
 
+import com.prayerquest.app.data.dao.GratitudeDateCount
 import com.prayerquest.app.data.dao.GratitudeEntryDao
 import com.prayerquest.app.data.entity.GratitudeEntry
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +18,22 @@ class GratitudeRepository(
     fun observeWithPhotos(): Flow<List<GratitudeEntry>> = gratitudeEntryDao.observeWithPhotos()
     fun observeDistinctDates(): Flow<List<String>> = gratitudeEntryDao.observeDistinctDates()
     fun search(query: String): Flow<List<GratitudeEntry>> = gratitudeEntryDao.search(query)
+
+    /**
+     * Debounced keyword search used by the Gratitude Catalogue. Callers
+     * debounce on the ViewModel side (250ms) before collecting this Flow so
+     * typing doesn't thrash Room.
+     */
+    fun searchEntries(query: String): Flow<List<GratitudeEntry>> =
+        gratitudeEntryDao.searchEntries(query)
+
+    /**
+     * Per-day entry counts for the calendar heat-map at the top of the
+     * Gratitude Catalogue. Rows are already sorted ascending by date, so
+     * the UI layer can fold them into a `Map<LocalDate, Int>` in one pass.
+     */
+    fun observeDateCounts(): Flow<List<GratitudeDateCount>> =
+        gratitudeEntryDao.observeDateCounts()
 
     suspend fun getById(id: Long): GratitudeEntry? = gratitudeEntryDao.getById(id)
     suspend fun getByDate(date: String): List<GratitudeEntry> = gratitudeEntryDao.getByDate(date)

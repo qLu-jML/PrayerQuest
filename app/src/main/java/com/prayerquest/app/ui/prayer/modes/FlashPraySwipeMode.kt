@@ -84,25 +84,49 @@ fun FlashPraySwipeMode(
             //  - otherwise: "Finish Session" — early-exit with whatever they've
             //    prayed so far. Always visible so the user is never trapped
             //    mid-deck wondering how to bail.
-            Button(
-                onClick = {
-                    onModeComplete(
-                        if (allSwiped) {
-                            "Flash Prayed $swipedCount/$currentIndex topics"
-                        } else {
-                            "Flash Prayed $swipedCount/${currentIndex + 1} topics"
-                        }
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = MaterialTheme.shapes.medium
+            //
+            // Gated by `swipedCount > 0`: previously the user could tap Finish
+            // Session immediately without ever interacting with a card and
+            // still earn XP. The back arrow in the TopAppBar still lets them
+            // fully bail out of the session without any swipes. A helper line
+            // above the button explains the gate so users aren't puzzled by
+            // a disabled CTA.
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = if (allSwiped) "Complete Session" else "Finish Session",
-                    style = MaterialTheme.typography.labelLarge
-                )
+                if (swipedCount == 0) {
+                    Text(
+                        text = "Swipe a card right to pray — at least one is required to finish.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 6.dp)
+                    )
+                }
+                Button(
+                    onClick = {
+                        onModeComplete(
+                            if (allSwiped) {
+                                "Flash Prayed $swipedCount/$currentIndex topics"
+                            } else {
+                                "Flash Prayed $swipedCount/${currentIndex + 1} topics"
+                            }
+                        )
+                    },
+                    enabled = swipedCount > 0,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text(
+                        text = if (allSwiped) "Complete Session" else "Finish Session",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
             }
         }
     ) {

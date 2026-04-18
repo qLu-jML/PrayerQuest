@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Share
@@ -52,8 +53,15 @@ fun GroupDetailScreen(
     val prayerItems by viewModel.prayerItems.collectAsState(initial = emptyList())
     val members by viewModel.members.collectAsState(initial = emptyList())
     val weeklyCounts by viewModel.weeklyCounts.collectAsState(initial = emptyMap())
+    // `isCreator` is computed fresh once `group` is loaded — the repo owns
+    // the identity check so the UI doesn't duplicate "compare to currentUserId"
+    // logic and risk drift.
+    val isCreator = remember(group) {
+        group?.let { viewModel.isGroupCreator(it) } ?: false
+    }
     var showShareCodeCopied by remember { mutableStateOf(false) }
     var showLeaveDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     if (group != null) {
         Column(modifier = modifier.fillMaxSize()) {
@@ -212,7 +220,15 @@ fun GroupDetailScreen(
                 }
             }
 
-            // Action buttons
+            // Action buttons.
+            //
+            // Non-creators see [Add Prayer] + [Leave Group].
+            // Creators see [Add Prayer] + [Leave] + [Delete] — the delete
+            // path tears down the group for ALL members and is clearly
+            // marked destructive (error-colored icon button to keep the
+            // hit target small so it isn't tapped by accident). Leaving
+            // your own group is still a valid action; e.g. the creator
+            // wants out but trusts another admin to keep it running.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -237,7 +253,21 @@ fun GroupDetailScreen(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Leave Group")
+                    Text(if (isCreator) "Leave" else "Leave Group")
+                }
+                if (isCreator) {
+                    IconButton(
+                        onClick = { showDeleteDialog = true },
+                        modifier = Modifier
+                            .height(48.dp)
+                            .width(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete group",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }
@@ -262,6 +292,45 @@ fun GroupDetailScreen(
                 dismissButton = {
                     TextButton(
                         onClick = { showLeaveDialog = false }
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
+        // Delete group dialog (creator only). Separate from Leave because
+        // the copy + consequence are very different: Leave only affects
+        // me, Delete affects everyone. Keeping these as distinct dialogs
+        // with distinct copy reduces the chance of a mis-tap.
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                title = { Text("Delete Group?") },
+                text = {
+                    Text(
+                        "This will permanently delete \"${group!!.name}\" and " +
+                            "remove every member, prayer, and piece of activity. " +
+                            "This can't be undone."
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.deleteGroupAsCreator(groupId)
+                            onNavigateBack()
+                            showDeleteDialog = false
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Delete")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDeleteDialog = false }
                     ) {
                         Text("Cancel")
                     }
@@ -376,6 +445,24 @@ class GroupDetailViewModel(
     fun leaveGroup(groupId: Long) {
         viewModelScope.launch {
             groupRepository.leaveGroup(groupId)
+        }
+    }
+
+    /**
+     * Exposes the repo's creator check to the Compose layer so the UI
+     * can conditionally show the destructive "Delete Group" action.
+     */
+    fun isGroupCreator(group: PrayerGroup): Boolean =
+        groupRepository.isGroupCreator(group)
+
+    /**
+     * Fire the full "tear down this group for everyone" cascade. The
+     * screen navigates back immediately after this returns so the user
+     * doesn't stare at a group that's mid-delete.
+     */
+    fun deleteGroupAsCreator(groupId: Long) {
+        viewModelScope.launch {
+            groupRepository.deleteGroupAsCreator(groupId)
         }
     }
 

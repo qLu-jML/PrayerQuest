@@ -6,7 +6,7 @@ import com.prayerquest.app.billing.BillingManager
 import com.prayerquest.app.billing.PremiumRepository
 import com.prayerquest.app.data.database.PrayerQuestDatabase
 import com.prayerquest.app.data.preferences.UserPreferences
-import com.prayerquest.app.data.devotional.SpurgeonDevotionalImporter
+import com.prayerquest.app.data.prayer.BiblePrayerImporter
 import com.prayerquest.app.data.prayer.FamousPrayerImporter
 import com.prayerquest.app.data.prayer.SuggestedPrayerPackLoader
 import com.prayerquest.app.data.repository.*
@@ -51,7 +51,8 @@ class AppContainer(context: Context) {
         prayerItemDao = database.prayerItemDao(),
         prayerRecordDao = database.prayerRecordDao(),
         userPrayerProgressDao = database.userPrayerProgressDao(),
-        famousPrayerDao = database.famousPrayerDao()
+        famousPrayerDao = database.famousPrayerDao(),
+        biblePrayerDao = database.biblePrayerDao()
     )
 
     val collectionRepository: CollectionRepository = CollectionRepository(
@@ -90,10 +91,6 @@ class AppContainer(context: Context) {
         nameOfGodDao = database.nameOfGodDao()
     )
 
-    val devotionalRepository: DevotionalRepository = DevotionalRepository(
-        devotionalDao = database.devotionalDao()
-    )
-
     val fastingRepository: FastingRepository = FastingRepository(
         fastingSessionDao = database.fastingSessionDao()
     )
@@ -104,13 +101,13 @@ class AppContainer(context: Context) {
         famousPrayerDao = database.famousPrayerDao()
     )
 
-    val suggestedPackLoader: SuggestedPrayerPackLoader = SuggestedPrayerPackLoader(
-        context = context
+    val biblePrayerImporter: BiblePrayerImporter = BiblePrayerImporter(
+        context = context,
+        biblePrayerDao = database.biblePrayerDao()
     )
 
-    val spurgeonDevotionalImporter: SpurgeonDevotionalImporter = SpurgeonDevotionalImporter(
-        context = context,
-        devotionalDao = database.devotionalDao()
+    val suggestedPackLoader: SuggestedPrayerPackLoader = SuggestedPrayerPackLoader(
+        context = context
     )
 
     init {
@@ -120,8 +117,26 @@ class AppContainer(context: Context) {
         applicationScope.launch {
             progressRepository.ensureSeeded()
             famousPrayerImporter.importIfNeeded()
-            spurgeonDevotionalImporter.importIfNeeded()
+            biblePrayerImporter.importIfNeeded()
         }
+
+        // Attach the Prayer Groups cloud→Room mirror at application scope.
+        //
+        // Previously this was tied to PrayerGroupsViewModel.viewModelScope,
+        // which meant listeners didn't attach until the user actually
+        // navigated to the Groups screen. The visible symptom was "I signed
+        // in but my groups don't appear until I force something to happen"
+        // — the mirror only started on screen entry, and if the user signed
+        // in somewhere else first (Settings, or was already signed in at
+        // launch) the Groups list rendered empty before the first snapshot
+        // landed. Moving it here means Room is always being hydrated as
+        // long as the user is signed in, so the Groups screen's observing
+        // Flow<> reads from already-populated data on first composition.
+        //
+        // The mirror is a no-op while signed out (its authState collector
+        // only attaches nested listeners on SignedIn), so there is no cost
+        // for users who never enable sync.
+        prayerGroupRepository.startCloudMirror(applicationScope)
 
         // Initialize ads (no-op if ADS_ENABLED = false).
         AdManager.initialize(context)

@@ -2,12 +2,10 @@ package com.prayerquest.app.notifications
 
 import android.content.Context
 import androidx.work.BackoffPolicy
-import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.prayerquest.app.PrayerQuestApplication
-import com.prayerquest.app.data.preferences.DevotionalAuthor
 import com.prayerquest.app.data.preferences.ReminderSlot
 import com.prayerquest.app.data.preferences.UserPreferences
 import kotlinx.coroutines.flow.first
@@ -27,9 +25,8 @@ import java.util.concurrent.TimeUnit
  *    being assigned, so looking it up would NPE. Post-startup callers can
  *    omit it and we'll fall back to the container.
  *  - [rescheduleAll] is invoked from Settings / Onboarding when the user
- *    changes any time-affecting preference (quiet hours, reminder slots,
- *    devotional author/time). We use REPLACE policy on rescheduling so the
- *    new time wins immediately.
+ *    changes any time-affecting preference (quiet hours, reminder slots).
+ *    We use REPLACE policy on rescheduling so the new time wins immediately.
  */
 object NotificationScheduler {
 
@@ -44,7 +41,6 @@ object NotificationScheduler {
             scheduleStreakAlert(context)            // fixed 20:00 — evening streak-save
             scheduleQuestNotification(context)      // fixed 08:00 — new quest drop
             scheduleGratitudePrompt(context)        // fixed 19:00 — post-dinner prompt
-            scheduleDailyDevotional(context, resolved)
         }
     }
 
@@ -59,7 +55,6 @@ object NotificationScheduler {
 
         runBlocking {
             scheduleReminderSlots(context, resolved, replace = true)
-            scheduleDailyDevotional(context, resolved, replace = true)
             // streak / quest / gratitude run on fixed times for MVP —
             // rescheduling them is a no-op but kept for symmetry.
             scheduleStreakAlert(context, replace = true)
@@ -145,116 +140,6 @@ object NotificationScheduler {
             .build()
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             "gratitude_prompt",
-            if (replace) ExistingPeriodicWorkPolicy.REPLACE else ExistingPeriodicWorkPolicy.KEEP,
-            request
-        )
-    }
-
-    // --- Daily devotional (author-aware, per-slot) ---------------------
-
-    /**
-     * Enqueues up to three periodic workers — one for Spurgeon morning,
-     * one for Spurgeon evening, one for Bonhoeffer evening — each keyed
-     * by a unique work name so the slots can be toggled independently
-     * without racing over a single queue entry.
-     *
-     * Slots that don't apply under the current author (e.g., Bonhoeffer
-     * slot while author == SPURGEON) are explicitly cancelled rather than
-     * left enqueued — this keeps the WorkManager view clean and prevents
-     * a stale worker from firing if the user flips authors and back.
-     *
-     * Per-Spurgeon-slot enable toggles act as a second-layer guard inside
-     * the worker itself (see [DailyDevotionalWorker]); here we also honor
-     * them at scheduling time so a disabled slot consumes zero system
-     * resources.
-     */
-    private suspend fun scheduleDailyDevotional(
-        context: Context,
-        prefs: UserPreferences,
-        replace: Boolean = false
-    ) {
-        val author = prefs.devotionalAuthor.first()
-        val wm = WorkManager.getInstance(context)
-
-        val spurgeonMorningName = "daily_devotional_spurgeon_morning"
-        val spurgeonEveningName = "daily_devotional_spurgeon_evening"
-        val bonhoefferName = "daily_devotional_bonhoeffer"
-
-        if (author == DevotionalAuthor.NONE) {
-            wm.cancelUniqueWork(spurgeonMorningName)
-            wm.cancelUniqueWork(spurgeonEveningName)
-            wm.cancelUniqueWork(bonhoefferName)
-            return
-        }
-
-        val spurgeonActive = author == DevotionalAuthor.SPURGEON || author == DevotionalAuthor.BOTH
-        val bonhoefferActive = author == DevotionalAuthor.BONHOEFFER || author == DevotionalAuthor.BOTH
-
-        // ── Spurgeon morning ──
-        if (spurgeonActive && prefs.devotionalSpurgeonMorningEnabled.first()) {
-            enqueueDevotionalSlot(
-                wm = wm,
-                workName = spurgeonMorningName,
-                fireMin = prefs.devotionalSpurgeonMin.first(),
-                slotTag = DailyDevotionalWorker.SLOT_SPURGEON_MORNING,
-                replace = replace
-            )
-        } else {
-            wm.cancelUniqueWork(spurgeonMorningName)
-        }
-
-        // ── Spurgeon evening ──
-        if (spurgeonActive && prefs.devotionalSpurgeonEveningEnabled.first()) {
-            enqueueDevotionalSlot(
-                wm = wm,
-                workName = spurgeonEveningName,
-                fireMin = prefs.devotionalSpurgeonEveningMin.first(),
-                slotTag = DailyDevotionalWorker.SLOT_SPURGEON_EVENING,
-                replace = replace
-            )
-        } else {
-            wm.cancelUniqueWork(spurgeonEveningName)
-        }
-
-        // ── Bonhoeffer evening ──
-        if (bonhoefferActive) {
-            enqueueDevotionalSlot(
-                wm = wm,
-                workName = bonhoefferName,
-                fireMin = prefs.devotionalBonhoefferMin.first(),
-                slotTag = DailyDevotionalWorker.SLOT_BONHOEFFER,
-                replace = replace
-            )
-        } else {
-            wm.cancelUniqueWork(bonhoefferName)
-        }
-
-        // Cancel the legacy v1 single-queue worker so upgrading users don't
-        // keep getting the old notification alongside the new slot-based
-        // ones. Harmless no-op once everyone has moved past this build.
-        wm.cancelUniqueWork("daily_devotional")
-    }
-
-    private fun enqueueDevotionalSlot(
-        wm: WorkManager,
-        workName: String,
-        fireMin: Int,
-        slotTag: String,
-        replace: Boolean
-    ) {
-        val input = Data.Builder()
-            .putString(DailyDevotionalWorker.KEY_SLOT, slotTag)
-            .build()
-
-        val request = PeriodicWorkRequestBuilder<DailyDevotionalWorker>(1, TimeUnit.DAYS)
-            .setInitialDelay(delayUntilMinuteOfDay(fireMin), TimeUnit.MINUTES)
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, Duration.ofMinutes(15))
-            .setInputData(input)
-            .addTag(slotTag)
-            .build()
-
-        wm.enqueueUniquePeriodicWork(
-            workName,
             if (replace) ExistingPeriodicWorkPolicy.REPLACE else ExistingPeriodicWorkPolicy.KEEP,
             request
         )

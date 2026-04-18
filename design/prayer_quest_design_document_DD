@@ -12,8 +12,9 @@ Status legend used throughout this document:
   [FUTURE UPDATE]        — Captured for a future release; see Section 9
 
 Architectural decisions of record (2026-04-16):
+  - **Offline-first, sign-in optional.** The entire app — prayer modes, gamification, gratitude, answered prayers, fasting, library, crisis mode, onboarding — works 100% offline with no account of any kind. Prayer Groups and Prayer Partners are the **only** features that require the network, and they are **strictly optional**. A user can install PrayerQuest, use it every day for years, and never sign in. Groups/Partners are gated behind Google Sign-In via Firebase Auth; when signed in, the app pulls/pushes group data to Firestore. Firebase is not touched at all when the user is signed out.
   - Hearts and freezes live on StreakData (not UserStats). Gamification streak-protection reads/writes from StreakData.
-  - Prayer Groups use real-time Firestore snapshot listeners with Firestore's offline cache, not manual refresh. The Repository layer owns listener lifecycle (attach on group screen open, detach on disposal). Offline behaviour is handled by Firestore's cache; writes queue automatically.
+  - Prayer Groups use **Google Sign-In** (via Firebase Auth) plus real-time Firestore snapshot listeners with Firestore's offline cache — not manual refresh. The Repository layer owns listener lifecycle (attach on group screen open, detach on disposal). Offline behaviour is handled by Firestore's cache; writes queue automatically. (Note: earlier drafts of this DD called for anonymous Firebase Auth; shipping code uses Google Sign-In because users need a durable identity to move between devices and to be reachably invited into groups. See §3.7.1.)
   - Deprecated-and-deleted prayer modes (do not resurrect without DD change): Scripture Soak, Contemplative Silence, Gratitude Blast. Scripture Soak and Contemplative Silence are captured for a future release in §9.1 and §9.2. Gratitude Blast's rapid-fire behaviour is folded into the Gratitude Section as "Speed Round" — it is no longer a standalone prayer mode.
   - PrayerMode enum values are the 10 MVP modes: GUIDED_ACTS, VOICE_RECORD, PRAYER_JOURNAL, INTERCESSION_DRILL, FLASH_PRAY_SWIPE, DAILY_EXAMEN, LECTIO_DIVINA, BREATH_PRAYER, PRAYER_BEADS, DAILY_OFFICE.
 
@@ -110,21 +111,20 @@ Purpose: present 10 modes (plus Library items that can launch modes) without ove
 - 100% offline for all solo prayer modes. Reuses ScriptureQuest tech stack and Collection data layer.
 - Voice-to-text everywhere via SpeechRecognizer (real-time + editable).
 - Prayer lists stored as PrayerCollection + cross-refs.
-- Firebase is used for Prayer Groups only (§3.6); nothing else requires network connectivity.
+- Firebase is used for Prayer Groups and Prayer Partners only (§3.7 and §3.8); nothing else requires network connectivity. Signing in is **optional** — only required if the user wants to use Groups/Partners. Everywhere else in the app, signed-in and signed-out users have identical experiences.
 
 3.2 Onboarding Flow — First-Run Full Setup [NEEDS IMPLEMENTING]
-Purpose: Get users comfortable fast, while quietly configuring tradition, notifications, devotional preferences, and first prayer items. Must feel warm and encouraging, never like a form.
+Purpose: Get users comfortable fast, while quietly configuring tradition, notifications, and first prayer items. Must feel warm and encouraging, never like a form.
 
-The onboarding is 8 lightweight steps. At any point the user can tap "Skip setup, I'll configure later" and land on Home with sensible defaults.
+The onboarding is 7 lightweight steps. At any point the user can tap "Skip setup, I'll configure later" and land on Home with sensible defaults.
 
 1. **Welcome & Vision** — short animated screen: "Pray without ceasing. Grow in gratitude. See God's faithfulness." → Continue.
 2. **Name & Goal** — user's preferred first name + daily prayer-minutes goal (3/5/10/15/custom) + daily gratitude count (1/3/5).
 3. **Tradition Selection** — multi-select chips for Protestant/Evangelical, Catholic, Orthodox, Anglican/Episcopal, Non-denominational. This pre-enables matching modes and Library content.
 4. **Liturgical Calendar Awareness** — "Would you like PrayerQuest to follow the Christian calendar?" If yes, user picks Western (Roman/Protestant) or Eastern (Orthodox) calendar. Seasonal prayer packs for Advent, Lent, Holy Week, Easter, and Pentecost auto-surface during those seasons.
-5. **Devotional Author Preference** — "Receive a short daily devotional on your lock screen?" Options: Spurgeon's Morning & Evening, Bonhoeffer, Both, None. Time picker for each delivery.
-6. **Notification Times & Quiet Hours** — user sets up to three daily prayer reminders (morning / midday / evening defaults) with per-time-of-day reminder personalities ("Morning — start the day with Him", "Midday — a quick breath prayer", "Evening — examen and gratitude"). User sets quiet hours (no notifications between X and Y).
-7. **First Prayer Collection** — app auto-seeds a "Foundational Prayers" active collection and lets the user add 2–3 people or topics they want to pray for. Voice-to-text button prominent.
-8. **First Gratitude Entry** — "Before we go, what's one thing you're thankful for today?" User logs their first gratitude. Celebration animation + first badge earned (Gratitude Starter, day 1/7).
+5. **Notification Times & Quiet Hours** — user sets up to three daily prayer reminders (morning / midday / evening defaults) with per-time-of-day reminder personalities ("Morning — start the day with Him", "Midday — a quick breath prayer", "Evening — examen and gratitude"). User sets quiet hours (no notifications between X and Y).
+6. **First Prayer Collection** — app auto-seeds a "Foundational Prayers" active collection and lets the user add 2–3 people or topics they want to pray for. Voice-to-text button prominent.
+7. **First Gratitude Entry** — "Before we go, what's one thing you're thankful for today?" User logs their first gratitude. Celebration animation + first badge earned (Gratitude Starter, day 1/7).
 
 Onboarding completion = first streak day earned, first XP awarded, user lands on Home with quests ready.
 
@@ -161,20 +161,13 @@ Unified library screen with filter chips: "Famous Prayers," "Names of God," and 
 - Badges awarded for frequency milestones (e.g., "Lord's Prayer 50×", "Jesus Prayer 100×", "Prayed All 30 Names").
 - Users can add their own favorite prayers to the library and earn the same usage badges.
 
-3.5.4 Daily Devotional Card [NEEDS IMPLEMENTING]
-- Configurable during onboarding (§3.2 step 5): Spurgeon, Bonhoeffer, Both, or None.
-- If Both is selected, user can set separate delivery times for each (e.g., Spurgeon 7 a.m., Bonhoeffer 8 p.m.).
-- Delivered as a Home screen card AND as a notification at the configured time (respecting Quiet Hours).
-- Each card shows: title, short passage (public-domain text bundled in-app), and a "Pray about this" button that launches Guided ACTS or Prayer Journal seeded with the devotional theme.
-- Content bundled in `assets/devotionals/` as chunked JSON (365 entries per author). Idempotent importer pattern matching ScriptureQuest's BibleImporter.
-
-3.5.5 Liturgical Calendar Awareness [NEEDS IMPLEMENTING]
+3.5.4 Liturgical Calendar Awareness [NEEDS IMPLEMENTING]
 - If enabled in onboarding (§3.2 step 4), the Home screen shows the current liturgical day/season (e.g., "Second Sunday of Advent," "Ash Wednesday," "Pentecost").
 - Seasonal prayer packs auto-surface during their seasons: an "Advent" pack appears in the Library four Sundays before Christmas, a "Lent" pack appears on Ash Wednesday, etc.
 - Calendar computation is pure function (date in → feast/season out), no network.
 - Supports Western (Roman / Protestant common) and Eastern (Orthodox) calendars per user selection.
 
-3.5.6 ScriptureQuest Integration [NEEDS IMPLEMENTING]
+3.5.5 ScriptureQuest Integration [NEEDS IMPLEMENTING]
 - If the user has ScriptureQuest installed, PrayerQuest can link to verses from their collections via a content provider or local IPC. Specifically: Prayer Journal and Guided ACTS get a "Pray this verse" shortcut; Breath Prayer can pull a short verse; Answered Prayer testimonies can attach a verse.
 - If ScriptureQuest is not installed, all of the above work against PrayerQuest's own bundled prayer-verse pack (ships with 50+ curated passages) — users are never blocked.
 
@@ -216,12 +209,16 @@ Purpose: Build a powerful daily habit of thanksgiving (1 Thessalonians 5:18) tha
 3.7 Prayer Groups — Firebase-Backed Shared Intercession [NEEDS IMPLEMENTING]
 Purpose: Enable users to create or join strictly invite-only Prayer Groups so they can pray together with friends, family, small groups, or church communities.
 
-**MVP scope decision**: Unlike the solo experience, Prayer Groups require shared state across devices. They are built on **Firebase (Firestore + Auth + Cloud Functions + FCM)** from day one. The project is already Firebase-initialized (`firebase.json`, `functions/`), so we build on that foundation. The rest of the app remains 100% offline-first — Firebase is touched only when the user opens a Group screen or receives a Group push notification.
+**MVP scope decision**: Unlike the solo experience, Prayer Groups require shared state across devices. They are built on **Firebase (Firestore + Google Sign-In via Firebase Auth + Cloud Functions + FCM)** from day one. The project is already Firebase-initialized (`firebase.json`, `functions/`), so we build on that foundation. The rest of the app remains 100% offline-first — Firebase is touched only when a signed-in user opens a Group screen or receives a Group push notification.
+
+**Groups are strictly optional.** A user can use every solo feature of PrayerQuest — prayer modes, gamification, gratitude, answered prayers, fasting, library, crisis mode — without ever signing in. The sign-in prompt appears only when the user taps into the Prayer Groups tab (or the Prayer Partners entry) and chooses to create or join a group. If they never do, they never sign in, and Firebase is never contacted from their device.
 
 Note: A separate step-by-step implementation guide will be provided when Phase 4 begins. This section defines *what* Groups do; the guide defines *how* to wire them up.
 
 3.7.1 Core Features
-- Anonymous Firebase Auth on first Group interaction (user never creates an explicit account; the device-bound anon UID is enough).
+- **Google Sign-In (via Firebase Auth)** is required on first Group interaction. Users sign in with an existing Google account — no separate email/password account creation. Sign-in is deferred: it is surfaced the first time the user opens the Groups tab, not during onboarding. A signed-out user sees a friendly "Sign in with Google to create or join a Prayer Group" card in place of the Groups list.
+- Once signed in, the app pulls the user's groups and group prayer items from Firestore and mirrors them into Room for fast UI. Subsequent actions (creating a group, adding a request, tapping "I prayed for this", updating status) are written to Firestore; the Room mirror is updated by the snapshot listener when Firestore confirms.
+- The user can sign out at any time from Settings; signing out detaches all Firestore listeners and hides Groups/Partners UI until they sign back in. Solo features continue to work exactly as before.
 - Users can create a new Prayer Group with a name, description, emoji/icon.
 - Each group generates a unique **shareable invite code** (e.g., "PRAY-8K9M2X" — 5-byte base32). Only people who receive and enter this code can join.
 - No public browsing or discovery.
@@ -236,14 +233,18 @@ Note: A separate step-by-step implementation guide will be provided when Phase 4
 - Strictly private and invite-only.
 - Members can leave a group at any time.
 - Group creators (Admin role) can remove members and moderate requests.
-- Anonymous UIDs only — no email, phone, or real-name collection for MVP. Members are identified by their chosen display name per group.
+- Users sign in with Google, so Firebase receives the Google account's email and display name for authentication purposes. **Inside a group**, other members never see the user's email address; each member is identified only by the per-group display name they chose when joining. Email stays between the user, Google, and Firebase Auth.
+- Sign-in is entirely optional (see §3.7.1). Users who never open Groups or Partners never transmit any identity information to Firebase.
+- An in-app **Delete Account** flow (Settings → Account) removes the user's Firestore data, revokes Google sign-in, and deletes the Firebase Auth account. A safety-net Cloud Function (`onUserDeleted`) performs the Firestore cleanup on the backend even if the app call is interrupted.
 - Firestore Security Rules enforce: only group members can read/write that group's documents.
 
 3.7.3 Real-Time Sync and Offline Behavior
-- PrayerGroupRepository opens Firestore snapshot listeners on each group the user is a member of. Listeners fire on every remote change and update the local Room mirror in real time.
+- **Pull path**: when a signed-in user opens the Groups tab or a group detail screen, PrayerGroupRepository opens Firestore snapshot listeners on that group (and on the `userGroups/{uid}/groups` index). Listeners fire on every remote change and update the local Room mirror in real time.
+- **Push path**: every user action (create group, join via invite code, add request, tap "I prayed for this", update status, promote/remove member, leave group) writes directly to Firestore; the snapshot listener confirms by updating the Room mirror.
 - Listener lifecycle: listeners are attached when a group screen is visible (or the user's groups list is visible) and detached when the screen is disposed. No persistent background listeners — push notifications (FCM) are the wake-up path when the app is closed.
-- Firestore's built-in offline cache handles airplane-mode: users can open Groups, view cached prayer items, tap "I prayed for this" (queued), and writes sync when network returns. No manual "refresh" button or action is needed.
+- Firestore's built-in offline cache handles airplane-mode for signed-in users: they can open Groups, view cached prayer items, tap "I prayed for this" (queued), and writes sync when network returns. No manual "refresh" button or action is needed.
 - Room mirror is eventually-consistent with Firestore and is used only for fast UI / offline reads. Firestore is the source of truth for all Group data.
+- **Signed-out users** see no Group data and initiate no Firestore traffic. The Groups and Partners tabs become simple sign-in prompts.
 
 3.7.4 Gamification Integration
 - Praying for group items earns bonus XP and contributes to daily quests.
@@ -308,25 +309,23 @@ Rich, configurable, considerate.
 - **Streak Alert**: fires late afternoon on a day the user hasn't logged yet — gentle tone, no guilt.
 - **Quest Notification**: fires when a daily quest is nearly complete ("One more session and you complete today's quests!").
 - **Daily Gratitude Prompt**: separate reminder, configurable time.
-- **Devotional Notification**: Spurgeon / Bonhoeffer card delivery, per user's onboarding choice and times.
 - **Prayer Group Activity**: FCM push from Firebase when a member adds a new request (respecting recipient's quiet hours).
 - **Quiet Hours**: global setting (default 10 p.m. – 7 a.m.). No notifications of any kind during quiet hours. Violations of quiet hours are a P0 bug.
 
 All local notifications go through WorkManager (reusing ScriptureQuest's worker scaffolding). FCM notifications (Groups only) route through a small Cloud Function.
 
 3.14 Progress & Analytics [NEEDS IMPLEMENTING]
-- Home dashboard with streak flame, hearts, level card, "Start Prayer" CTA, live quests, prayer-minutes strip, quick link to Answered Prayers, quick "Log Today's Gratitude" button, quick access to Prayer Groups and Prayer Partners, Daily Devotional card, and the current liturgical day (if calendar enabled).
-- Profile screen with level header, daily goal picker (minutes + gratitude count), theme toggle (light/dark), tradition selector, lifetime stats grid (including total gratitudes logged, group activity summary, total fasts completed, total devotionals read), achievement grid, "Your Year of Prayer" button (after Dec 15), "Export Testimony Book" button, and "The Science Behind PrayerQuest" expandable card.
+- Home dashboard with streak flame, hearts, level card, "Start Prayer" CTA, live quests, prayer-minutes strip, quick link to Answered Prayers, quick "Log Today's Gratitude" button, quick access to Prayer Groups and Prayer Partners, and the current liturgical day (if calendar enabled).
+- Profile screen with level header, daily goal picker (minutes + gratitude count), theme toggle (light/dark), tradition selector, lifetime stats grid (including total gratitudes logged, group activity summary, total fasts completed), achievement grid, "Your Year of Prayer" button (after Dec 15), "Export Testimony Book" button, and "The Science Behind PrayerQuest" expandable card.
 
 3.15 Localization [NEEDS IMPLEMENTING]
 - Launch languages: English, Spanish, Korean, Portuguese. All UI strings externalized via standard Android resource files from day one (never hardcode user-facing text).
-- Devotional author content (Spurgeon/Bonhoeffer) ships in English only at launch; localized devotionals are a [FUTURE UPDATE].
 - Scripture references link to localized Bible translations where possible; fallback is English.
 - Right-to-left layout is not a launch target but code should not actively prevent it (`layoutDirection="locale"`).
 
 3.16 Technical Requirements [NEEDS IMPLEMENTING]
-- 100% offline-first for all solo features: Room + WorkManager.
-- Firebase (Firestore + Auth + Cloud Functions + FCM) for Prayer Groups and Prayer Partners only.
+- **100% offline-first for all solo features** (Room + WorkManager): prayer engine, gamification, gratitude, answered prayers, fasting, library, crisis mode, onboarding. No account, no network, no sign-in.
+- **Firebase (Firestore + Google Sign-In via Firebase Auth + Cloud Functions + FCM) for Prayer Groups and Prayer Partners only.** These features are optional and gated behind Google Sign-In, which is surfaced only at the moment a user tries to use Groups/Partners. Signed-in users pull/push group data against Firestore; signed-out users see a sign-in prompt where the Groups/Partners UI would be and are otherwise unaffected.
 - Same architecture and DI as ScriptureQuest (manual AppContainer, companion Factory pattern).
 - Material 3 warm faith palette, dark/light mode, premium ad-free tier.
 - Voice-to-text everywhere via SpeechRecognizer.
@@ -334,8 +333,8 @@ All local notifications go through WorkManager (reusing ScriptureQuest's worker 
 - Accessibility: content descriptions, proper contrast, screen reader support, large-text mode.
 
 4. USER FLOW (High-Level) [NEEDS IMPLEMENTING]
-1. Onboarding → 8 steps (§3.2) configuring tradition, notifications, devotional, first collection, first gratitude.
-2. Home Dashboard → streak + Start Prayer CTA + Daily Devotional card + liturgical day + quick Gratitude button + Prayer Groups + Prayer Partners + Crisis Prayer link.
+1. Onboarding → 7 steps (§3.2) configuring tradition, notifications, first collection, first gratitude.
+2. Home Dashboard → streak + Start Prayer CTA + liturgical day + quick Gratitude button + Prayer Groups + Prayer Partners + Crisis Prayer link.
 3. Add Prayer Items → build personal active lists, browse Prayer Library, add to a Group.
 4. Formation Mode (optional) → start praying immediately for new items.
 5. Prayer Session → choose personal items / famous prayers / group requests / Library → tradition-aware Netflix-shelf Mode Picker → run mode → log prayer → rewards summary.
@@ -363,7 +362,7 @@ All local notifications go through WorkManager (reusing ScriptureQuest's worker 
 
 7. TECH STACK [NEEDS IMPLEMENTING]
 - Kotlin 2.0.21, Jetpack Compose, Room 2.7.0, WorkManager, SpeechRecognizer/TTS, image picker/compression, AdMob, Google Play Billing — identical to ScriptureQuest.
-- **Firebase**: Firestore (real-time sync + offline cache), Firebase Auth (anonymous), Cloud Functions (invite code generation/validation + notification fan-out), Firebase Cloud Messaging (group push notifications). Project is already initialized (`firebase.json`, `functions/`).
+- **Firebase**: Firestore (real-time sync + offline cache), **Firebase Auth with Google Sign-In** (optional — only invoked for Groups/Partners), Cloud Functions (invite code generation/validation + notification fan-out + `onUserDeleted` cleanup), Firebase Cloud Messaging (group push notifications). Project is already initialized (`firebase.json`, `functions/`), `FirebaseAuthManager` and `FirestoreGroupService` are in place.
 
 8. MVP BUILD PHASES [NEEDS IMPLEMENTING]
 
@@ -378,10 +377,9 @@ Phase 4a — v1.0 Launch Scope (must-haves for first public release):
   - Gratitude Section: daily prompt (1/3/5 count), Speed Round, catalogue view, filters, heat-map, export as image card.
   - Photo Prayers (private, app-local).
   - Crisis Prayer Mode.
-  - Daily Devotional cards (Spurgeon / Bonhoeffer / Both / None, per-author time pickers).
   - Liturgical Calendar awareness (Western / Eastern).
-  - Notifications + WorkManager workers (prayer reminders, streak alert, quest, gratitude prompt, devotional delivery) with Quiet Hours and per-time-of-day personalities.
-  - Full 8-step Onboarding (tradition, calendar, devotional choice, notification times, quiet hours, first collection, first gratitude).
+  - Notifications + WorkManager workers (prayer reminders, streak alert, quest, gratitude prompt) with Quiet Hours and per-time-of-day personalities.
+  - Full 7-step Onboarding (tradition, calendar, notification times, quiet hours, first collection, first gratitude).
   - Localization strings externalized (English shipped; Spanish/Korean/Portuguese translation work begins).
   - Auto-tagging for prayer items.
 
@@ -404,9 +402,9 @@ Sprint 1 — Schema + cleanup:
   - Delete ScriptureSoakMode, ContemplativeSilenceMode, GratitudeBlastMode files and all call sites.
   - Remove SCRIPTURE_SOAK, CONTEMPLATIVE_SILENCE, GRATITUDE_BLAST from PrayerMode enum; add DAILY_EXAMEN, LECTIO_DIVINA, BREATH_PRAYER, PRAYER_BEADS, DAILY_OFFICE.
   - Move hearts and freezes fields from UserStats to StreakData (Decision 2a).
-  - Add NameOfGod, Devotional, FastingSession entities + DAOs.
+  - Add NameOfGod, FastingSession entities + DAOs.
   - Bump Room DB version 4→5 with an explicit Migration_4_5.
-  - Wire new DAOs into AppContainer; add LibraryRepository (famous + names), DevotionalRepository, FastingRepository.
+  - Wire new DAOs into AppContainer; add LibraryRepository (famous + names), FastingRepository.
   - Gradle/KSP compile verification.
 
 Sprint 2 — Firestore real-time refactor (Decision 3b):
@@ -422,14 +420,13 @@ Sprint 3 — 5 new prayer modes + mode picker:
   - Replace flat PrayerSessionScreen mode switch with Netflix-shelf tradition-aware Mode Picker (Quick / Guided / Expressive / Traditional shelves; opted-out traditions collapsed behind an "Explore more traditions" footer).
 
 Sprint 4 — Onboarding + Settings + Notifications:
-  - Replace tutorial-carousel Onboarding with the full 8-step data-collecting flow from DD §3.2.
-  - Expand SettingsScreen: reminder times (up to 3/day), per-time-of-day reminder personalities, Quiet Hours window, tradition selector, prayer-mode on/off toggles, daily goal, devotional author + per-author time.
+  - Replace tutorial-carousel Onboarding with the full 7-step data-collecting flow from DD §3.2.
+  - Expand SettingsScreen: reminder times (up to 3/day), per-time-of-day reminder personalities, Quiet Hours window, tradition selector, prayer-mode on/off toggles, daily goal.
   - Add Quiet Hours guard to DailyPrayerReminderWorker, StreakAlertWorker, QuestNotificationWorker, GratitudePromptWorker. Quiet Hours violations are a P0 bug.
-  - Add new DailyDevotionalWorker for Spurgeon / Bonhoeffer delivery.
   - Add POST_NOTIFICATIONS runtime permission for Android 13+.
 
 Sprint 5 — Home + Library + Gratitude polish:
-  - HomeScreen expansion: streak flame, hearts, live quests row, daily devotional card, liturgical day indicator, quick-gratitude CTA, groups/partners tile, crisis prayer link.
+  - HomeScreen expansion: streak flame, hearts, live quests row, liturgical day indicator, quick-gratitude CTA, groups/partners tile, crisis prayer link.
   - LibraryScreen: add Names of God tab; unify Famous Prayers + Names of God under a single "Prayer Library" view with filter chips.
   - GratitudeLogScreen: add Speed Round button and rapid-fire flow writing into existing GratitudeEntry table.
   - GratitudeCatalogueScreen: calendar heat-map, photo-only filter, keyword search, export-as-image-card.
@@ -440,8 +437,6 @@ Sprint 5 — Home + Library + Gratitude polish:
 
 Sprint 6 — Asset authoring:
   - names_of_god.json (30+ entries with Hebrew/Greek name, meaning, Scripture reference).
-  - devotionals/spurgeon.json (365 public-domain Morning & Evening entries).
-  - devotionals/bonhoeffer.json (365 entries — verify public-domain status per jurisdiction; fall back to curated summaries if copyright is ambiguous).
   - bible/prayer_verses.json (50+ curated passages as Lectio Divina fallback pack).
   - breath_prayers.json (10+ classical breath prayers: Jesus Prayer, Psalm 23 fragments, Philippians 4:6-7, etc.).
   - rosary/*.json (Joyful, Sorrowful, Glorious, Luminous mysteries + Anglican Rope + Jesus Prayer Rope content).
@@ -466,7 +461,7 @@ A Bible-integrated prayer mode. Pulls a verse (from linked ScriptureQuest collec
 A listening/silence mode. Timer (default 10 minutes) with optional gentle haptic tick every 30–60 seconds. Curated "still small voice" prompts (30–40 handpicked short Scripture passages like "Be still and know that I am God" — Psalm 46:10) surface randomly every 60–90 seconds as a 2-second card. Ends with a quick voice-to-text reflection. No ambient audio (that was sent to §9.5).
 
 9.3 Home-Screen and Lock-Screen Widgets
-Home widget variants: streak flame, "tap to log gratitude," daily verse, quick "Start Prayer" button, daily devotional preview. Lock-screen prayer widget for Android 12+. Widgets are the single biggest retention lever Duolingo invested in late; worth building soon after launch.
+Home widget variants: streak flame, "tap to log gratitude," daily verse, quick "Start Prayer" button. Lock-screen prayer widget for Android 12+. Widgets are the single biggest retention lever Duolingo invested in late; worth building soon after launch.
 
 9.4 Wear OS Companion
 One-tap prayer logging from the wrist. Breath-prayer nudge haptics. Streak status glance. Voice-recording of quick prayers.
@@ -528,22 +523,19 @@ Encrypted backup of journals, gratitude entries, photos, and answered-prayer tes
 9.23 Printable Testimony Books (Print-on-Demand)
 Extension of the MVP-scope Testimony Book PDF export (§3.12.3). Optional paid integration with a print-on-demand service to produce a hardcover keepsake book from the user's Answered Prayers.
 
-9.24 Localized Devotional Content
-Spanish, Korean, Portuguese translations (or native-language equivalents) of Spurgeon, Bonhoeffer, and other devotional authors. Launch ships English-only devotionals; other UI strings are localized at launch.
-
-9.25 Full Cloud Sync for All Solo Features
+9.24 Full Cloud Sync for All Solo Features
 Optional cloud backup/sync of the entire user state (journals, gratitudes, prayer items, answered prayers, stats) across devices. MVP keeps solo features 100% offline; this is a future convenience feature.
 
-9.26 Group Voice Prayer Rooms
+9.25 Group Voice Prayer Rooms
 Live audio rooms where group members can pray aloud together in real time. WebRTC-based. Significant moderation and safety design work required before launch.
 
-9.27 AR Prayer Palace
+9.26 AR Prayer Palace
 Method-of-loci visual prayer builder using AR. User places prayer items in a virtual 3D space and "walks through" their prayer list. Experimental/speculative.
 
-9.28 Sing / Declare Mode with User Recordings
+9.27 Sing / Declare Mode with User Recordings
 Users record themselves singing / declaring Scripture or a prayer, and the recordings become a personal worship library for playback during prayer time.
 
-9.29 AI-Suggested Prayer Plans Based on Journal/Mood
+9.28 AI-Suggested Prayer Plans Based on Journal/Mood
 Builds on §9.15 and §9.19. AI analyzes journal entries and mood trends to suggest seasonal prayer plans ("It looks like anxiety has been a theme this month — consider a 7-day Philippians 4 plan").
 
 10. SUCCESS METRICS
@@ -556,4 +548,4 @@ Builds on §9.15 and §9.19. AI analyzes journal entries and mood trends to sugg
 - Testimony Book export count (leading indicator of deep user investment).
 - Positive reviews highlighting "fun + actually pray consistently + seeing God answer + growing in gratitude + praying together + welcoming for my tradition."
 
-This document is the single source of truth for PrayerQuest. It mirrors the philosophy, structure, and technical approach of ScriptureQuest while focusing purely on joyful, rewarding prayer habits, voice-to-text ease, answer tracking, a unified Prayer Library, daily Gratitude with photos, Firebase-backed invite-only Prayer Groups + Prayer Partners, Photo Prayers, Crisis Prayer Mode, Fasting tracking, Memory & Legacy features, Big Celebration Moments when prayers are answered, a tradition-aware Netflix-style Mode Picker, and a full 8-step onboarding that configures everything up front.
+This document is the single source of truth for PrayerQuest. It mirrors the philosophy, structure, and technical approach of ScriptureQuest while focusing purely on joyful, rewarding prayer habits, voice-to-text ease, answer tracking, a unified Prayer Library, daily Gratitude with photos, Firebase-backed invite-only Prayer Groups + Prayer Partners, Photo Prayers, Crisis Prayer Mode, Fasting tracking, Memory & Legacy features, Big Celebration Moments when prayers are answered, a tradition-aware Netflix-style Mode Picker, and a full 7-step onboarding that configures everything up front.
