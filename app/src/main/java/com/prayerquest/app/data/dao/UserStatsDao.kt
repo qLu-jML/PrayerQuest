@@ -54,6 +54,33 @@ interface UserStatsDao {
     @Query("UPDATE user_stats SET totalFamousPrayersSaid = totalFamousPrayersSaid + 1 WHERE id = 1")
     suspend fun incrementFamousPrayers()
 
+    @Query("UPDATE user_stats SET totalVoiceSessions = totalVoiceSessions + 1 WHERE id = 1")
+    suspend fun incrementVoiceSessions()
+
+    @Query("UPDATE user_stats SET totalJournalSessions = totalJournalSessions + 1 WHERE id = 1")
+    suspend fun incrementJournalSessions()
+
+    @Query("UPDATE user_stats SET totalSundaySessions = totalSundaySessions + 1 WHERE id = 1")
+    suspend fun incrementSundaySessions()
+
+    /**
+     * Lifts [UserStats.longestGratitudeStreak] to at least [days]. The MAX
+     * here is the invariant — the peak never regresses even when the live
+     * consecutive counter resets on a missed day. Called from
+     * [com.prayerquest.app.data.repository.GamificationRepository.onGratitudeLogged].
+     */
+    @Query("UPDATE user_stats SET longestGratitudeStreak = MAX(longestGratitudeStreak, :days) WHERE id = 1")
+    suspend fun raiseLongestGratitudeStreak(days: Int)
+
+    /**
+     * Lifts [UserStats.longestSessionMinutes] to at least [minutes]. Backs
+     * the LONGEST_SESSION badges (Thirty Still / Holy Hour). The column has
+     * shipped since v1 of the schema but nothing was ever writing to it —
+     * Sprint-18 wires it through [GamificationRepository.onPrayerSessionCompleted].
+     */
+    @Query("UPDATE user_stats SET longestSessionMinutes = MAX(longestSessionMinutes, :minutes) WHERE id = 1")
+    suspend fun raiseLongestSession(minutes: Int)
+
     // Hearts + freezes have moved to StreakDao.
     // See CLAUDE.md "Architectural decisions of record" (2026-04-16).
 }

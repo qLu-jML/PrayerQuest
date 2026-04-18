@@ -43,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import com.prayerquest.app.domain.content.Decade
 import com.prayerquest.app.domain.content.PrayerRope
 import com.prayerquest.app.domain.content.RosaryContent
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Prayer Beads — walk through a Rosary, Jesus Prayer rope, Anglican rosary,
@@ -86,6 +88,15 @@ fun PrayerBeadsMode(
         .take(decadeIndex)
         .sumOf { it.beads.size } + beadIndex + 1
 
+    // Resolve the summary strings at @Composable level — onClick is a plain
+    // `() -> Unit` lambda and `stringResource()` can't be called inside it.
+    val beadsSummaryTitle = stringResource(R.string.prayer_modes_prayer_beads_x, selectedRope.displayName)
+    val beadsSummaryTradition = stringResource(R.string.prayer_modes_x_tradition, selectedRope.tradition)
+    val beadsSummaryBody = stringResource(
+        R.string.prayer_modes_walked_all_x_beads_across_x_decade_s,
+        totalBeads,
+        selectedRope.decades.size
+    )
     PrayerModeScaffold(
         modifier = modifier,
         contentArrangement = Arrangement.spacedBy(16.dp),
@@ -105,10 +116,10 @@ fun PrayerBeadsMode(
                     if (isLastBead) {
                         onModeComplete(
                             buildString {
-                                appendLine("Prayer Beads · ${selectedRope.displayName}")
-                                appendLine("${selectedRope.tradition} tradition")
+                                appendLine(beadsSummaryTitle)
+                                appendLine(beadsSummaryTradition)
                                 appendLine()
-                                appendLine("Walked all $totalBeads beads across ${selectedRope.decades.size} decade(s).")
+                                appendLine(beadsSummaryBody)
                             }.trim()
                         )
                     } else if (beadIndex < currentDecade.beads.lastIndex) {
@@ -125,9 +136,9 @@ fun PrayerBeadsMode(
             ) {
                 Text(
                     text = when {
-                        isLastBead -> "Complete Prayer"
-                        beadIndex == currentDecade.beads.lastIndex -> "Next Decade"
-                        else -> "Next Bead"
+                        isLastBead -> stringResource(R.string.prayer_modes_complete_prayer)
+                        beadIndex == currentDecade.beads.lastIndex -> stringResource(R.string.prayer_modes_next_decade)
+                        else -> stringResource(R.string.prayer_modes_next_bead)
                     },
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold
@@ -162,11 +173,11 @@ fun PrayerBeadsMode(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Decade ${decadeIndex + 1} of ${selectedRope.decades.size}",
+                    text = stringResource(R.string.prayer_modes_decade_x_of_x, decadeIndex + 1, selectedRope.decades.size),
                     style = MaterialTheme.typography.labelMedium
                 )
                 Text(
-                    text = "$beadsWalked / $totalBeads beads",
+                    text = stringResource(R.string.prayer_modes_x_x_beads, beadsWalked, totalBeads),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -289,7 +300,7 @@ private fun RopePicker(
             )
             Icon(
                 imageVector = Icons.Default.ArrowDropDown,
-                contentDescription = "Choose rope"
+                contentDescription = stringResource(R.string.prayer_modes_choose_rope)
             )
         }
         DropdownMenu(

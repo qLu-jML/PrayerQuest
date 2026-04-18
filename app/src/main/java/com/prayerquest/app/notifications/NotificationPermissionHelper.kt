@@ -13,6 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Android 13 (API 33) introduced POST_NOTIFICATIONS as a runtime permission.
@@ -54,7 +56,7 @@ object NotificationPermissionHelper {
  * Usage (typical onboarding step):
  * ```
  * val permission = rememberNotificationPermissionState()
- * Button(onClick = { permission.request() }) { Text("Allow notifications") }
+ * Button(onClick = { permission.request() }) { Text(stringResource(R.string.common_allow_notifications)) }
  * if (permission.isGranted) { /* show "You're all set" */ }
  * ```
  *

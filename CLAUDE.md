@@ -45,31 +45,34 @@ Canonical values — do not add others without updating the DD:
 - All migrations are explicit in `PrayerQuestDatabase.kt`. No `fallbackToDestructiveMigration()` in shipped builds.
 - Schema export is ON (`$projectDir/schemas`).
 
-## Sprint workflow (commit every sprint)
-Nathan is running one Claude conversation per sprint to finalize features + content for release. Every sprint ends with a git commit. Follow this loop:
+## Sprint workflow (commit every sprint AND every major bugfix)
+Nathan is running one Claude conversation per sprint to finalize features + content for release. Every sprint ends with a git commit. Every meaningful bugfix between sprints ALSO ends with its own commit — don't let fixes pile up unattributed. Follow this loop:
 
-1. Do the sprint work.
-2. When the sprint's deliverables are complete, STOP and prompt Nathan to build and test:
-   > "Sprint N is done. Please build the app in Android Studio and test the new behavior on your device/emulator. Reply **all clear** when you've verified it works, or tell me what's broken and I'll fix it."
-3. If he replies "all clear" (or equivalent), commit everything to git **locally** — do not attempt to `git push`. There is no `origin` configured in this repo; Nathan pushes manually from his Windows box in PowerShell.
+1. Do the sprint work (or the bugfix work).
+2. When the deliverables are complete, STOP and prompt Nathan to build and test:
+   > "Sprint X is done. Please build the app in Android Studio and test the new behavior on your device/emulator. Reply **all clear** when you've verified it works, or tell me what's broken and I'll fix it."
+   For a bugfix: "Bugfix for <thing> is ready. Please build and test, then reply **all clear** or tell me what's still broken."
+3. If he replies "all clear" (or equivalent), commit everything to git **locally**.
 4. If he reports issues, fix them, then re-prompt for build/test. Don't commit until he's green.
 
-**Commit style:** one commit per sprint, title line `Sprint N: <short summary>`, body describing what was built/changed. Match existing commit style (see `git log`). Always include the `Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>` trailer.
+**Commit cadence:**
+- One commit per sprint, title line `Sprint X: <short summary>` (use the letter, e.g. `Sprint I:`).
+- One commit per major bugfix, title line `Fix: <short summary>`. "Major" = anything that touches behavior a user would notice, anything that was a P0/P1 bug, or any fix Nathan explicitly asked for.
+- Trivial cleanups (typos, comment-only edits, formatting) can ride along in the next sprint commit.
+- Match existing commit style (see `git log`). Always include the `Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>` trailer.
 
-**Never push.** Nathan pushes manually via PowerShell. Claude's job stops at a clean local commit.
+**Never push.** There is no `origin` configured here. Nathan pushes manually via PowerShell on his Windows box. Claude's job stops at a clean local commit — do not run `git push`, do not add a remote, do not suggest pushing as a next step. Just confirm the commit landed and stop.
 
-## Sprint status (see DD §8.1 for full plan)
-- **Sprint 1** — Schema + cleanup: *in progress*
-- **Sprint 2** — Firestore real-time refactor: pending
-- **Sprint 3** — 5 new prayer modes + Netflix-shelf Mode Picker: pending
-- **Sprint 4** — Onboarding + Settings + Notifications (Quiet Hours, personalities): pending
-- **Sprint 5** — Home + Library + Gratitude polish (Names of God tab, Speed Round, Crisis Mode, Big Celebration, auto-tagging): pending
-- **Sprint 6** — Asset authoring (names of god, breath prayers, rosary, daily office, seasonal packs, disclaimer): pending
-- **Sprint 7** (optional) — v1.1 groundwork stubs (Fasting UI, Testimony Book, Prayer Partners)
+## Sprint plan lives elsewhere
+The authoritative sprint list — which sprint is next, what each sprint delivers, what's done — lives in `design/PrayerQuest_Roadmap_To_Release.md`. That document changes; this one doesn't. Read the Roadmap at the start of any session to learn the current sprint. Do NOT duplicate sprint status into this file.
 
-## Release phasing
-- **v1.0 (Phase 4a)**: solo features, Gratitude, Library, Answered Prayers, Big Celebration, Crisis, Fasting, Liturgical Calendar, Notifications + Quiet Hours, 7-step Onboarding, localization strings externalized.
-- **v1.1 (Phase 4b)**: Firebase Groups + Prayer Partners full rollout, Memory & Legacy (Year in Review, Testimony Book PDF, On This Day, Time Capsule).
+## Release phases (philosophy, not schedule)
+Work moves through three phases. The Roadmap document names the specific sprints in each:
+- **Feature-build phase** — lettered sprints landing DD features. One sprint per Claude conversation, one commit per sprint.
+- **Polish + bugfix phase** — after feature sprints are done, before/after a version goes to 100% rollout. Each notable fix is its own commit (`Fix: <summary>`), its own build, its own versionCode bump when shipping. Don't batch unrelated fixes into a single commit unless they share a root cause — one fix per commit makes Play Console release notes trivial.
+- **Release phase** — staged rollout via the Play Console release pipeline. Follow `store/LAUNCH_CHECKLIST.md`.
+
+When the Roadmap's final sprint is done, the app is in permanent polish/bugfix mode unless a new version plan is drafted. The commit cadence above still applies.
 
 ## File conventions
 - Entities: `data/entity/<Name>.kt`

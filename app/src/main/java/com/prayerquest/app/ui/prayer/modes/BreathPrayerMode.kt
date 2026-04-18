@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import com.prayerquest.app.domain.content.BreathPrayer
 import com.prayerquest.app.domain.content.BreathPrayerLibrary
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Breath Prayer — paced inhale-exhale animation with a short repeatable
@@ -115,6 +117,18 @@ fun BreathPrayerMode(
 
     val suggestedReached = elapsedSeconds >= DEFAULT_SESSION_SECONDS
 
+    // Resolve summary strings at @Composable level — onClick is plain
+    // `() -> Unit`. These recompose with the underlying state anyway, so we
+    // just hoist the stringResource calls out of the lambda.
+    val breathSummaryTitle = stringResource(R.string.prayer_modes_breath_prayer_x, selected.title)
+    val breathSummaryInhale = stringResource(R.string.prayer_modes_inhale_x, selected.inhale)
+    val breathSummaryExhale = stringResource(R.string.prayer_modes_exhale_x, selected.exhale)
+    val breathSummaryStats = stringResource(
+        R.string.prayer_modes_x_x_breath_cycles,
+        formatSeconds(elapsedSeconds),
+        cycleCount
+    )
+
     PrayerModeScaffold(
         modifier = modifier,
         contentArrangement = Arrangement.spacedBy(16.dp),
@@ -126,11 +140,11 @@ fun BreathPrayerMode(
                 onClick = {
                     onModeComplete(
                         buildString {
-                            appendLine("Breath Prayer · ${selected.title}")
-                            appendLine("(inhale) ${selected.inhale}")
-                            appendLine("(exhale) ${selected.exhale}")
+                            appendLine(breathSummaryTitle)
+                            appendLine(breathSummaryInhale)
+                            appendLine(breathSummaryExhale)
                             appendLine()
-                            appendLine("${formatSeconds(elapsedSeconds)} · $cycleCount breath cycles")
+                            appendLine(breathSummaryStats)
                         }.trim()
                     )
                 },
@@ -140,7 +154,7 @@ fun BreathPrayerMode(
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
-                    text = if (suggestedReached) "Complete" else "Finish early",
+                    text = if (suggestedReached) stringResource(R.string.prayer_modes_complete) else stringResource(R.string.common_finish_early),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -175,7 +189,10 @@ fun BreathPrayerMode(
             // user is breath-praying _for_ these items, so naming them keeps
             // the screen connected to what they committed to.
             Text(
-                text = "Breathing for: ${topics!!.joinToString(" · ").take(140)}",
+                text = stringResource(
+                    R.string.prayer_modes_breathing_for_topics_jointostring,
+                    topics.orEmpty().joinToString(" · ").take(140)
+                ),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontStyle = FontStyle.Italic,
@@ -195,7 +212,7 @@ fun BreathPrayerMode(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = if (inhaling) "Breathe in…" else "Breathe out…",
+                text = if (inhaling) stringResource(R.string.common_breathe_in) else stringResource(R.string.common_breathe_out),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.SemiBold
@@ -214,15 +231,15 @@ fun BreathPrayerMode(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             MetaStat(
-                label = "Time",
+                label = stringResource(R.string.common_time),
                 value = formatSeconds(elapsedSeconds)
             )
             MetaStat(
-                label = "Breaths",
+                label = stringResource(R.string.common_breaths),
                 value = cycleCount.toString()
             )
             MetaStat(
-                label = "Suggested",
+                label = stringResource(R.string.common_suggested),
                 value = formatSeconds(DEFAULT_SESSION_SECONDS)
             )
         }
@@ -230,7 +247,7 @@ fun BreathPrayerMode(
         // Gentle encouragement once the suggested time has been reached
         if (suggestedReached) {
             Text(
-                text = "Three minutes with the Lord. Well done.",
+                text = stringResource(R.string.prayer_modes_three_minutes_with_the_lord_well_done),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontStyle = FontStyle.Italic,
@@ -311,7 +328,7 @@ private fun BreathPrayerPicker(
             )
             Icon(
                 imageVector = Icons.Default.ArrowDropDown,
-                contentDescription = "Choose breath prayer"
+                contentDescription = stringResource(R.string.prayer_modes_choose_breath_prayer)
             )
         }
         DropdownMenu(

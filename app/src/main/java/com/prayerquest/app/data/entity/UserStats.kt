@@ -27,6 +27,14 @@ data class UserStats(
     val totalGratitudesLogged: Int = 0,
     val totalGratitudePhotos: Int = 0,
     val consecutiveGratitudeDays: Int = 0,
+    /**
+     * Running-max of [consecutiveGratitudeDays]. Updated at the end of
+     * [com.prayerquest.app.data.repository.GamificationRepository.onGratitudeLogged].
+     * Backs the "Hundred Thankful Days" badge (gratitude_100_streak) which
+     * must survive a reset of the live consecutive counter — once a user
+     * has strung 100 days together, the badge is earned forever.
+     */
+    val longestGratitudeStreak: Int = 0,
 
     // Group totals
     val totalGroupPrayersLogged: Int = 0,
@@ -39,6 +47,12 @@ data class UserStats(
     // Session-level stats
     val longestSessionMinutes: Int = 0,
     val totalDistinctModesUsed: Int = 0,
+    /** Lifetime count of prayer sessions whose record stored a voice transcript. Backs VOICE-category badges. */
+    val totalVoiceSessions: Int = 0,
+    /** Lifetime count of prayer sessions whose record stored journal text (or were in PRAYER_JOURNAL mode). Backs JOURNAL-category badges. */
+    val totalJournalSessions: Int = 0,
+    /** Lifetime count of prayer sessions whose sessionDate landed on a Sunday. Backs SABBATH-category badges. */
+    val totalSundaySessions: Int = 0,
 
     // Streak protection: hearts + freezes now live on StreakData.
     // See CLAUDE.md "Architectural decisions of record" (2026-04-16).

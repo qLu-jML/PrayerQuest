@@ -1,6 +1,7 @@
 package com.prayerquest.app.ui.navigation
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.Groups
@@ -17,19 +18,22 @@ import com.prayerquest.app.R
  * screen. Groups took its slot so Prayer Groups is a top-level tap.
  *
  * Each destination has either an [icon] (Material ImageVector) or an [iconRes]
- * (custom drawable resource) — never both.
+ * (custom drawable resource) — never both. Labels are resource IDs resolved
+ * at Composable call sites via `stringResource(destination.labelRes)` — enum
+ * initializers run outside a Composable scope so we can't call stringResource()
+ * here.
  */
 enum class TopLevelDestination(
     val route: String,
-    val label: String,
+    @StringRes val labelRes: Int,
     val icon: ImageVector? = null,
     @DrawableRes val iconRes: Int? = null
 ) {
-    HOME("home", "Home", icon = Icons.Default.Home),
-    PRAY("pray", "Pray", iconRes = R.drawable.ic_praying_hands),
-    LIBRARY("library", "Library", icon = Icons.Default.AutoStories),
-    GROUPS("prayer_groups", "Groups", icon = Icons.Default.Groups),
-    PROFILE("profile", "Profile", icon = Icons.Default.Person)
+    HOME("home", R.string.navigation_home, icon = Icons.Default.Home),
+    PRAY("pray", R.string.prayer_modes_pray, iconRes = R.drawable.ic_praying_hands),
+    LIBRARY("library", R.string.navigation_library, icon = Icons.Default.AutoStories),
+    GROUPS("prayer_groups", R.string.navigation_groups, icon = Icons.Default.Groups),
+    PROFILE("profile", R.string.settings_profile, icon = Icons.Default.Person)
 }
 
 /**
@@ -106,6 +110,14 @@ object Routes {
         "edit_prayer_item/$prayerItemId"
     const val FAMOUS_PRAYER_DETAIL = "famous_prayer/{prayerId}"
     const val BIBLE_PRAYER_DETAIL = "bible_prayer/{prayerId}"
+    /**
+     * Detail screen for a single Name of God (DD §3.12). `nameId` is the
+     * string id from `assets/prayers/names_of_god.json` (e.g. "yhwh",
+     * "elohim"). The detail screen's "Pray this name" CTA routes through
+     * the contemplative Breath Prayer path — see [NameOfGodDetailScreen].
+     */
+    const val NAME_OF_GOD_DETAIL = "name_of_god/{nameId}"
+    fun nameOfGodDetail(nameId: String): String = "name_of_god/$nameId"
     const val ANSWERED_PRAYERS = "answered_prayers"
     const val GRATITUDE_LOG = "gratitude_log"
     const val GRATITUDE_CATALOGUE = "gratitude_catalogue"

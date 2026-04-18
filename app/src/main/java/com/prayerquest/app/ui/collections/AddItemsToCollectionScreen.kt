@@ -71,6 +71,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Screen for adding prayer items into an existing [com.prayerquest.app.data.entity.PrayerCollection].
@@ -145,12 +147,12 @@ fun AddItemsToCollectionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Prayers") },
+                title = { Text(stringResource(R.string.common_add_prayers)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.common_back)
                         )
                     }
                 }
@@ -192,7 +194,7 @@ fun AddItemsToCollectionScreen(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Text(
-                                text = "Add a new prayer",
+                                text = stringResource(R.string.collections_add_a_new_prayer),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -209,8 +211,8 @@ fun AddItemsToCollectionScreen(
                                 OutlinedTextField(
                                     value = newTitle,
                                     onValueChange = { newTitle = it },
-                                    label = { Text("Prayer title") },
-                                    placeholder = { Text("e.g., Healing for Mom") },
+                                    label = { Text(stringResource(R.string.collections_prayer_title)) },
+                                    placeholder = { Text(stringResource(R.string.collections_e_g_healing_for_mom)) },
                                     singleLine = true,
                                     modifier = Modifier.weight(1f)
                                 )
@@ -245,8 +247,8 @@ fun AddItemsToCollectionScreen(
                             OutlinedTextField(
                                 value = newDescription,
                                 onValueChange = { newDescription = it },
-                                label = { Text("Description (optional)") },
-                                placeholder = { Text("Any context or Scripture to pray into…") },
+                                label = { Text(stringResource(R.string.collections_description_optional)) },
+                                placeholder = { Text(stringResource(R.string.collections_any_context_or_scripture_to_pray_into)) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .heightIn(min = 80.dp)
@@ -292,7 +294,7 @@ fun AddItemsToCollectionScreen(
                             ) {
                                 Icon(Icons.Default.Add, contentDescription = null)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Create & Add")
+                                Text(stringResource(R.string.collections_create_add))
                             }
                         }
                     }
@@ -306,7 +308,7 @@ fun AddItemsToCollectionScreen(
                     ) {
                         HorizontalDivider(modifier = Modifier.weight(1f))
                         Text(
-                            text = "  or pick existing  ",
+                            text = stringResource(R.string.collections_or_pick_existing),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontStyle = FontStyle.Italic
@@ -325,7 +327,7 @@ fun AddItemsToCollectionScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "No other prayers yet — create one above.",
+                                text = stringResource(R.string.collections_no_other_prayers_yet_create_one_above),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontStyle = FontStyle.Italic
@@ -360,7 +362,7 @@ fun AddItemsToCollectionScreen(
                             .height(48.dp),
                         colors = ButtonDefaults.outlinedButtonColors()
                     ) {
-                        Text("Done")
+                        Text(stringResource(R.string.common_done))
                     }
                     Button(
                         onClick = {
@@ -373,8 +375,8 @@ fun AddItemsToCollectionScreen(
                             .height(48.dp)
                     ) {
                         Text(
-                            text = if (selectedIds.isEmpty()) "Add Selected"
-                            else "Add ${selectedIds.size} Selected"
+                            text = if (selectedIds.isEmpty()) stringResource(R.string.collections_add_selected)
+                            else stringResource(R.string.collections_add_x_selected, selectedIds.size)
                         )
                     }
                 }
@@ -388,7 +390,7 @@ fun AddItemsToCollectionScreen(
                         .padding(16.dp)
                         .height(48.dp)
                 ) {
-                    Text("Done")
+                    Text(stringResource(R.string.common_done))
                 }
             }
         }
@@ -415,7 +417,7 @@ private fun SuggestedTagRow(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            text = "Suggested tags",
+            text = stringResource(R.string.collections_suggested_tags),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onPrimaryContainer
         )
@@ -426,9 +428,9 @@ private fun SuggestedTagRow(
             suggestions.forEach { tag ->
                 val isAccepted = accepted == tag.category
                 val a11y = if (isAccepted) {
-                    "Suggested tag: ${tag.category.displayName}. Tap to dismiss."
+                    stringResource(R.string.collections_suggested_tag_x_tap_to_dismiss, tag.category.displayName)
                 } else {
-                    "Suggested tag: ${tag.category.displayName}. Tap to apply."
+                    stringResource(R.string.collections_suggested_tag_x_tap_to_apply, tag.category.displayName)
                 }
                 FilterChip(
                     selected = isAccepted,

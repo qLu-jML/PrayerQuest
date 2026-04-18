@@ -52,6 +52,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Edit screen for an existing prayer item — title, description, and the
@@ -107,12 +109,12 @@ fun EditPrayerItemScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Edit prayer") },
+                title = { Text(stringResource(R.string.collections_edit_prayer)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.common_back),
                         )
                     }
                 }
@@ -145,13 +147,13 @@ fun EditPrayerItemScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Photo",
+                        text = stringResource(R.string.collections_photo),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        text = "Stays private to this device. Never shared.",
+                        text = stringResource(R.string.collections_stays_private_to_this_device_never_shared),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -186,14 +188,14 @@ fun EditPrayerItemScreen(
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
-                label = { Text("Title") },
+                label = { Text(stringResource(R.string.collections_title)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                label = { Text("Description (optional)") },
+                label = { Text(stringResource(R.string.collections_description_optional)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 120.dp),
@@ -214,7 +216,7 @@ fun EditPrayerItemScreen(
                         .height(48.dp),
                     colors = ButtonDefaults.outlinedButtonColors(),
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.common_cancel))
                 }
                 Button(
                     onClick = {
@@ -230,7 +232,7 @@ fun EditPrayerItemScreen(
                         .weight(1f)
                         .height(48.dp),
                 ) {
-                    Text("Save")
+                    Text(stringResource(R.string.common_save))
                 }
             }
         }

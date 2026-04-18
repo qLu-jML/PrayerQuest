@@ -42,6 +42,8 @@ import com.prayerquest.app.data.entity.PrayerItem
 import com.prayerquest.app.data.repository.PrayerGroupRepository
 import com.prayerquest.app.data.repository.PrayerRepository
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Screen for adding a new prayer request to a Prayer Group.
@@ -82,10 +84,10 @@ fun AddGroupPrayerScreen(
             .imePadding()
     ) {
         TopAppBar(
-            title = { Text("Add Prayer") },
+            title = { Text(stringResource(R.string.groups_add_prayer)) },
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
             }
         )
@@ -99,12 +101,12 @@ fun AddGroupPrayerScreen(
         ) {
             item {
                 Text(
-                    text = "Share a prayer request",
+                    text = stringResource(R.string.groups_share_a_prayer_request),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "All members of this group will see this prayer and can pray for it together.",
+                    text = stringResource(R.string.groups_all_members_of_this_group_will_see_this_prayer_and),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
@@ -115,9 +117,9 @@ fun AddGroupPrayerScreen(
                 OutlinedTextField(
                     value = title,
                     onValueChange = { if (it.length <= 100) title = it },
-                    label = { Text("Prayer Title") },
+                    label = { Text(stringResource(R.string.groups_prayer_title)) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("e.g., Healing for my mom") },
+                    placeholder = { Text(stringResource(R.string.groups_e_g_healing_for_my_mom)) },
                     singleLine = true
                 )
             }
@@ -126,9 +128,9 @@ fun AddGroupPrayerScreen(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { if (it.length <= 500) description = it },
-                    label = { Text("Details (Optional)") },
+                    label = { Text(stringResource(R.string.groups_details_optional)) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Anything the group should know as they pray...") },
+                    placeholder = { Text(stringResource(R.string.groups_anything_the_group_should_know_as_they_pray)) },
                     minLines = 4,
                     maxLines = 6
                 )
@@ -136,7 +138,7 @@ fun AddGroupPrayerScreen(
 
             item {
                 Text(
-                    text = "Keep personal / sensitive details light — everyone in this group will see this.",
+                    text = stringResource(R.string.groups_keep_personal_sensitive_details_light_everyone_in),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -181,7 +183,7 @@ fun AddGroupPrayerScreen(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text("Add to Group", style = MaterialTheme.typography.labelLarge)
+                        Text(stringResource(R.string.groups_add_to_group), style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }

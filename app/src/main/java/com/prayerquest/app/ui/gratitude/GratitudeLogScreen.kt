@@ -35,6 +35,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,16 +67,16 @@ fun GratitudeLogScreen(
     var hasPhotos by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
-    val dateFormat = DateTimeFormatter.ofPattern("EEEE, MMMM d")
+    val dateFormat = DateTimeFormatter.ofPattern(stringResource(R.string.gratitude_eeee_mmmm_d))
     val today = LocalDate.now().format(dateFormat)
 
     Column(modifier = modifier.fillMaxSize()) {
         // Top bar
         TopAppBar(
-            title = { Text("Daily Gratitude") },
+            title = { Text(stringResource(R.string.gratitude_daily_gratitude)) },
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
             }
         )
@@ -89,7 +92,7 @@ fun GratitudeLogScreen(
                 // Header with verse prompt
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "What are you thankful for today?",
+                        text = stringResource(R.string.common_what_are_you_thankful_for_today),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -106,7 +109,7 @@ fun GratitudeLogScreen(
                         color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Text(
-                            text = "\"Give thanks in all circumstances; for this is God's will for you in Christ Jesus.\" — 1 Thessalonians 5:18",
+                            text = stringResource(R.string.gratitude_give_thanks_in_all_circumstances_for_this_is_god_s),
                             style = MaterialTheme.typography.labelMedium,
                             modifier = Modifier.padding(12.dp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -150,12 +153,12 @@ fun GratitudeLogScreen(
                         }
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Speed Round",
+                                text = stringResource(R.string.gratitude_speed_round),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Rapid-fire gratitude — 60 seconds, bonus XP if you hit 5.",
+                                text = stringResource(R.string.gratitude_rapid_fire_gratitude_60_seconds_bonus_xp_if_you_hi),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -167,7 +170,7 @@ fun GratitudeLogScreen(
                                 contentColor = MaterialTheme.colorScheme.onPrimary
                             )
                         ) {
-                            Text("Start", style = MaterialTheme.typography.labelMedium)
+                            Text(stringResource(R.string.common_start), style = MaterialTheme.typography.labelMedium)
                         }
                     }
                 }
@@ -181,7 +184,7 @@ fun GratitudeLogScreen(
                 // Entry count selector
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "How many gratitudes today?",
+                        text = stringResource(R.string.gratitude_how_many_gratitudes_today),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -197,13 +200,15 @@ fun GratitudeLogScreen(
                                     gratitudeTexts = List(count) { "" }
                                     selectedCategories = List(count) { GratitudeEntry.CATEGORY_OTHER }
                                 },
-                                label = { Text("$count gratitude${if (count > 1) "s" else ""}", style = MaterialTheme.typography.labelSmall) },
+                                label = { Text(pluralStringResource(R.plurals.gratitude_count_label, count, count), style = MaterialTheme.typography.labelSmall) },
                                 modifier = Modifier.weight(1f)
                             )
                         }
                     }
+                    val xpEarned = 5 + ((entryCount - 1).coerceAtLeast(0) * 3) + (if (hasPhotos) 5 else 0)
+                    val countPhrase = pluralStringResource(R.plurals.gratitude_count_label, entryCount, entryCount)
                     Text(
-                        text = "Logging ${if (entryCount == 1) "1 gratitude" else "$entryCount gratitudes"} will earn you ${5 + ((entryCount - 1).coerceAtLeast(0) * 3) + (if (hasPhotos) 5 else 0)} XP",
+                        text = stringResource(R.string.gratitude_logging_xp_hint, countPhrase, xpEarned),
                         style = MaterialTheme.typography.labelSmall,
                         color = GratitudeGreen
                     )
@@ -263,13 +268,13 @@ fun GratitudeLogScreen(
                             modifier = Modifier.size(16.dp),
                         )
                         Text(
-                            text = "Monthly photo limit reached (${PremiumFeatures.FREE_GRATITUDE_PHOTOS_PER_MONTH}). Keep logging without photos, or upgrade for unlimited.",
+                            text = stringResource(R.string.gratitude_monthly_photo_limit_reached_x_keep_logging_without, PremiumFeatures.FREE_GRATITUDE_PHOTOS_PER_MONTH),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.weight(1f),
                         )
                         TextButton(onClick = onNavigateToPaywall) {
-                            Text("Upgrade", style = MaterialTheme.typography.labelSmall)
+                            Text(stringResource(R.string.gratitude_upgrade), style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
@@ -309,7 +314,7 @@ fun GratitudeLogScreen(
                     color = MaterialTheme.colorScheme.onPrimary
                 )
             } else {
-                Text("Save & Earn XP", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.gratitude_save_earn_xp), style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -334,7 +339,7 @@ private fun GratitudeEntryField(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Gratitude #${index + 1}",
+                text = stringResource(R.string.gratitude_gratitude_x, index + 1),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.SemiBold
@@ -345,14 +350,14 @@ private fun GratitudeEntryField(
                 value = text,
                 onValueChange = onTextChange,
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("What are you grateful for?") },
+                placeholder = { Text(stringResource(R.string.gratitude_what_are_you_grateful_for)) },
                 minLines = 2,
                 maxLines = 3,
                 trailingIcon = {
                     IconButton(onClick = { /* Voice to text placeholder */ }) {
                         Icon(
                             Icons.Default.Mic,
-                            contentDescription = "Voice to text",
+                            contentDescription = stringResource(R.string.common_voice_to_text),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -406,7 +411,7 @@ private fun GratitudeEntryField(
                         .padding(end = 8.dp)
                 )
                 Text(
-                    text = if (photoLocked) "Add Photo (Premium)" else "Add Photo (Optional)",
+                    text = if (photoLocked) stringResource(R.string.gratitude_add_photo_premium) else stringResource(R.string.gratitude_add_photo_optional),
                     style = MaterialTheme.typography.labelSmall,
                 )
             }

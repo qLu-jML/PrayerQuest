@@ -42,6 +42,8 @@ import androidx.compose.ui.unit.sp
 import com.prayerquest.app.data.repository.SessionGamificationResult
 import com.prayerquest.app.domain.model.Leveling
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @Composable
 fun SessionSummary(
@@ -88,7 +90,7 @@ fun SessionSummary(
             ) {
         // Header
         Text(
-            text = "Prayer Complete!",
+            text = stringResource(R.string.prayer_prayer_complete),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
@@ -104,7 +106,7 @@ fun SessionSummary(
         // Level-up celebration
         if (result.leveledUp) {
             Text(
-                text = "🎉 Level Up! You reached Level ${result.newLevel}!",
+                text = stringResource(R.string.prayer_level_up_you_reached_level_x, result.newLevel),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -124,7 +126,7 @@ fun SessionSummary(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "Experience Points",
+                    text = stringResource(R.string.prayer_experience_points),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -159,7 +161,7 @@ fun SessionSummary(
             ) {
                 Column {
                     Text(
-                        text = "Current Streak",
+                        text = stringResource(R.string.prayer_current_streak),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -199,12 +201,12 @@ fun SessionSummary(
                 ) {
                     Column {
                         Text(
-                            text = "Level",
+                            text = stringResource(R.string.prayer_level),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "Level ${result.newLevel}",
+                            text = stringResource(R.string.prayer_level_x, result.newLevel),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 4.dp)
@@ -235,7 +237,7 @@ fun SessionSummary(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "🏆 New Achievements Unlocked!",
+                    text = stringResource(R.string.prayer_new_achievements_unlocked),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -264,7 +266,7 @@ fun SessionSummary(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.KeyboardArrowDown,
-                            contentDescription = "Scroll for more",
+                            contentDescription = stringResource(R.string.prayer_scroll_for_more),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(4.dp)
                         )
@@ -289,7 +291,7 @@ fun SessionSummary(
                     .height(48.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Text(text = "Pray Again", style = MaterialTheme.typography.labelLarge)
+                Text(text = stringResource(R.string.prayer_pray_again), style = MaterialTheme.typography.labelLarge)
             }
             OutlinedButton(
                 onClick = onDone,
@@ -298,7 +300,7 @@ fun SessionSummary(
                     .height(48.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Text(text = "Done", style = MaterialTheme.typography.labelLarge)
+                Text(text = stringResource(R.string.common_done), style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -332,11 +334,12 @@ private fun AchievementChip(name: String, description: String) {
     }
 }
 
+@Composable
 private fun getEncouragingMessage(xpEarned: Int): String {
     return when {
-        xpEarned > 150 -> "Incredible session! Your dedication is inspiring."
-        xpEarned > 100 -> "Great work! You're growing spiritually."
-        xpEarned > 50 -> "Good job! Keep up the faithful practice."
-        else -> "Thanks for praying today. Every prayer matters."
+        xpEarned > 150 -> stringResource(R.string.prayer_incredible_session_your_dedication_is_inspiring)
+        xpEarned > 100 -> stringResource(R.string.prayer_great_work_you_re_growing_spiritually)
+        xpEarned > 50 -> stringResource(R.string.prayer_good_job_keep_up_the_faithful_practice)
+        else -> stringResource(R.string.prayer_thanks_for_praying_today_every_prayer_matters)
     }
 }

@@ -1,0 +1,36 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  PrayerQuest — user-level secrets template
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Nathan: copy the block below into `~/.gradle/gradle.properties` (Windows:
+# `%USERPROFILE%\.gradle\gradle.properties`) and fill in real values. That
+# file lives OUTSIDE this repo and is never committed.
+#
+# ❗ DO NOT paste these values into the project-level `gradle.properties`.
+#    That file IS checked into git; only the project-wide JVM / Kotlin
+#    settings belong there.
+#
+# See `store/SIGNING_SETUP.md` for the keystore-generation walk-through.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Release signing ──────────────────────────────────────────────────────────
+# Path to the upload keystore (NOT debug.keystore). May be absolute or start
+# with `~` — the gradle script expands `~` to the user's home directory.
+# The keystore itself MUST live outside the repo; never commit a .jks file.
+uploadKeystorePath=~/keys/prayerquest-upload.jks
+uploadKeystorePassword=your_keystore_password_here
+uploadKeyAlias=prayerquest-upload
+uploadKeyPassword=your_key_password_here
+
+# ── AdMob production ad unit IDs ─────────────────────────────────────────────
+# Paste the real IDs from AdMob console → Apps → PrayerQuest → Ad units.
+# Leave any of these unset (or set to the literal "REPLACE_WITH_REAL_AD_UNIT_ID")
+# and the release build will emit a warning AND the AdManager runtime fail-safe
+# will throw, so test ads never reach production.
+#
+# https://apps.admob.com/ → select PrayerQuest → Ad units tab
+ADMOB_BANNER_ID=ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY
+ADMOB_INTERSTITIAL_ID=ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY
+ADMOB_REWARDED_STREAK_SAVE_ID=ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY
+ADMOB_REWARDED_BONUS_XP_ID=ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY
+ADMOB_APP_OPEN_ID=ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY

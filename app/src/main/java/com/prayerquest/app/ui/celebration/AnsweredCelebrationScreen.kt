@@ -90,6 +90,9 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.random.Random
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * The Big Celebration Moment (DD §3.5.2).
@@ -224,8 +227,10 @@ private fun CelebrationContent(
     ) {
         Spacer(Modifier.height(8.dp))
 
+        // Resolve at @Composable level — `semantics { }` is non-@Composable.
+        val praiseHeadlineA11y = stringResource(R.string.celebration_praise_god_your_prayer_was_answered)
         Text(
-            text = "Praise God!",
+            text = stringResource(R.string.celebration_praise_god),
             style = MaterialTheme.typography.displayLarge.copy(
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 72.sp,
@@ -236,8 +241,7 @@ private fun CelebrationContent(
                 .alpha(headlineAlpha.value)
                 .scale(headlineScale.value)
                 .semantics {
-                    contentDescription =
-                        "Praise God! Your prayer was answered."
+                    contentDescription = praiseHeadlineA11y
                 }
         )
 
@@ -279,7 +283,7 @@ private fun CelebrationContent(
                 enabled = prayer != null
             ) {
                 Text(
-                    text = "Share testimony",
+                    text = stringResource(R.string.celebration_share_testimony),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold
                     )
@@ -292,7 +296,7 @@ private fun CelebrationContent(
                     .height(56.dp)
             ) {
                 Text(
-                    text = "Close",
+                    text = stringResource(R.string.common_close),
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White
                 )
@@ -313,8 +317,8 @@ private fun VerseCard(
     prayerTitle: String,
     modifier: Modifier = Modifier
 ) {
-    val contentDesc = "Scripture card. ${verse.text} — ${verse.reference}." +
-            if (prayerTitle.isNotBlank()) " Prayer: $prayerTitle." else ""
+    val contentDesc = stringResource(R.string.celebration_scripture_card_x_x, verse.text, verse.reference) +
+            if (prayerTitle.isNotBlank()) stringResource(R.string.celebration_prayer_x, prayerTitle) else ""
 
     Surface(
         modifier = modifier
@@ -354,7 +358,7 @@ private fun VerseCard(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Text(
-                    text = "— ${verse.reference}",
+                    text = stringResource(R.string.common_x, verse.reference),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF4A4743)
@@ -364,7 +368,7 @@ private fun VerseCard(
                 if (prayerTitle.isNotBlank()) {
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "Answered prayer: $prayerTitle",
+                        text = stringResource(R.string.celebration_answered_prayer_x, prayerTitle),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = Color(0xFF4A4743)
                         ),
@@ -395,7 +399,7 @@ private fun NewAchievementsStrip(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "New achievement${if (achievements.size > 1) "s" else ""} unlocked",
+                text = pluralStringResource(R.plurals.celebration_new_achievements_unlocked, achievements.size),
                 style = MaterialTheme.typography.labelLarge.copy(
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold
@@ -637,16 +641,16 @@ class AnsweredCelebrationViewModel(
                 putExtra(Intent.EXTRA_STREAM, uri)
                 putExtra(
                     Intent.EXTRA_TEXT,
-                    "Praise God! My prayer \"${prayer.title}\" was answered. " +
-                            "${pickedVerse.reference} — via PrayerQuest."
+                    context.getString(R.string.celebration_praise_god_my_prayer_x_was_answered, prayer.title) +
+                            context.getString(R.string.celebration_x_via_prayerquest, pickedVerse.reference)
                 )
-                putExtra(Intent.EXTRA_SUBJECT, "Praise God — answered prayer")
+                putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.celebration_praise_god_answered_prayer))
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
             val chooser = Intent.createChooser(
                 sendIntent,
-                "Share your testimony"
+                context.getString(R.string.celebration_share_your_testimony)
             ).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
@@ -704,7 +708,7 @@ class AnsweredCelebrationViewModel(
                 typeface = Typeface.create(Typeface.DEFAULT_BOLD, Typeface.BOLD)
                 textAlign = Paint.Align.CENTER
             }
-            drawText("Praise God!", width / 2f, 220f, headlinePaint)
+            drawText(context.getString(R.string.celebration_praise_god), width / 2f, 220f, headlinePaint)
 
             // 3) Subtitle: "My prayer was answered."
             val subtitlePaint = Paint().apply {
@@ -714,7 +718,7 @@ class AnsweredCelebrationViewModel(
                 typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
                 textAlign = Paint.Align.CENTER
             }
-            drawText("My prayer was answered.", width / 2f, 290f, subtitlePaint)
+            drawText(context.getString(R.string.celebration_my_prayer_was_answered), width / 2f, 290f, subtitlePaint)
 
             // 4) Verse body — wrap within 840px horizontal runs.
             val versePaint = Paint().apply {
@@ -741,7 +745,7 @@ class AnsweredCelebrationViewModel(
                 textAlign = Paint.Align.CENTER
             }
             y += 40f
-            drawText("— ${pickedVerse.reference}", width / 2f, y, refPaint)
+            drawText(context.getString(R.string.celebration_x, pickedVerse.reference), width / 2f, y, refPaint)
 
             // 6) Prayer title line (optional).
             if (prayer.title.isNotBlank()) {
@@ -754,7 +758,7 @@ class AnsweredCelebrationViewModel(
                 }
                 y += 80f
                 val titleLines = wrapText(
-                    "Answered prayer: ${prayer.title}",
+                    context.getString(R.string.celebration_answered_prayer_x_2, prayer.title),
                     titlePaint,
                     width - 160
                 )
@@ -772,7 +776,7 @@ class AnsweredCelebrationViewModel(
                 typeface = Typeface.create(Typeface.DEFAULT_BOLD, Typeface.BOLD)
                 textAlign = Paint.Align.CENTER
             }
-            drawText("PrayerQuest", width / 2f, (height - 80).toFloat(), footerPaint)
+            drawText(context.getString(R.string.common_prayerquest), width / 2f, (height - 80).toFloat(), footerPaint)
         }
 
         val dir = File(context.cacheDir, "shared/celebration").apply { mkdirs() }

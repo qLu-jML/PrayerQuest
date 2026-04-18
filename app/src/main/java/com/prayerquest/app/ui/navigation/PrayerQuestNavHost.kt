@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -37,6 +38,7 @@ import com.prayerquest.app.ui.groups.PrayerGroupsScreen
 import com.prayerquest.app.ui.library.AnsweredPrayerDetailScreen
 import com.prayerquest.app.ui.library.BiblePrayerDetailScreen
 import com.prayerquest.app.ui.library.FamousPrayerDetailScreen
+import com.prayerquest.app.ui.library.NameOfGodDetailScreen
 import com.prayerquest.app.ui.prayer.ModePickerScreen
 import com.prayerquest.app.ui.prayer.PrayerListPickerScreen
 import com.prayerquest.app.ui.prayer.PrayerSessionScreen
@@ -64,15 +66,16 @@ fun PrayerQuestNavHost(
             if (showBottomBar) {
                 NavigationBar {
                     TopLevelDestination.entries.forEach { destination ->
+                        val label = stringResource(destination.labelRes)
                         NavigationBarItem(
                             icon = {
                                 if (destination.icon != null) {
-                                    Icon(destination.icon, contentDescription = destination.label)
+                                    Icon(destination.icon, contentDescription = label)
                                 } else if (destination.iconRes != null) {
-                                    Icon(painterResource(id = destination.iconRes), contentDescription = destination.label)
+                                    Icon(painterResource(id = destination.iconRes), contentDescription = label)
                                 }
                             },
-                            label = { Text(destination.label) },
+                            label = { Text(label) },
                             selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
                             onClick = {
                                 navController.navigate(destination.route) {
@@ -169,6 +172,9 @@ fun PrayerQuestNavHost(
                     },
                     onNavigateToBiblePrayerDetail = { prayerId ->
                         navController.navigate("bible_prayer/$prayerId")
+                    },
+                    onNavigateToNameOfGodDetail = { nameId ->
+                        navController.navigate(Routes.nameOfGodDetail(nameId))
                     },
                     onNavigateToAnsweredPrayerDetail = { prayerId ->
                         navController.navigate("answered_prayer/$prayerId")
@@ -444,6 +450,21 @@ fun PrayerQuestNavHost(
                 val prayerId = backStackEntry.arguments?.getString("prayerId") ?: ""
                 BiblePrayerDetailScreen(
                     prayerId = prayerId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // ═══════════════════════════════════════════
+            // NAME OF GOD DETAIL (DD §3.12)
+            // ═══════════════════════════════════════════
+
+            composable(
+                route = Routes.NAME_OF_GOD_DETAIL,
+                arguments = listOf(navArgument("nameId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val nameId = backStackEntry.arguments?.getString("nameId") ?: ""
+                NameOfGodDetailScreen(
+                    nameId = nameId,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

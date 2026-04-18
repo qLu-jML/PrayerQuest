@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @Composable
 fun PremiumCard(
@@ -47,7 +49,7 @@ fun PremiumCard(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "🌟 PrayerQuest Premium",
+            text = stringResource(R.string.premium_prayerquest_premium_2),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             fontSize = 20.sp
@@ -56,7 +58,7 @@ fun PremiumCard(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Upgrade to Premium",
+            text = stringResource(R.string.common_upgrade_to_premium),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -67,15 +69,15 @@ fun PremiumCard(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            PremiumFeature("Ad-Free Experience")
-            PremiumFeature("Unlimited Photos & Journals")
-            PremiumFeature("Enhanced Prayer Groups")
+            PremiumFeature(stringResource(R.string.premium_ad_free_experience))
+            PremiumFeature(stringResource(R.string.premium_unlimited_photos_journals))
+            PremiumFeature(stringResource(R.string.premium_enhanced_prayer_groups))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "$4.99 / month",
+            text = stringResource(R.string.premium_4_99_month),
             style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
             fontSize = 28.sp,
@@ -91,7 +93,7 @@ fun PremiumCard(
                 .height(48.dp)
         ) {
             Text(
-                text = "Upgrade Now",
+                text = stringResource(R.string.premium_upgrade_now),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )

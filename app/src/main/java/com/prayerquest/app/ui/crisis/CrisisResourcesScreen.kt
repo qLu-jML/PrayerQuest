@@ -39,6 +39,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Crisis Resources screen (DD §3.10).
@@ -79,7 +81,7 @@ fun CrisisResourcesScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Crisis resources",
+                        text = stringResource(R.string.crisis_crisis_resources),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.SemiBold
                         )
@@ -89,7 +91,7 @@ fun CrisisResourcesScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back to Crisis Prayer"
+                            contentDescription = stringResource(R.string.crisis_back_to_crisis_prayer)
                         )
                     }
                 }
@@ -129,7 +131,7 @@ private fun IntroBlock() {
     ) {
         Text(
             // Neutral, honest framing. "May help" — we don't over-promise.
-            text = "If you're in danger or thinking about harming yourself, these organizations may help. Tap to call.",
+            text = stringResource(R.string.crisis_if_you_re_in_danger_or_thinking_about_harming_your),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
@@ -138,10 +140,13 @@ private fun IntroBlock() {
 
 @Composable
 private fun ClosingBlock() {
+    // Two-part string: the copy was originally split across two resource keys
+    // plus a literal "option." tail. Concatenation preserves behavior for now;
+    // the cleaner fix (merging into a single resource key with proper
+    // placeholder punctuation) is tracked in LOCALIZATION_AUDIT.md.
     Text(
-        text = "If you're not in the US, UK, or Australia, a short web search for " +
-                "\"crisis line\" plus your country name will usually surface a local " +
-                "option.",
+        text = stringResource(R.string.crisis_if_you_re_not_in_the_us_uk_or_australia_a_short_we) +
+                stringResource(R.string.crisis_crisis_line_plus_your_country_name_will_usually_su),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
     )
@@ -152,6 +157,14 @@ private fun ResourceCard(
     resource: CrisisResource,
     onCall: () -> Unit
 ) {
+    // Resolve the localized call-button accessibility label at the @Composable
+    // level — `semantics { }` runs in a non-Composable SemanticsPropertyReceiver
+    // scope where `stringResource()` is illegal.
+    val callContentDescription = stringResource(
+        R.string.crisis_call_x_x,
+        resource.name,
+        resource.displayNumber
+    )
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -199,7 +212,7 @@ private fun ResourceCard(
                     .fillMaxWidth()
                     .height(52.dp)
                     .semantics {
-                        contentDescription = "Call ${resource.name}, ${resource.displayNumber}"
+                        contentDescription = callContentDescription
                     },
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
@@ -213,7 +226,7 @@ private fun ResourceCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Call",
+                        text = stringResource(R.string.crisis_call),
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -254,6 +267,13 @@ data class CrisisResource(
     val dialString: String
 ) {
     companion object {
+        // NOTE: Crisis-hotline entries are intentionally plain strings, not
+        // string resources. They sit in a top-level `companion object`
+        // initializer where stringResource() can't run; and localizing these
+        // specific names/numbers without human review could send a user in
+        // crisis to the wrong helpline. Localization-pending — see
+        // design/LOCALIZATION_AUDIT.md for the planned resource-ID + render-
+        // time resolution refactor.
         val BUNDLED: List<CrisisResource> = listOf(
             CrisisResource(
                 region = "United States",

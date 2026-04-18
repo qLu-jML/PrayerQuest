@@ -70,8 +70,8 @@ class AnsweredPrayerAnniversaryWorker(
                 return Result.success()
             }
 
-            val title = "A year ago today 🙏"
-            val body = "\"${prayer.title}\" was answered. God is faithful."
+            val title = applicationContext.getString(R.string.notifications_a_year_ago_today)
+            val body = applicationContext.getString(R.string.notifications_x_was_answered_god_is_faithful, prayer.title)
 
             postDeepLinkedNotification(
                 prayerId = prayerId,

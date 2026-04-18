@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
         NameOfGod::class,
         FastingSession::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 abstract class PrayerQuestDatabase : RoomDatabase() {
@@ -76,7 +76,7 @@ abstract class PrayerQuestDatabase : RoomDatabase() {
                 DATABASE_NAME
             )
                 .addCallback(SeedCallback(scope))
-                .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
                 // Dev-phase policy (matches ScriptureQuest): any schema gap we
                 // haven't written an explicit migration for wipes and rebuilds.
                 // MIGRATION_4_5 still runs for v4 devices; pre-v4 installs
@@ -315,6 +315,57 @@ abstract class PrayerQuestDatabase : RoomDatabase() {
         val MIGRATION_9_10: Migration = object : Migration(9, 10) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE prayer_items ADD COLUMN photoUri TEXT")
+            }
+        }
+
+        /**
+         * v10 → v11 — Extended badge counters (2026-04-18).
+         *
+         * Adds four new lifetime-counter columns to `user_stats` that back the
+         * Phase-3 badge expansion:
+         *   - `longestGratitudeStreak` — running max of `consecutiveGratitudeDays`.
+         *     Lets the "Hundred Thankful Days" badge survive a reset of the live
+         *     counter: once 100 has been reached, the badge is earned forever.
+         *   - `totalVoiceSessions` — count of prayer sessions whose record stored
+         *     a voice transcript. Backs Spoken Prayers / Voice of Prayer.
+         *   - `totalJournalSessions` — count of prayer sessions whose record
+         *     stored journal text or were in PRAYER_JOURNAL mode. Backs
+         *     Prayer Scribe / Prayer Journalist.
+         *   - `totalSundaySessions` — count of prayer sessions that landed on a
+         *     Sunday. Backs Sabbath Rhythm / Year of Sabbaths.
+         *
+         * All four default to 0. The counters only start accruing from v11
+         * onward — we don't back-fill from `prayer_records` because the hot
+         * path is where we want the invariant to hold going forward, and
+         * back-filling would require replaying every record (slow on older
+         * installs with heavy history).
+         */
+        val MIGRATION_10_11: Migration = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE user_stats ADD COLUMN longestGratitudeStreak INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "ALTER TABLE user_stats ADD COLUMN totalVoiceSessions INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "ALTER TABLE user_stats ADD COLUMN totalJournalSessions INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "ALTER TABLE user_stats ADD COLUMN totalSundaySessions INTEGER NOT NULL DEFAULT 0"
+                )
+
+                // Seed `longestGratitudeStreak` from the current live counter so
+                // users who already have a streak running aren't punished at
+                // the migration boundary. Safe (idempotent) — later writes
+                // take the max anyway.
+                db.execSQL(
+                    """
+                    UPDATE user_stats
+                    SET longestGratitudeStreak = consecutiveGratitudeDays
+                    WHERE id = 1
+                    """.trimIndent()
+                )
             }
         }
     }

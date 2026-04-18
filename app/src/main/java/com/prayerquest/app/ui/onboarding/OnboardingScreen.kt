@@ -75,6 +75,8 @@ import com.prayerquest.app.ui.theme.Ink
 import com.prayerquest.app.ui.theme.Parchment
 import com.prayerquest.app.ui.theme.Rose500
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Step enumeration — DD §3.2
@@ -134,7 +136,7 @@ fun OnboardingScreen(
                     IconButton(onClick = { step-- }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.common_back),
                             tint = Ink.copy(alpha = 0.75f)
                         )
                     }
@@ -176,7 +178,7 @@ fun OnboardingScreen(
                     )
                 ) {
                     Text(
-                        text = "Skip",
+                        text = stringResource(R.string.common_skip),
                         color = Indigo700,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold
@@ -303,9 +305,9 @@ fun OnboardingScreen(
             ) {
                 Text(
                     text = when (step) {
-                        STEP_WELCOME -> "Let's begin"
-                        TOTAL_STEPS - 1 -> "Begin praying"
-                        else -> "Next"
+                        STEP_WELCOME -> stringResource(R.string.onboarding_let_s_begin)
+                        TOTAL_STEPS - 1 -> stringResource(R.string.onboarding_begin_praying)
+                        else -> stringResource(R.string.common_next)
                     },
                     fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold
@@ -355,13 +357,13 @@ private fun ProgressDots(current: Int, total: Int) {
 private fun WelcomeStep() {
     StepScaffold(
         iconTint = Indigo500,
-        title = "Welcome to\nPrayerQuest",
-        subtitle = "Your gentle companion for a deeper prayer life"
+        title = stringResource(R.string.onboarding_welcome_to_nprayerquest),
+        subtitle = stringResource(R.string.onboarding_your_gentle_companion_for_a_deeper_prayer_life)
     ) {
         Text(
-            text = "Over the next few steps we'll set up your prayer rhythm together — " +
-                    "your name, daily goal, how you like to pray, and when you'd like us to " +
-                    "nudge you. Everything is adjustable later.",
+            text = stringResource(R.string.onboarding_over_the_next_few_steps_we_ll_set_up_your_prayer_r) +
+                    stringResource(R.string.onboarding_your_name_daily_goal_how_you_like_to_pray_and_when) +
+                    stringResource(R.string.onboarding_nudge_you_everything_is_adjustable_later),
             fontSize = 15.sp,
             color = Ink.copy(alpha = 0.7f),
             textAlign = TextAlign.Center,
@@ -383,14 +385,14 @@ private fun NameAndGoalStep(
 ) {
     StepScaffold(
         iconTint = Gold700,
-        title = "Who are you\npraying as?",
-        subtitle = "Name and daily goal"
+        title = stringResource(R.string.onboarding_who_are_you_npraying_as),
+        subtitle = stringResource(R.string.onboarding_name_and_daily_goal)
     ) {
         TextField(
             value = displayName,
             onValueChange = onNameChange,
-            label = { Text("Your name") },
-            placeholder = { Text("Prayer Warrior") },
+            label = { Text(stringResource(R.string.onboarding_your_name)) },
+            placeholder = { Text(stringResource(R.string.common_prayer_warrior)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
@@ -398,7 +400,7 @@ private fun NameAndGoalStep(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "Daily prayer goal (minutes)",
+            text = stringResource(R.string.onboarding_daily_prayer_goal_minutes),
             style = MaterialTheme.typography.labelMedium,
             color = Ink.copy(alpha = 0.75f),
             modifier = Modifier.align(Alignment.Start)
@@ -431,7 +433,7 @@ private fun NameAndGoalStep(
 
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Any amount counts — even three minutes of honest prayer moves mountains.",
+            text = stringResource(R.string.onboarding_any_amount_counts_even_three_minutes_of_honest_pra),
             fontSize = 13.sp,
             color = Ink.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,
@@ -460,7 +462,7 @@ private fun GoalPill(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "$value min",
+            text = stringResource(R.string.onboarding_x_min, value),
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
             color = if (isSelected) Color.White else Indigo700
@@ -480,8 +482,8 @@ private fun TraditionsStep(
 ) {
     StepScaffold(
         iconTint = CommunityBlue,
-        title = "How do\nyou pray?",
-        subtitle = "Pick any that speak to you"
+        title = stringResource(R.string.onboarding_how_do_nyou_pray),
+        subtitle = stringResource(R.string.onboarding_pick_any_that_speak_to_you)
     ) {
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
@@ -513,8 +515,8 @@ private fun TraditionsStep(
         }
         Spacer(modifier = Modifier.height(14.dp))
         Text(
-            text = "This tunes which prayer modes appear first. You can enable any mode later " +
-                    "regardless — traditions just shape the defaults.",
+            text = stringResource(R.string.onboarding_this_tunes_which_prayer_modes_appear_first_you_can) +
+                    stringResource(R.string.onboarding_regardless_traditions_just_shape_the_defaults),
             fontSize = 13.sp,
             color = Ink.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,
@@ -534,13 +536,13 @@ private fun LiturgicalStep(
 ) {
     StepScaffold(
         iconTint = Rose500,
-        title = "Liturgical\ncalendar?",
-        subtitle = "We'll surface seasonal packs and the day on Home"
+        title = stringResource(R.string.onboarding_liturgical_ncalendar),
+        subtitle = stringResource(R.string.onboarding_we_ll_surface_seasonal_packs_and_the_day_on_home)
     ) {
         val options = listOf(
-            LiturgicalCalendar.NONE to "None",
-            LiturgicalCalendar.WESTERN to "Western",
-            LiturgicalCalendar.EASTERN to "Eastern"
+            LiturgicalCalendar.NONE to stringResource(R.string.common_none),
+            LiturgicalCalendar.WESTERN to stringResource(R.string.common_western),
+            LiturgicalCalendar.EASTERN to stringResource(R.string.common_eastern)
         )
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             options.forEachIndexed { index, (value, label) ->
@@ -557,11 +559,11 @@ private fun LiturgicalStep(
         Text(
             text = when (current) {
                 LiturgicalCalendar.NONE ->
-                    "No seasonal banners — keep the Home screen plain."
+                    stringResource(R.string.onboarding_no_seasonal_banners_keep_the_home_screen_plain)
                 LiturgicalCalendar.WESTERN ->
-                    "Advent, Christmas, Lent, Easter, Ordinary Time — Catholic/Anglican/Lutheran calendar."
+                    stringResource(R.string.onboarding_advent_christmas_lent_easter_ordinary_time_catholi)
                 LiturgicalCalendar.EASTERN ->
-                    "Great Lent, Pentecostarion, Nativity Fast — Eastern Orthodox calendar."
+                    stringResource(R.string.onboarding_great_lent_pentecostarion_nativity_fast_eastern_or)
             },
             fontSize = 13.sp,
             color = Ink.copy(alpha = 0.65f),
@@ -591,8 +593,8 @@ private fun RemindersStep(
 ) {
     StepScaffold(
         iconTint = Indigo500,
-        title = "When should\nwe nudge you?",
-        subtitle = "Reminders and Quiet Hours"
+        title = stringResource(R.string.onboarding_when_should_nwe_nudge_you),
+        subtitle = stringResource(R.string.onboarding_reminders_and_quiet_hours)
     ) {
         // Notification permission banner (API 33+ only)
         if (!permissionGranted) {
@@ -605,14 +607,14 @@ private fun RemindersStep(
             ) {
                 Column {
                     Text(
-                        text = "Notifications are turned off",
+                        text = stringResource(R.string.onboarding_notifications_are_turned_off),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Rose500
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "We need permission to send prayer reminders.",
+                        text = stringResource(R.string.onboarding_we_need_permission_to_send_prayer_reminders),
                         fontSize = 13.sp,
                         color = Ink.copy(alpha = 0.7f)
                     )
@@ -624,7 +626,7 @@ private fun RemindersStep(
                             contentColor = Color.White
                         )
                     ) {
-                        Text("Allow notifications")
+                        Text(stringResource(R.string.common_allow_notifications))
                     }
                 }
             }
@@ -632,7 +634,7 @@ private fun RemindersStep(
         }
 
         ReminderRow(
-            label = "Morning",
+            label = stringResource(R.string.onboarding_morning),
             enabled = morningEnabled,
             minuteOfDay = morningMin,
             onToggle = { onMorningChange(it, morningMin) },
@@ -640,7 +642,7 @@ private fun RemindersStep(
         )
         Spacer(modifier = Modifier.height(8.dp))
         ReminderRow(
-            label = "Midday",
+            label = stringResource(R.string.onboarding_midday),
             enabled = middayEnabled,
             minuteOfDay = middayMin,
             onToggle = { onMiddayChange(it, middayMin) },
@@ -648,7 +650,7 @@ private fun RemindersStep(
         )
         Spacer(modifier = Modifier.height(8.dp))
         ReminderRow(
-            label = "Evening",
+            label = stringResource(R.string.onboarding_evening),
             enabled = eveningEnabled,
             minuteOfDay = eveningMin,
             onToggle = { onEveningChange(it, eveningMin) },
@@ -664,7 +666,7 @@ private fun RemindersStep(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Quiet Hours",
+                text = stringResource(R.string.settings_quiet_hours),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = Ink,
@@ -683,13 +685,13 @@ private fun RemindersStep(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 TimeButton(
-                    label = "Start",
+                    label = stringResource(R.string.common_start),
                     minuteOfDay = quietStartMin,
                     onChange = { onQuietWindowChange(it, quietEndMin) },
                     modifier = Modifier.weight(1f)
                 )
                 TimeButton(
-                    label = "End",
+                    label = stringResource(R.string.common_end),
                     minuteOfDay = quietEndMin,
                     onChange = { onQuietWindowChange(quietStartMin, it) },
                     modifier = Modifier.weight(1f)
@@ -725,14 +727,14 @@ private fun ReminderRow(
         Box(modifier = Modifier.weight(1f)) {
             if (enabled) {
                 TimeButton(
-                    label = "At",
+                    label = stringResource(R.string.onboarding_at),
                     minuteOfDay = minuteOfDay,
                     onChange = onTimeChange,
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {
                 Text(
-                    text = "Off",
+                    text = stringResource(R.string.onboarding_off),
                     fontSize = 14.sp,
                     color = Ink.copy(alpha = 0.5f)
                 )
@@ -757,13 +759,13 @@ private fun FirstCollectionStep(
 ) {
     StepScaffold(
         iconTint = GratitudeGreen,
-        title = "Your first\nprayer list",
-        subtitle = "Create one now, or jump straight into the app"
+        title = stringResource(R.string.onboarding_your_first_nprayer_list),
+        subtitle = stringResource(R.string.onboarding_create_one_now_or_jump_straight_into_the_app)
     ) {
         TextField(
             value = name,
             onValueChange = onNameChange,
-            label = { Text("List name") },
+            label = { Text(stringResource(R.string.onboarding_list_name)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
@@ -771,12 +773,12 @@ private fun FirstCollectionStep(
         TextField(
             value = description,
             onValueChange = onDescriptionChange,
-            label = { Text("Optional description") },
+            label = { Text(stringResource(R.string.onboarding_optional_description)) },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Tap Next below to create this list, or skip and add lists later from inside the app.",
+            text = stringResource(R.string.onboarding_tap_next_below_to_create_this_list_or_skip_and_add),
             fontSize = 13.sp,
             color = Ink.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,
@@ -794,7 +796,7 @@ private fun FirstCollectionStep(
             shape = RoundedCornerShape(14.dp)
         ) {
             Text(
-                text = "Skip — take me into the app",
+                text = stringResource(R.string.onboarding_skip_take_me_into_the_app),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -814,21 +816,21 @@ private fun FirstGratitudeStep(
 ) {
     StepScaffold(
         iconTint = GratitudeGreen,
-        title = "One thing\nyou're thankful for",
-        subtitle = "Start your gratitude catalogue right now (optional)"
+        title = stringResource(R.string.onboarding_one_thing_nyou_re_thankful_for),
+        subtitle = stringResource(R.string.onboarding_start_your_gratitude_catalogue_right_now_optional)
     ) {
         TextField(
             value = text,
             onValueChange = onTextChange,
-            label = { Text("I'm thankful for…") },
-            placeholder = { Text("One moment, one person, one blessing") },
+            label = { Text(stringResource(R.string.onboarding_i_m_thankful_for)) },
+            placeholder = { Text(stringResource(R.string.onboarding_one_moment_one_person_one_blessing)) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(120.dp)
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Skipping is fine — you can start your gratitude log any time from Home.",
+            text = stringResource(R.string.onboarding_skipping_is_fine_you_can_start_your_gratitude_log),
             fontSize = 13.sp,
             color = Ink.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,
@@ -847,7 +849,7 @@ private fun FirstGratitudeStep(
             shape = RoundedCornerShape(14.dp)
         ) {
             Text(
-                text = "Skip for now — begin praying",
+                text = stringResource(R.string.onboarding_skip_for_now_begin_praying),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -946,12 +948,13 @@ private fun TimeButton(
         modifier = modifier
     ) {
         Text(
-            text = "$label: ${formatTime(minuteOfDay)}",
+            text = stringResource(R.string.common_x_x_2, label, formatTime(minuteOfDay)),
             fontSize = 13.sp
         )
     }
 }
 
+@Composable
 private fun formatTime(minuteOfDay: Int): String {
     val h = minuteOfDay / 60
     val m = minuteOfDay % 60
@@ -961,5 +964,5 @@ private fun formatTime(minuteOfDay: Int): String {
         else -> h
     }
     val ampm = if (h < 12) "AM" else "PM"
-    return "%d:%02d %s".format(hour12, m, ampm)
+    return stringResource(R.string.common_d_02d_s).format(hour12, m, ampm)
 }

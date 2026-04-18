@@ -75,6 +75,8 @@ import com.prayerquest.app.ui.settings.ThemePickerDialog
 import com.prayerquest.app.ui.theme.AppTheme
 import com.prayerquest.app.ui.theme.ThemeRepository
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,7 +94,7 @@ fun SettingsScreen(
     val selectedThemeId by viewModel.selectedThemeId.collectAsState(initial = "prayer_quest")
     val dailyGoal by viewModel.dailyGoal.collectAsState(initial = 10)
     val gratitudeGoal by viewModel.gratitudeGoal.collectAsState(initial = 3)
-    val displayName by viewModel.displayName.collectAsState(initial = "Prayer Warrior")
+    val displayName by viewModel.displayName.collectAsState(initial = stringResource(R.string.common_prayer_warrior))
     val reminderSlots by viewModel.reminderSlots.collectAsState(initial = emptyList())
     val quietHoursEnabled by viewModel.quietHoursEnabled.collectAsState(initial = true)
     val quietHoursStartMin by viewModel.quietHoursStartMin.collectAsState(initial = UserPreferences.DEFAULT_QUIET_START_MIN)
@@ -128,7 +130,7 @@ fun SettingsScreen(
         TopAppBar(
             title = {
                 Text(
-                    text = "Settings",
+                    text = stringResource(R.string.home_settings),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -137,7 +139,7 @@ fun SettingsScreen(
                 IconButton(onClick = onNavigateBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back"
+                        contentDescription = stringResource(R.string.common_back)
                     )
                 }
             }
@@ -152,11 +154,11 @@ fun SettingsScreen(
             // ═══════════════════════════════════════════════════════════════
             // Theme
             // ═══════════════════════════════════════════════════════════════
-            SettingsSectionHeader(title = "Theme")
+            SettingsSectionHeader(title = stringResource(R.string.settings_theme))
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Theme Mode",
+                text = stringResource(R.string.settings_theme_mode),
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -176,7 +178,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "Select Theme",
+                text = stringResource(R.string.settings_select_theme),
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
@@ -201,7 +203,7 @@ fun SettingsScreen(
                 onClick = { showThemeDialog.value = true },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Create Custom Theme")
+                Text(stringResource(R.string.settings_create_custom_theme))
             }
 
             SectionDivider()
@@ -209,11 +211,11 @@ fun SettingsScreen(
             // ═══════════════════════════════════════════════════════════════
             // Prayer Goals
             // ═══════════════════════════════════════════════════════════════
-            SettingsSectionHeader(title = "Prayer Goals")
+            SettingsSectionHeader(title = stringResource(R.string.settings_prayer_goals))
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Daily Prayer Goal (minutes)",
+                text = stringResource(R.string.settings_daily_prayer_goal_minutes),
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -226,7 +228,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Daily Gratitude Goal (entries)",
+                text = stringResource(R.string.settings_daily_gratitude_goal_entries),
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -241,10 +243,10 @@ fun SettingsScreen(
             // ═══════════════════════════════════════════════════════════════
             // Reminders (3 configurable slots)
             // ═══════════════════════════════════════════════════════════════
-            SettingsSectionHeader(title = "Reminders")
+            SettingsSectionHeader(title = stringResource(R.string.settings_reminders))
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Choose when PrayerQuest nudges you to pray. Each slot has its own tone.",
+                text = stringResource(R.string.settings_choose_when_prayerquest_nudges_you_to_pray_each_sl),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -263,10 +265,10 @@ fun SettingsScreen(
             // ═══════════════════════════════════════════════════════════════
             // Quiet Hours
             // ═══════════════════════════════════════════════════════════════
-            SettingsSectionHeader(title = "Quiet Hours")
+            SettingsSectionHeader(title = stringResource(R.string.settings_quiet_hours))
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Pause notifications during this window. Reminders silently skip.",
+                text = stringResource(R.string.settings_pause_notifications_during_this_window_reminders_s),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -277,7 +279,7 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Enable Quiet Hours",
+                    text = stringResource(R.string.settings_enable_quiet_hours),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f)
                 )
@@ -294,7 +296,7 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     TimePickerField(
-                        label = "Start",
+                        label = stringResource(R.string.common_start),
                         minuteOfDay = quietHoursStartMin,
                         onTimePicked = { newStart ->
                             viewModel.setQuietHoursWindow(newStart, quietHoursEndMin)
@@ -302,7 +304,7 @@ fun SettingsScreen(
                         modifier = Modifier.weight(1f)
                     )
                     TimePickerField(
-                        label = "End",
+                        label = stringResource(R.string.common_end),
                         minuteOfDay = quietHoursEndMin,
                         onTimePicked = { newEnd ->
                             viewModel.setQuietHoursWindow(quietHoursStartMin, newEnd)
@@ -313,7 +315,7 @@ fun SettingsScreen(
                 if (quietHoursStartMin > quietHoursEndMin) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "This window crosses midnight.",
+                        text = stringResource(R.string.settings_this_window_crosses_midnight),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -325,10 +327,10 @@ fun SettingsScreen(
             // ═══════════════════════════════════════════════════════════════
             // Traditions
             // ═══════════════════════════════════════════════════════════════
-            SettingsSectionHeader(title = "Traditions")
+            SettingsSectionHeader(title = stringResource(R.string.settings_traditions))
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Pick any that speak to you — shapes which prayer modes appear first.",
+                text = stringResource(R.string.settings_pick_any_that_speak_to_you_shapes_which_prayer_mod),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -344,10 +346,10 @@ fun SettingsScreen(
             // ═══════════════════════════════════════════════════════════════
             // Prayer Modes (per-mode on/off toggles)
             // ═══════════════════════════════════════════════════════════════
-            SettingsSectionHeader(title = "Prayer Modes")
+            SettingsSectionHeader(title = stringResource(R.string.settings_prayer_modes))
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Fine-tune which modes appear in your Mode Picker. Per-mode choices override tradition defaults.",
+                text = stringResource(R.string.settings_fine_tune_which_modes_appear_in_your_mode_picker_p),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -366,10 +368,10 @@ fun SettingsScreen(
             // ═══════════════════════════════════════════════════════════════
             // Liturgical Calendar
             // ═══════════════════════════════════════════════════════════════
-            SettingsSectionHeader(title = "Liturgical Calendar")
+            SettingsSectionHeader(title = stringResource(R.string.settings_liturgical_calendar))
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Show the current liturgical day on Home and surface seasonal packs.",
+                text = stringResource(R.string.settings_show_the_current_liturgical_day_on_home_and_surfac),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -385,11 +387,11 @@ fun SettingsScreen(
             // ═══════════════════════════════════════════════════════════════
             // Profile
             // ═══════════════════════════════════════════════════════════════
-            SettingsSectionHeader(title = "Profile")
+            SettingsSectionHeader(title = stringResource(R.string.settings_profile))
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Display Name",
+                text = stringResource(R.string.settings_display_name),
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -397,7 +399,7 @@ fun SettingsScreen(
                 value = editingDisplayName.value,
                 onValueChange = { editingDisplayName.value = it },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Prayer Warrior") }
+                placeholder = { Text(stringResource(R.string.common_prayer_warrior)) }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -405,7 +407,7 @@ fun SettingsScreen(
                 onClick = { viewModel.setDisplayName(editingDisplayName.value) },
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("Save Name")
+                Text(stringResource(R.string.settings_save_name))
             }
 
             SectionDivider()
@@ -413,11 +415,11 @@ fun SettingsScreen(
             // ═══════════════════════════════════════════════════════════════
             // About
             // ═══════════════════════════════════════════════════════════════
-            SettingsSectionHeader(title = "About")
+            SettingsSectionHeader(title = stringResource(R.string.settings_about))
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "App Version",
+                text = stringResource(R.string.settings_app_version),
                 style = MaterialTheme.typography.labelMedium
             )
             Text(
@@ -430,7 +432,7 @@ fun SettingsScreen(
                 onClick = { /* TODO: Implement rating */ },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Rate PrayerQuest")
+                Text(stringResource(R.string.settings_rate_prayerquest))
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -439,7 +441,7 @@ fun SettingsScreen(
                 onClick = { /* TODO: Implement share */ },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Share PrayerQuest")
+                Text(stringResource(R.string.settings_share_prayerquest))
             }
 
             SectionDivider()
@@ -500,7 +502,7 @@ private fun ReminderSlotRow(
         if (config.enabled) {
             Spacer(modifier = Modifier.height(8.dp))
             TimePickerField(
-                label = "Time",
+                label = stringResource(R.string.common_time),
                 minuteOfDay = config.minuteOfDay,
                 onTimePicked = { newMinute ->
                     onChange(config.copy(minuteOfDay = newMinute))
@@ -511,7 +513,7 @@ private fun ReminderSlotRow(
             TextField(
                 value = personalityState.value,
                 onValueChange = { personalityState.value = it },
-                label = { Text("Personality / reminder text") },
+                label = { Text(stringResource(R.string.settings_personality_reminder_text)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -522,7 +524,7 @@ private fun ReminderSlotRow(
                 },
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("Save wording")
+                Text(stringResource(R.string.settings_save_wording))
             }
         }
     }
@@ -555,12 +557,13 @@ private fun TimePickerField(
         modifier = modifier
     ) {
         Text(
-            text = "$label: ${formatTime(minuteOfDay)}",
+            text = stringResource(R.string.common_x_x_2, label, formatTime(minuteOfDay)),
             fontSize = 14.sp
         )
     }
 }
 
+@Composable
 private fun formatTime(minuteOfDay: Int): String {
     val h = minuteOfDay / 60
     val m = minuteOfDay % 60
@@ -570,13 +573,14 @@ private fun formatTime(minuteOfDay: Int): String {
         else -> h
     }
     val ampm = if (h < 12) "AM" else "PM"
-    return "%d:%02d %s".format(hour12, m, ampm)
+    return stringResource(R.string.common_d_02d_s).format(hour12, m, ampm)
 }
 
+@Composable
 private fun ReminderSlot.displayName(): String = when (this) {
-    ReminderSlot.MORNING -> "Morning"
-    ReminderSlot.MIDDAY -> "Midday"
-    ReminderSlot.EVENING -> "Evening"
+    ReminderSlot.MORNING -> stringResource(R.string.onboarding_morning)
+    ReminderSlot.MIDDAY -> stringResource(R.string.onboarding_midday)
+    ReminderSlot.EVENING -> stringResource(R.string.onboarding_evening)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -651,9 +655,9 @@ private fun LiturgicalCalendarPicker(
     onSelect: (LiturgicalCalendar) -> Unit
 ) {
     val options = listOf(
-        LiturgicalCalendar.NONE to "None",
-        LiturgicalCalendar.WESTERN to "Western",
-        LiturgicalCalendar.EASTERN to "Eastern"
+        LiturgicalCalendar.NONE to stringResource(R.string.common_none),
+        LiturgicalCalendar.WESTERN to stringResource(R.string.common_western),
+        LiturgicalCalendar.EASTERN to stringResource(R.string.common_eastern)
     )
     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
         options.forEachIndexed { index, (value, label) ->
@@ -688,13 +692,14 @@ private fun DeleteAccountSection() {
     val isDeleting = remember { mutableStateOf(false) }
     val deleteResult = remember { mutableStateOf<String?>(null) }
 
-    SettingsSectionHeader(title = "Account")
+    SettingsSectionHeader(title = stringResource(R.string.settings_account))
     Spacer(modifier = Modifier.height(12.dp))
 
     if (isSignedIn) {
         val user = (authState as AuthState.SignedIn).user
+        val userLabel = user.email ?: user.displayName ?: stringResource(R.string.common_unknown)
         Text(
-            text = "Signed in as ${user.email ?: user.displayName ?: "Unknown"}",
+            text = stringResource(R.string.settings_signed_in_as_user, userLabel),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 12.dp)
@@ -715,9 +720,9 @@ private fun DeleteAccountSection() {
                     strokeWidth = 2.dp
                 )
                 Spacer(modifier = Modifier.size(8.dp))
-                Text("Deleting Account...")
+                Text(stringResource(R.string.settings_deleting_account))
             } else {
-                Text("Delete My Account")
+                Text(stringResource(R.string.settings_delete_my_account))
             }
         }
 
@@ -726,7 +731,7 @@ private fun DeleteAccountSection() {
             Text(
                 text = deleteResult.value!!,
                 style = MaterialTheme.typography.bodySmall,
-                color = if (deleteResult.value!!.startsWith("Account"))
+                color = if (deleteResult.value!!.startsWith(stringResource(R.string.settings_account)))
                     MaterialTheme.colorScheme.primary
                 else
                     MaterialTheme.colorScheme.error
@@ -734,14 +739,14 @@ private fun DeleteAccountSection() {
         }
 
         Text(
-            text = "This will permanently delete your account, remove you from all Prayer Groups, and delete your shared prayer requests from the cloud.",
+            text = stringResource(R.string.settings_this_will_permanently_delete_your_account_remove_y),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp)
         )
     } else {
         Text(
-            text = "Not signed in. Sign in via Prayer Groups to manage your account.",
+            text = stringResource(R.string.settings_not_signed_in_sign_in_via_prayer_groups_to_manage),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -757,12 +762,12 @@ private fun DeleteAccountSection() {
                     tint = MaterialTheme.colorScheme.error
                 )
             },
-            title = { Text("Delete Account?") },
+            title = { Text(stringResource(R.string.settings_delete_account)) },
             text = {
                 Text(
-                    "This will permanently delete your account and remove all your data from Prayer Groups. " +
-                    "Your local prayer data (journal, gratitude entries, progress) will NOT be affected — " +
-                    "only cloud data is removed.\n\nThis action cannot be undone."
+                    stringResource(R.string.settings_this_will_permanently_delete_your_account_and_remo) +
+                    stringResource(R.string.settings_your_local_prayer_data_journal_gratitude_entries_p) +
+                    stringResource(R.string.settings_only_cloud_data_is_removed_n_nthis_action_cannot_b)
                 )
             },
             confirmButton = {
@@ -775,25 +780,28 @@ private fun DeleteAccountSection() {
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Continue")
+                    Text(stringResource(R.string.common_continue))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog.value = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
     }
 
     if (showConfirmDialog.value) {
+        val accountDeletedMsg = stringResource(R.string.settings_account_deleted_success)
+        val unknownErrorMsg = stringResource(R.string.common_unknown_error)
+        val deletionFailedTemplate = stringResource(R.string.settings_deletion_failed_template)
         AlertDialog(
             onDismissRequest = { showConfirmDialog.value = false },
-            title = { Text("Are you absolutely sure?") },
+            title = { Text(stringResource(R.string.settings_are_you_absolutely_sure)) },
             text = {
                 Text(
-                    "You are about to permanently delete your PrayerQuest account. " +
-                    "You will be removed from all Prayer Groups and your shared prayers will be deleted."
+                    stringResource(R.string.settings_you_are_about_to_permanently_delete_your_prayerque) +
+                    stringResource(R.string.settings_you_will_be_removed_from_all_prayer_groups_and_you)
                 )
             },
             confirmButton = {
@@ -806,9 +814,10 @@ private fun DeleteAccountSection() {
                             val result = prayerGroupRepository.deleteAccount()
                             isDeleting.value = false
                             deleteResult.value = if (result.isSuccess) {
-                                "Account deleted successfully."
+                                accountDeletedMsg
                             } else {
-                                "Deletion failed: ${result.exceptionOrNull()?.message ?: "Unknown error"}. Please try again or contact jedimasterlenny@gmail.com."
+                                val errMsg = result.exceptionOrNull()?.message ?: unknownErrorMsg
+                                String.format(deletionFailedTemplate, errMsg)
                             }
                         }
                     },
@@ -816,12 +825,12 @@ private fun DeleteAccountSection() {
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Yes, Delete My Account")
+                    Text(stringResource(R.string.settings_yes_delete_my_account))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirmDialog.value = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )

@@ -13,9 +13,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * Formation Mode ViewModel.
+ *
+ * Takes already-resolved default strings for the starter prayer item so the
+ * ViewModel never has to call `stringResource` itself — that API is
+ * `@Composable`-only and fails to compile inside a ViewModel property
+ * initializer. The Composable that builds the Factory resolves the defaults
+ * at its own @Composable scope and passes them in here.
+ */
 class FormationViewModel(
     private val prayerRepository: PrayerRepository,
-    private val gamificationRepository: GamificationRepository
+    private val gamificationRepository: GamificationRepository,
+    defaultTitle: String,
+    defaultDescription: String,
+    defaultCategory: String,
 ) : ViewModel() {
 
     companion object {
@@ -34,9 +46,9 @@ class FormationViewModel(
 
     private val _prayerItem = MutableStateFlow(
         PrayerItem(
-            title = "My First Prayer",
-            description = "A prayer to begin my journey with PrayerQuest",
-            category = "Personal",
+            title = defaultTitle,
+            description = defaultDescription,
+            category = defaultCategory,
             status = PrayerItem.STATUS_ACTIVE
         )
     )
@@ -106,11 +118,20 @@ class FormationViewModel(
 
     class Factory(
         private val prayerRepository: PrayerRepository,
-        private val gamificationRepository: GamificationRepository
+        private val gamificationRepository: GamificationRepository,
+        private val defaultTitle: String,
+        private val defaultDescription: String,
+        private val defaultCategory: String,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return FormationViewModel(prayerRepository, gamificationRepository) as T
+            return FormationViewModel(
+                prayerRepository,
+                gamificationRepository,
+                defaultTitle,
+                defaultDescription,
+                defaultCategory,
+            ) as T
         }
     }
 }

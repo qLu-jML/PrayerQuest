@@ -29,6 +29,8 @@ import com.prayerquest.app.domain.model.PrayerGrade
 import com.prayerquest.app.ui.theme.ErrorRed
 import com.prayerquest.app.ui.theme.SuccessGreen
 import com.prayerquest.app.ui.theme.WarningGold
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @Composable
 fun GradeBar(
@@ -52,7 +54,7 @@ fun GradeBar(
                     .padding(horizontal = 8.dp)
             ) {
                 Text(
-                    text = "Meditation Depth",
+                    text = stringResource(R.string.prayer_meditation_depth),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -86,7 +88,7 @@ fun GradeBar(
 
         // Grade buttons
         Text(
-            text = "How was this session?",
+            text = stringResource(R.string.prayer_how_was_this_session),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.fillMaxWidth()
         )
@@ -96,7 +98,7 @@ fun GradeBar(
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             GradeButton(
-                label = "Again",
+                label = stringResource(R.string.prayer_again),
                 multiplier = "0.5×",
                 grade = PrayerGrade.AGAIN,
                 color = ErrorRed,
@@ -104,7 +106,7 @@ fun GradeBar(
                 onGradeSelected = { onGradeSelected(it, selectedDepth) }
             )
             GradeButton(
-                label = "Hard",
+                label = stringResource(R.string.prayer_hard),
                 multiplier = "0.75×",
                 grade = PrayerGrade.HARD,
                 color = WarningGold,
@@ -112,7 +114,7 @@ fun GradeBar(
                 onGradeSelected = { onGradeSelected(it, selectedDepth) }
             )
             GradeButton(
-                label = "Good",
+                label = stringResource(R.string.prayer_good),
                 multiplier = "1.0×",
                 grade = PrayerGrade.GOOD,
                 color = MaterialTheme.colorScheme.primary,
@@ -120,7 +122,7 @@ fun GradeBar(
                 onGradeSelected = { onGradeSelected(it, selectedDepth) }
             )
             GradeButton(
-                label = "Easy",
+                label = stringResource(R.string.prayer_easy),
                 multiplier = "1.25×",
                 grade = PrayerGrade.EASY,
                 color = SuccessGreen,

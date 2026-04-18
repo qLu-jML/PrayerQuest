@@ -51,6 +51,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.prayerquest.app.domain.content.BreathPrayerLibrary
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Restricted Breath Prayer variant for Crisis Prayer Mode (DD §3.10).
@@ -137,7 +139,7 @@ fun CrisisBreathPrayerScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Breath Prayer",
+                        text = stringResource(R.string.prayer_breath_prayer),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.SemiBold
                         )
@@ -147,7 +149,7 @@ fun CrisisBreathPrayerScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back to Crisis Prayer"
+                            contentDescription = stringResource(R.string.crisis_back_to_crisis_prayer)
                         )
                     }
                 }
@@ -173,22 +175,26 @@ fun CrisisBreathPrayerScreen(
 
             BreathingCircle(inhaling = inhaling)
 
+            // Resolve the breath-cue accessibility label at the @Composable
+            // level — `semantics { }` is a non-@Composable lambda and can't
+            // call stringResource directly.
+            val breathCueDescription = if (inhaling) {
+                stringResource(R.string.crisis_breathe_in_x, prayer.inhale)
+            } else {
+                stringResource(R.string.crisis_breathe_out_x, prayer.exhale)
+            }
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .animateContentSize()
                     .semantics {
-                        contentDescription = if (inhaling) {
-                            "Breathe in. ${prayer.inhale}."
-                        } else {
-                            "Breathe out. ${prayer.exhale}."
-                        }
+                        contentDescription = breathCueDescription
                     },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
-                    text = if (inhaling) "Breathe in…" else "Breathe out…",
+                    text = if (inhaling) stringResource(R.string.common_breathe_in) else stringResource(R.string.common_breathe_out),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold
@@ -205,17 +211,17 @@ fun CrisisBreathPrayerScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                MetaStat(label = "Time", value = formatSeconds(elapsedSeconds))
-                MetaStat(label = "Breaths", value = cycleCount.toString())
+                MetaStat(label = stringResource(R.string.common_time), value = formatSeconds(elapsedSeconds))
+                MetaStat(label = stringResource(R.string.common_breaths), value = cycleCount.toString())
                 MetaStat(
-                    label = "Suggested",
+                    label = stringResource(R.string.common_suggested),
                     value = formatSeconds(SUGGESTED_SESSION_SECONDS)
                 )
             }
 
             if (suggestedReached) {
                 Text(
-                    text = "Three minutes with the Lord. You can stay as long as you like.",
+                    text = stringResource(R.string.crisis_three_minutes_with_the_lord_you_can_stay_as_long_a),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontStyle = FontStyle.Italic,
@@ -233,7 +239,7 @@ fun CrisisBreathPrayerScreen(
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
-                    text = if (suggestedReached) "Done for now" else "Finish early",
+                    text = if (suggestedReached) stringResource(R.string.crisis_done_for_now) else stringResource(R.string.common_finish_early),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold
                 )

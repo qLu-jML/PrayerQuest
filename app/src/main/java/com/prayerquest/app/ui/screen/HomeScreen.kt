@@ -68,6 +68,8 @@ import com.prayerquest.app.ui.theme.StainedGlassAmber
 import com.prayerquest.app.ui.theme.StainedGlassViolet
 import com.prayerquest.app.ui.theme.SuccessGreen
 import com.prayerquest.app.ui.theme.WarningGold
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Home Dashboard — Full implementation matching ScriptureQuest's layout.
@@ -259,7 +261,7 @@ private fun GreetingRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Hi, Prayer Warrior 👋",
+                text = stringResource(R.string.home_hi_prayer_warrior),
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold
                 ),
@@ -270,7 +272,7 @@ private fun GreetingRow(
             IconButton(onClick = onOpenSettings) {
                 Icon(
                     imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
+                    contentDescription = stringResource(R.string.home_settings),
                     tint = MaterialTheme.colorScheme.onBackground
                 )
             }
@@ -370,7 +372,7 @@ private fun LevelCard(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "Level $level",
+                    text = stringResource(R.string.home_level_x, level),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
@@ -388,7 +390,7 @@ private fun LevelCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${xpProgress.first} / ${xpProgress.second} XP · $totalXp total",
+                        text = stringResource(R.string.home_x_x_xp_x_total, xpProgress.first, xpProgress.second, totalXp),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
                     )
@@ -424,7 +426,7 @@ private fun StartPrayerCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Today's Session",
+                text = stringResource(R.string.home_today_s_session),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -434,7 +436,7 @@ private fun StartPrayerCard(
                     .fillMaxWidth()
                     .height(48.dp)
             ) {
-                Text("Start Prayer")
+                Text(stringResource(R.string.common_start_prayer))
             }
 
             // Subtle "In distress? Crisis Prayer →" link per DD §3.10.
@@ -443,17 +445,19 @@ private fun StartPrayerCard(
             // shouting help-button. Padding on the clickable Box gives a
             // finger-friendly tap target (~48dp tall with the text inside)
             // so fingers can find it under stress without hunting.
+            // Resolve at @Composable level — `semantics { }` is non-@Composable.
+            val crisisLinkLabel = stringResource(R.string.home_in_distress_open_crisis_prayer)
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))
                     .clickable(onClick = onCrisisPrayer)
                     .padding(horizontal = 16.dp, vertical = 14.dp)
                     .semantics {
-                        contentDescription = "In distress? Open Crisis Prayer"
+                        contentDescription = crisisLinkLabel
                     }
             ) {
                 Text(
-                    text = "In distress? Crisis Prayer →",
+                    text = stringResource(R.string.home_in_distress_crisis_prayer),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
                 )
@@ -486,7 +490,7 @@ private fun DailyQuestsCard(quests: List<DailyQuest>) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Daily Quests",
+                    text = stringResource(R.string.home_daily_quests),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -529,7 +533,7 @@ private fun QuestSlot(quest: DailyQuest) {
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "${quest.progress} / ${quest.target}",
+                    text = stringResource(R.string.home_x_x, quest.progress, quest.target),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -583,17 +587,17 @@ private fun TotalsStrip(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         TotalTile(
-            label = "Sessions",
+            label = stringResource(R.string.home_sessions),
             value = sessions.toString(),
             modifier = Modifier.weight(1f)
         )
         TotalTile(
-            label = "Minutes",
+            label = stringResource(R.string.home_minutes),
             value = minutes.toString(),
             modifier = Modifier.weight(1f)
         )
         TotalTile(
-            label = "Badges",
+            label = stringResource(R.string.home_badges),
             value = badges.toString(),
             modifier = Modifier.weight(1f)
         )
@@ -719,16 +723,17 @@ private fun LiturgicalCard(
  * extension so it isn't part of the engine's public surface area — the
  * engine deals in enum values; the UI layer picks how to render them.
  */
+@Composable
 private fun LiturgicalSeason.displayName(): String = when (this) {
-    LiturgicalSeason.ADVENT -> "Advent"
-    LiturgicalSeason.CHRISTMAS -> "Christmas"
-    LiturgicalSeason.EPIPHANY -> "Epiphany"
-    LiturgicalSeason.ORDINARY_TIME -> "Ordinary Time"
-    LiturgicalSeason.LENT -> "Lent"
-    LiturgicalSeason.HOLY_WEEK -> "Holy Week"
-    LiturgicalSeason.EASTER -> "Easter"
-    LiturgicalSeason.PENTECOST -> "Pentecost"
-    LiturgicalSeason.ORDINARY_TIME_2 -> "Ordinary Time"
+    LiturgicalSeason.ADVENT -> stringResource(R.string.home_advent)
+    LiturgicalSeason.CHRISTMAS -> stringResource(R.string.home_christmas)
+    LiturgicalSeason.EPIPHANY -> stringResource(R.string.home_epiphany)
+    LiturgicalSeason.ORDINARY_TIME -> stringResource(R.string.home_ordinary_time)
+    LiturgicalSeason.LENT -> stringResource(R.string.home_lent)
+    LiturgicalSeason.HOLY_WEEK -> stringResource(R.string.home_holy_week)
+    LiturgicalSeason.EASTER -> stringResource(R.string.home_easter)
+    LiturgicalSeason.PENTECOST -> stringResource(R.string.home_pentecost)
+    LiturgicalSeason.ORDINARY_TIME_2 -> stringResource(R.string.home_ordinary_time)
 }
 
 // ═══════════════════════════════════════════════════════
@@ -752,7 +757,7 @@ private fun QuickActionsRow(
                 .weight(1f)
                 .height(48.dp)
         ) {
-            Text("Log Gratitude")
+            Text(stringResource(R.string.home_log_gratitude))
         }
         OutlinedButton(
             onClick = onPrayerGroups,
@@ -760,7 +765,7 @@ private fun QuickActionsRow(
                 .weight(1f)
                 .height(48.dp)
         ) {
-            Text("Prayer Groups")
+            Text(stringResource(R.string.home_prayer_groups))
         }
     }
 }

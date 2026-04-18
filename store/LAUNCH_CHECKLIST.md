@@ -32,7 +32,7 @@ runbook is predictable.
 - [ ] **Tablet screenshots** — 2 minimum if targeting tablets (optional at launch)
 - [ ] **Category** — "Lifestyle" (primary), "Education" (secondary)
 - [ ] **Tags** — prayer, faith, christian, gratitude, habit, meditation
-- [ ] **Contact email** — jedimasterlenny@gmail.com
+- [ ] **Contact email** — nathan@5catsgamestudios.com
 - [ ] **Privacy policy URL** — hosted copy of `privacy-policy.html`
       (e.g., https://prayerquest.app/privacy)
 

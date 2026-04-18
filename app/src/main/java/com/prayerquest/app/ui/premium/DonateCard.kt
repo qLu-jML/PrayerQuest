@@ -38,6 +38,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Buy Me a Coffee page for PrayerQuest. Opens in the user's default browser
@@ -51,7 +53,7 @@ import androidx.lifecycle.LifecycleEventObserver
  * weekly payouts via Stripe or PayPal. Same BMC page as ScriptureQuest — the
  * author's single page handles both apps.
  */
-const val DONATE_URL = "https://buymeacoffee.com/jedimasterlenny"
+const val DONATE_URL = "https://buymeacoffee.com/fivecatstudios"
 
 /**
  * Preset dollar amounts shown as quick-pick buttons on the Donate card.
@@ -89,13 +91,17 @@ fun DonateCard(modifier: Modifier = Modifier) {
     var awaitingReturn by remember { mutableStateOf(false) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
+    // Resolve at @Composable level — `DisposableEffect`'s effect block is
+    // non-@Composable (it's `DisposableEffectScope.() -> DisposableEffectResult`),
+    // and the nested LifecycleEventObserver lambda is even more so.
+    val thanksToastText = stringResource(R.string.premium_thanks_for_supporting_prayerquest)
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME && awaitingReturn) {
                 awaitingReturn = false
                 Toast.makeText(
                     context,
-                    "Thanks for supporting PrayerQuest! 🙏",
+                    thanksToastText,
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -123,13 +129,13 @@ fun DonateCard(modifier: Modifier = Modifier) {
                 )
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        "Support PrayerQuest",
+                        stringResource(R.string.premium_support_prayerquest),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Text(
-                        "Buy us a coffee — every gift fuels more prayer.",
+                        stringResource(R.string.premium_buy_us_a_coffee_every_gift_fuels_more_prayer),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                     )
@@ -188,7 +194,7 @@ fun DonateCard(modifier: Modifier = Modifier) {
                     contentPadding = tightPadding
                 ) {
                     Text(
-                        "Other",
+                        stringResource(R.string.common_other),
                         maxLines = 1,
                         softWrap = false
                     )

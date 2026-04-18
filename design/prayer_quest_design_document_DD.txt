@@ -2,7 +2,7 @@ ULTIMATE GAMIFIED PRAYER APP - DESIGN DOCUMENT
 App Name: PrayerQuest
 Version: 1.0 (MVP) - Target Launch: 2026
 Platform: Android (Kotlin + Jetpack Compose)
-Developer: Nathan
+Developer: Five Cats Development Studio LLC (Nathan)
 Date: April 2026 (last updated 2026-04-16)
 
 Status legend used throughout this document:
@@ -132,10 +132,10 @@ Onboarding completion = first streak day earned, first XP awarded, user lands on
 (Distinct from the first-run Onboarding above.) When the user adds a new prayer item, Formation Mode is an optional 4–6 step progressive cycle that helps them start praying for it immediately: define it → voice-record a first prayer → set a trigger moment → optional Scripture link → celebrate. After completion: bonus XP.
 
 3.4 Gamification System (The Retention Hook) [NEEDS IMPLEMENTING]
-- XP & Leveling: 10-level curve with prayer-themed titles (Prayer Novice → Faithful Seeker → Devoted Disciple → Grace Warrior → Intercessor → Prayer Sage, etc.). Same thresholds as ScriptureQuest.
+- XP & Leveling: purely numerical, uncapped curve. Level label is "Level N" — no named tiers. Curve: threshold(L) = floor(100 × (1.5^(L−1) − 1)); Level 1 starts at 0 XP and each subsequent level requires exponentially more total XP. Same thresholds as ScriptureQuest; the progression is intentionally open-ended so dedicated intercessors keep earning new level-up moments beyond Level 50 / 75 / 100.
 - Daily Streaks with dual protection (freezes + hearts) — identical logic.
 - Daily Quests — 3 rotating slots (PRAY X MINUTES, USE ≥3 MODES, JOURNAL, LOG GRATITUDE, PRAY FOR GROUP ITEM, COMPLETE EXAMEN, etc.) + full-set bonus.
-- Badges & Achievements — 15+ at launch (streak, total minutes, items prayed, mode diversity, famous-prayer milestones, answered-prayer count, gratitude streaks and volume, group participation, prayer partner loyalty, tradition mastery).
+- Badges & Achievements — 65+ at launch spanning streak tiers (3 / 7 / 30 / 50 / 100 / 365 days), total prayer minutes (1 h / 10 h / 50 h / 100 h), items prayed (1 / 50 / 200 / 500), mode diversity, per-mode mastery (ACTS, Lectio, Examen, Beads, Breath, Daily Office — 25 sessions each), longest-session peaks (Thirty Still / Holy Hour), famous-prayer volume and distinct-count, Names-of-God distinct-count, answered-prayer count (1 / 10 / 50 / 100), testimony-on-answered, partial-answer, voice/journal session counts, Sunday (Sabbath) rhythm, gratitude streaks and volume including a 100-day peak badge, group participation, comeback, time-of-day (early bird / night owl), and leveling / XP milestones up through Level 100.
 - Grace Coins awarded by quests and achievements (cosmetic store [POST-MVP]).
 - Gratitude logging, Examen completion, and praying for group items all feed the same gamification hot path used by prayer sessions.
 
@@ -370,7 +370,7 @@ Phase 1 — Core Foundation: Room DB + all entities + DAOs + repositories + manu
 
 Phase 2 — Prayer Engagement Engine: all 10 modes (ACTS, Voice Record, Journal, Intercession Drill, Flash-Pray Swipe, Examen, Lectio Divina, Breath Prayer, Prayer Beads/Rosary, Daily Office) + voice-to-text integration + session flow + tradition-aware Netflix-style Mode Picker + Formation Mode for new prayer items.
 
-Phase 3 — Gamification Layer: XP, 10-tier levels, streaks with freezes/hearts, rotating daily quests, 15+ badges/achievements, daily activity tracking. Wired into prayer session completion, gratitude logging, group prayer activity.
+Phase 3 — Gamification Layer: XP, uncapped numerical levels ("Level N" labels, no named tiers), streaks with freezes/hearts, rotating daily quests, 65+ badges/achievements, daily activity tracking. Wired into prayer session completion, gratitude logging, group prayer activity.
 
 Phase 4a — v1.0 Launch Scope (must-haves for first public release):
   - Content: Answered Prayers Catalogue + Big Celebration Moments + Prayer Library UI (Famous Prayers + Names of God unified).

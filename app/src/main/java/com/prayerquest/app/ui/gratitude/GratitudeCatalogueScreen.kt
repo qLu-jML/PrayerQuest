@@ -73,6 +73,9 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Gratitude Catalogue (DD §3.6) — ship-quality browse/search UX for every
@@ -112,10 +115,10 @@ fun GratitudeCatalogueScreen(
 
     Column(modifier = modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text("Gratitude Catalogue") },
+            title = { Text(stringResource(R.string.gratitude_gratitude_catalogue)) },
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
             }
         )
@@ -133,12 +136,12 @@ fun GratitudeCatalogueScreen(
                 value = searchQuery,
                 onValueChange = viewModel::onSearchQueryChange,
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Search gratitude…") },
+                placeholder = { Text(stringResource(R.string.gratitude_search_gratitude)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
-                            Icon(Icons.Default.Close, contentDescription = "Clear search")
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.gratitude_clear_search))
                         }
                     }
                 },
@@ -159,7 +162,7 @@ fun GratitudeCatalogueScreen(
                     onClick = { viewModel.onPhotosOnlyToggle() },
                     label = {
                         Text(
-                            text = "With photos only",
+                            text = stringResource(R.string.gratitude_with_photos_only),
                             style = MaterialTheme.typography.labelSmall
                         )
                     }
@@ -167,7 +170,7 @@ fun GratitudeCatalogueScreen(
 
                 // Category filter chips — null sentinel = "All".
                 (listOf<String?>(null) + GratitudeEntry.ALL_CATEGORIES).forEach { category ->
-                    val label = category ?: "All"
+                    val label = category ?: stringResource(R.string.gratitude_all)
                     FilterChip(
                         selected = selectedCategory == category,
                         onClick = { viewModel.onCategoryChange(category) },
@@ -181,19 +184,24 @@ fun GratitudeCatalogueScreen(
             // Active day-filter chip (shown when the user tapped a heat-map
             // cell). Keeps the filter visible + undoable once the heat-map
             // is collapsed.
-            if (selectedDate != null) {
+            //
+            // Capture the delegated property into a local `val` so Kotlin
+            // can smart-cast it to non-null inside the chip label — smart
+            // casts don't work on `by` delegated properties.
+            val activeDateFilter = selectedDate
+            if (activeDateFilter != null) {
                 AssistChip(
                     onClick = { viewModel.onDateFilterClear() },
                     label = {
                         Text(
-                            text = "Day: ${selectedDate}",
+                            text = stringResource(R.string.gratitude_day_x, activeDateFilter),
                             style = MaterialTheme.typography.labelSmall
                         )
                     },
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Clear day filter",
+                            contentDescription = stringResource(R.string.gratitude_clear_day_filter),
                             modifier = Modifier.size(14.dp)
                         )
                     }
@@ -225,16 +233,16 @@ fun GratitudeCatalogueScreen(
             ) {
                 Text(
                     text = if (searchQuery.isNotEmpty() || selectedCategory != null || showPhotosOnly || selectedDate != null)
-                        "No entries match those filters"
+                        stringResource(R.string.gratitude_no_entries_match_those_filters)
                     else
-                        "No Gratitude Entries Yet",
+                        stringResource(R.string.gratitude_no_gratitude_entries_yet),
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
                     text = if (searchQuery.isNotEmpty() || selectedCategory != null || showPhotosOnly || selectedDate != null)
-                        "Try clearing a filter or searching a different keyword."
+                        stringResource(R.string.gratitude_try_clearing_a_filter_or_searching_a_different_key)
                     else
-                        "Start logging daily gratitude to see them here",
+                        stringResource(R.string.gratitude_start_logging_daily_gratitude_to_see_them_here),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp)
@@ -299,19 +307,19 @@ private fun HeatmapSection(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Heat-map — past year",
+                text = stringResource(R.string.gratitude_heat_map_past_year),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.weight(1f)
             )
             Text(
-                text = "${dateCounts.size} active day${if (dateCounts.size == 1) "" else "s"}",
+                text = pluralStringResource(R.plurals.gratitude_active_days, dateCounts.size, dateCounts.size),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Icon(
                 imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                contentDescription = if (expanded) "Collapse heat-map" else "Expand heat-map"
+                contentDescription = if (expanded) stringResource(R.string.gratitude_collapse_heat_map) else stringResource(R.string.gratitude_expand_heat_map)
             )
         }
         if (expanded) {
@@ -423,7 +431,7 @@ private fun HeatmapLegend() {
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Text(
-            text = "Less",
+            text = stringResource(R.string.gratitude_less),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -436,7 +444,7 @@ private fun HeatmapLegend() {
             )
         }
         Text(
-            text = "More",
+            text = stringResource(R.string.gratitude_more),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -455,7 +463,7 @@ private fun GratitudeCatalogueEntryCard(
     onShareClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    val dateFormat = SimpleDateFormat(stringResource(R.string.gratitude_mmm_dd_yyyy), Locale.getDefault())
     val displayDate = dateFormat.format(Date(entry.timestamp))
 
     ElevatedCard(
@@ -500,7 +508,7 @@ private fun GratitudeCatalogueEntryCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.IosShare,
-                            contentDescription = "Share as image card",
+                            contentDescription = stringResource(R.string.gratitude_share_as_image_card),
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -532,7 +540,7 @@ private fun GratitudeCatalogueEntryCard(
                         }
                     }
                     Text(
-                        text = "Photo attached",
+                        text = stringResource(R.string.gratitude_photo_attached),
                         style = MaterialTheme.typography.labelSmall,
                         color = GratitudeGreen
                     )
@@ -575,12 +583,12 @@ private fun ShareAsImageCardSheet(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Share as image card",
+                text = stringResource(R.string.gratitude_share_as_image_card),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Your gratitude will be rendered on a warm card with a verse overlay, date, and PrayerQuest watermark.",
+                text = stringResource(R.string.gratitude_your_gratitude_will_be_rendered_on_a_warm_card_wit),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -600,7 +608,7 @@ private fun ShareAsImageCardSheet(
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "— ${pickedVerse.text}",
+                        text = stringResource(R.string.gratitude_x, pickedVerse.text),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -614,7 +622,7 @@ private fun ShareAsImageCardSheet(
             }
 
             Text(
-                text = "Verse overlay",
+                text = stringResource(R.string.gratitude_verse_overlay),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold
             )
@@ -645,7 +653,7 @@ private fun ShareAsImageCardSheet(
             ) {
                 Icon(Icons.Default.IosShare, contentDescription = null)
                 Spacer(Modifier.size(8.dp))
-                Text("Share")
+                Text(stringResource(R.string.common_share))
             }
         }
     }
@@ -754,12 +762,12 @@ class GratitudeCatalogueViewModel(
                 putExtra(Intent.EXTRA_STREAM, uri)
                 putExtra(
                     Intent.EXTRA_TEXT,
-                    "Grateful today: \"${entry.text}\" — ${verse.reference} · via PrayerQuest."
+                    context.getString(R.string.gratitude_grateful_today_x_x_via_prayerquest, entry.text, verse.reference)
                 )
-                putExtra(Intent.EXTRA_SUBJECT, "A gratitude from PrayerQuest")
+                putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.gratitude_a_gratitude_from_prayerquest))
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            val chooser = Intent.createChooser(sendIntent, "Share your gratitude").apply {
+            val chooser = Intent.createChooser(sendIntent, context.getString(R.string.gratitude_share_your_gratitude)).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             try {
@@ -824,10 +832,10 @@ private fun renderAndWriteGratitudeBitmap(
             typeface = Typeface.create(Typeface.DEFAULT_BOLD, Typeface.BOLD)
             textAlign = Paint.Align.CENTER
         }
-        drawText("Grateful today", width / 2f, 180f, labelPaint)
+        drawText(context.getString(R.string.gratitude_grateful_today), width / 2f, 180f, labelPaint)
 
         // 3) Date line.
-        val dateFormat = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
+        val dateFormat = SimpleDateFormat(context.getString(R.string.gratitude_mmmm_d_yyyy), Locale.getDefault())
         val datePaint = Paint().apply {
             isAntiAlias = true
             color = android.graphics.Color.parseColor("#4A4743")
@@ -891,7 +899,7 @@ private fun renderAndWriteGratitudeBitmap(
             textAlign = Paint.Align.CENTER
         }
         y += 40f
-        drawText("— ${verse.reference}", width / 2f, y, refPaint)
+        drawText(context.getString(R.string.common_x, verse.reference), width / 2f, y, refPaint)
 
         // 8) Footer — PrayerQuest watermark, bottom-center.
         val footerPaint = Paint().apply {
@@ -901,7 +909,7 @@ private fun renderAndWriteGratitudeBitmap(
             typeface = Typeface.create(Typeface.DEFAULT_BOLD, Typeface.BOLD)
             textAlign = Paint.Align.CENTER
         }
-        drawText("PrayerQuest", width / 2f, (height - 80).toFloat(), footerPaint)
+        drawText(context.getString(R.string.common_prayerquest), width / 2f, (height - 80).toFloat(), footerPaint)
     }
 
     val dir = File(context.cacheDir, "shared/gratitude").apply { mkdirs() }

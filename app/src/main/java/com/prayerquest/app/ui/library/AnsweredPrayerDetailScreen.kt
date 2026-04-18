@@ -26,6 +26,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,21 +56,21 @@ fun AnsweredPrayerDetailScreen(
     val prayer = (uiState as? AnsweredPrayerDetailViewModel.UiState.Loaded)?.prayer
 
     if (prayer != null && prayer!!.status == PrayerItem.STATUS_ANSWERED) {
-        val dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault())
+        val dateFormat = SimpleDateFormat(stringResource(R.string.library_mmmm_dd_yyyy), Locale.getDefault())
         val answeredAtMs = prayer!!.answeredAt
         val answeredDate = if (answeredAtMs != null) {
             dateFormat.format(Date(answeredAtMs))
         } else {
-            "Recently"
+            stringResource(R.string.library_recently)
         }
 
         Column(modifier = modifier.fillMaxSize()) {
             // Top bar
             TopAppBar(
-                title = { Text("Prayer Answered") },
+                title = { Text(stringResource(R.string.library_prayer_answered)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 }
             )
@@ -96,7 +98,7 @@ fun AnsweredPrayerDetailScreen(
                                 onClick = {},
                                 label = {
                                     Text(
-                                        "✓ Answered",
+                                        stringResource(R.string.library_answered),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = SuccessGreen
                                     )
@@ -135,7 +137,7 @@ fun AnsweredPrayerDetailScreen(
                         }
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Prayer Answered",
+                                text = stringResource(R.string.library_prayer_answered),
                                 style = MaterialTheme.typography.labelLarge
                             )
                             Text(
@@ -155,7 +157,7 @@ fun AnsweredPrayerDetailScreen(
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "What You Prayed For",
+                            text = stringResource(R.string.library_what_you_prayed_for),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -188,7 +190,7 @@ fun AnsweredPrayerDetailScreen(
                     item {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                text = "Your Testimony",
+                                text = stringResource(R.string.library_your_testimony),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -217,7 +219,7 @@ fun AnsweredPrayerDetailScreen(
                     item {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                text = "Evidence Photo",
+                                text = stringResource(R.string.library_evidence_photo),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -233,7 +235,7 @@ fun AnsweredPrayerDetailScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        "📸 Photo: ${prayer!!.testimonyPhotoUri}",
+                                        stringResource(R.string.library_photo_x, prayer!!.testimonyPhotoUri),
                                         style = MaterialTheme.typography.labelMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -248,7 +250,7 @@ fun AnsweredPrayerDetailScreen(
                     item {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                text = "Voice Note",
+                                text = stringResource(R.string.library_voice_note),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -273,7 +275,7 @@ fun AnsweredPrayerDetailScreen(
                                         Text("▶", style = MaterialTheme.typography.labelSmall)
                                     }
                                     Text(
-                                        "Tap to play your testimony",
+                                        stringResource(R.string.library_tap_to_play_your_testimony),
                                         style = MaterialTheme.typography.labelMedium
                                     )
                                 }
@@ -305,15 +307,15 @@ fun AnsweredPrayerDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Prayer not found",
+                        text = stringResource(R.string.library_prayer_not_found),
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
                     )
                     Text(
-                        text = "We couldn't load this answered prayer. It may have been reactivated or removed.",
+                        text = stringResource(R.string.library_we_couldn_t_load_this_answered_prayer_it_may_have),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Button(onClick = onNavigateBack) { Text("Go Back") }
+                    Button(onClick = onNavigateBack) { Text(stringResource(R.string.common_go_back)) }
                 }
             }
         }

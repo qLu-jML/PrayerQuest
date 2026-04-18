@@ -25,6 +25,8 @@ import com.prayerquest.app.PrayerQuestApplication
 import com.prayerquest.app.data.repository.PrayerGroupRepository
 import com.prayerquest.app.ui.theme.SuccessGreen
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,10 +52,10 @@ fun JoinGroupScreen(
     ) {
         // Top bar
         TopAppBar(
-            title = { Text("Join Group") },
+            title = { Text(stringResource(R.string.groups_join_group)) },
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
             }
         )
@@ -75,13 +77,13 @@ fun JoinGroupScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "✨ Join a Prayer Group",
+                    text = stringResource(R.string.groups_join_a_prayer_group),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "Share prayers with your faith community",
+                    text = stringResource(R.string.groups_share_prayers_with_your_faith_community),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -95,7 +97,7 @@ fun JoinGroupScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Enter Invite Code",
+                    text = stringResource(R.string.groups_enter_invite_code),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -110,8 +112,8 @@ fun JoinGroupScreen(
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("e.g., PRAY-ABC123") },
-                    prefix = { Text("PRAY-") },
+                    placeholder = { Text(stringResource(R.string.groups_e_g_pray_abc123)) },
+                    prefix = { Text(stringResource(R.string.groups_pray)) },
                     singleLine = true,
                     maxLines = 1,
                     keyboardOptions = KeyboardOptions(
@@ -123,7 +125,10 @@ fun JoinGroupScreen(
                             isLoading = true
                             errorMessage = ""
                             successMessage = ""
-                            viewModel.joinGroup("PRAY-$inviteCode") { success, message ->
+                            // Pass raw 6-char share code (not "PRAY-XXXXXX") to
+                            // match Firestore's exact-match lookup. Also avoids
+                            // calling @Composable stringResource from a plain lambda.
+                            viewModel.joinGroup(inviteCode) { success, message ->
                                 isLoading = false
                                 if (success) {
                                     successMessage = message
@@ -137,7 +142,7 @@ fun JoinGroupScreen(
                 )
 
                 Text(
-                    text = "Ask a group admin for the invite code",
+                    text = stringResource(R.string.groups_ask_a_group_admin_for_the_invite_code),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -195,6 +200,11 @@ fun JoinGroupScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
+            // Resolve at @Composable level — onClick is plain `() -> Unit`.
+            // (Also: previously this wrapped the invite code in a "Pray for X"
+            // sentence which would have broken Firestore's exact-match lookup.
+            // The first arg to joinGroup is the raw 6-char share code.)
+            val invalidCodeMessage = stringResource(R.string.groups_please_enter_a_valid_6_character_code)
             // Join button
             Button(
                 onClick = {
@@ -202,7 +212,7 @@ fun JoinGroupScreen(
                         isLoading = true
                         errorMessage = ""
                         successMessage = ""
-                        viewModel.joinGroup("PRAY-$inviteCode") { success, message ->
+                        viewModel.joinGroup(inviteCode) { success, message ->
                             isLoading = false
                             if (success) {
                                 successMessage = message
@@ -212,7 +222,7 @@ fun JoinGroupScreen(
                             }
                         }
                     } else {
-                        errorMessage = "Please enter a valid 6-character code"
+                        errorMessage = invalidCodeMessage
                     }
                 },
                 modifier = Modifier
@@ -227,7 +237,7 @@ fun JoinGroupScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Join Group", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.groups_join_group), style = MaterialTheme.typography.labelLarge)
                 }
             }
 
@@ -244,22 +254,22 @@ fun JoinGroupScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "How It Works",
+                        text = stringResource(R.string.groups_how_it_works),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "• Groups are invite-only for privacy and community",
+                        text = stringResource(R.string.groups_groups_are_invite_only_for_privacy_and_community),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "• Share group prayers with all members",
+                        text = stringResource(R.string.groups_share_group_prayers_with_all_members),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "• See how many members have prayed for each request",
+                        text = stringResource(R.string.groups_see_how_many_members_have_prayed_for_each_request),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -276,6 +286,9 @@ class JoinGroupViewModel(
 ) : ViewModel() {
 
     fun joinGroup(shareCode: String, onResult: (success: Boolean, message: String) -> Unit) {
+        // NOTE: Strings in this ViewModel coroutine can't use @Composable
+        // stringResource(). Localization-pending — see LOCALIZATION_AUDIT.md
+        // (ViewModel strings need Context.getString via Application ref).
         viewModelScope.launch {
             try {
                 val result = groupRepository.joinGroup(shareCode)

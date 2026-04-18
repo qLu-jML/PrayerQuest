@@ -28,6 +28,10 @@ interface FamousPrayerDao {
     @Query("SELECT COUNT(*) FROM famous_prayers")
     suspend fun getCount(): Int
 
+    /** How many distinct Famous Prayers the user has prayed at least once. Backs FAMOUS_DISTINCT-category badges. */
+    @Query("SELECT COUNT(*) FROM famous_prayers WHERE userPrayedCount > 0")
+    suspend fun getDistinctPrayedCount(): Int
+
     @Query("UPDATE famous_prayers SET userPrayedCount = userPrayedCount + 1 WHERE id = :id")
     suspend fun incrementPrayedCount(id: String)
 

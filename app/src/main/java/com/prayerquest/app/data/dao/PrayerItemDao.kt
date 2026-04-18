@@ -52,6 +52,20 @@ interface PrayerItemDao {
     @Query("SELECT COUNT(*) FROM prayer_items WHERE status = 'Active'")
     suspend fun getActiveCount(): Int
 
+    /** How many answered prayers carry any testimony content (text, photo, or voice note). Backs TESTIMONY-category badges. */
+    @Query(
+        "SELECT COUNT(*) FROM prayer_items " +
+        "WHERE status = 'Answered' " +
+        "AND ((testimonyText IS NOT NULL AND testimonyText != '') " +
+        "  OR (testimonyPhotoUri IS NOT NULL AND testimonyPhotoUri != '') " +
+        "  OR (testimonyVoiceUri IS NOT NULL AND testimonyVoiceUri != ''))"
+    )
+    suspend fun getAnsweredWithTestimonyCount(): Int
+
+    /** How many prayers are currently in the PartiallyAnswered state. Backs PARTIAL_ANSWER-category badges. */
+    @Query("SELECT COUNT(*) FROM prayer_items WHERE status = 'PartiallyAnswered'")
+    suspend fun getPartiallyAnsweredCount(): Int
+
     @Query("SELECT * FROM prayer_items WHERE status = 'Active' ORDER BY createdAt DESC")
     suspend fun getActiveList(): List<PrayerItem>
 

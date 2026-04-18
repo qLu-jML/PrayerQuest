@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.prayerquest.app.ui.components.PrayerPhotoAvatar
 import kotlin.math.roundToInt
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @Composable
 fun FlashPraySwipeMode(
@@ -56,16 +58,16 @@ fun FlashPraySwipeMode(
     photoUris: List<String?>? = null,
 ) {
     val defaultTopics = listOf(
-        "Global peace",
-        "Healing from pain",
-        "Financial wisdom",
-        "Loving relationships",
-        "Spiritual growth",
-        "Community unity",
-        "Strength & courage",
-        "Forgiveness",
-        "Joy & laughter",
-        "Purpose & calling"
+        stringResource(R.string.prayer_modes_global_peace),
+        stringResource(R.string.prayer_modes_healing_from_pain),
+        stringResource(R.string.prayer_modes_financial_wisdom),
+        stringResource(R.string.prayer_modes_loving_relationships),
+        stringResource(R.string.prayer_modes_spiritual_growth),
+        stringResource(R.string.prayer_modes_community_unity),
+        stringResource(R.string.prayer_modes_strength_courage),
+        stringResource(R.string.prayer_modes_forgiveness),
+        stringResource(R.string.prayer_modes_joy_laughter),
+        stringResource(R.string.prayer_modes_purpose_calling)
     )
     val prayerTopics = topics?.takeIf { it.isNotEmpty() } ?: defaultTopics
 
@@ -106,7 +108,7 @@ fun FlashPraySwipeMode(
             ) {
                 if (swipedCount == 0) {
                     Text(
-                        text = "Swipe a card right to pray — at least one is required to finish.",
+                        text = stringResource(R.string.prayer_modes_swipe_a_card_right_to_pray_at_least_one_is_require),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -115,15 +117,20 @@ fun FlashPraySwipeMode(
                             .padding(bottom = 6.dp)
                     )
                 }
+                // Resolve at @Composable level — onClick is plain `() -> Unit`.
+                val flashSummaryDone = stringResource(
+                    R.string.prayer_modes_flash_prayed_x_x_topics,
+                    swipedCount,
+                    currentIndex
+                )
+                val flashSummaryEarly = stringResource(
+                    R.string.prayer_modes_flash_prayed_x_x_topics_2,
+                    swipedCount,
+                    currentIndex + 1
+                )
                 Button(
                     onClick = {
-                        onModeComplete(
-                            if (allSwiped) {
-                                "Flash Prayed $swipedCount/$currentIndex topics"
-                            } else {
-                                "Flash Prayed $swipedCount/${currentIndex + 1} topics"
-                            }
-                        )
+                        onModeComplete(if (allSwiped) flashSummaryDone else flashSummaryEarly)
                     },
                     enabled = swipedCount > 0,
                     modifier = Modifier
@@ -132,7 +139,7 @@ fun FlashPraySwipeMode(
                     shape = MaterialTheme.shapes.medium
                 ) {
                     Text(
-                        text = if (allSwiped) "Complete Session" else "Finish Session",
+                        text = if (allSwiped) stringResource(R.string.prayer_modes_complete_session) else stringResource(R.string.prayer_modes_finish_session),
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
@@ -142,7 +149,7 @@ fun FlashPraySwipeMode(
         // Headline removed — TopAppBar already shows "Prayer Session · N/N",
         // duplicating it here just pushed the swipe card below the fold.
         Text(
-            text = "Swipe right to pray → | Swipe left to skip ←",
+            text = stringResource(R.string.prayer_modes_swipe_right_to_pray_swipe_left_to_skip),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -162,11 +169,11 @@ fun FlashPraySwipeMode(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Card ${currentIndex + 1}/${prayerTopics.size}",
+                text = stringResource(R.string.prayer_modes_card_x_x, currentIndex + 1, prayerTopics.size),
                 style = MaterialTheme.typography.labelMedium
             )
             Text(
-                text = "Prayed: $swipedCount",
+                text = stringResource(R.string.prayer_modes_prayed_x, swipedCount),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary
@@ -238,7 +245,7 @@ fun FlashPraySwipeMode(
                             Spacer(modifier = Modifier.height(10.dp))
                         }
                         Text(
-                            text = "Pray for:",
+                            text = stringResource(R.string.prayer_modes_pray_for),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -254,14 +261,14 @@ fun FlashPraySwipeMode(
 
                         if (dragOffset > 50) {
                             Text(
-                                text = "✓ I Prayed This",
+                                text = stringResource(R.string.prayer_modes_i_prayed_this),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.SemiBold
                             )
                         } else if (dragOffset < -50) {
                             Text(
-                                text = "← Skip",
+                                text = stringResource(R.string.prayer_modes_skip),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -285,7 +292,7 @@ fun FlashPraySwipeMode(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "You've gone through all ${prayerTopics.size} topics!",
+                    text = stringResource(R.string.prayer_modes_you_ve_gone_through_all_x_topics, prayerTopics.size),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )

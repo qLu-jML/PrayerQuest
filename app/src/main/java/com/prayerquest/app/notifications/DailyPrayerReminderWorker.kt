@@ -5,6 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.prayerquest.app.PrayerQuestApplication
 import kotlin.random.Random
+import com.prayerquest.app.R
 
 /**
  * Converted to CoroutineWorker so we can consult the Flow-based
@@ -25,13 +26,13 @@ class DailyPrayerReminderWorker(
                 return Result.success()
             }
 
-            val title = "Time to pray! 🙏"
+            val title = applicationContext.getString(R.string.notifications_time_to_pray)
             val messages = listOf(
-                "A few minutes with God can transform your whole day.",
-                "Start your day with prayer and peace.",
-                "Take a moment to connect with what matters most.",
-                "Your prayers are heard and valued.",
-                "Begin today with gratitude and faith."
+                applicationContext.getString(R.string.notifications_a_few_minutes_with_god_can_transform_your_whole_da),
+                applicationContext.getString(R.string.notifications_start_your_day_with_prayer_and_peace),
+                applicationContext.getString(R.string.notifications_take_a_moment_to_connect_with_what_matters_most),
+                applicationContext.getString(R.string.notifications_your_prayers_are_heard_and_valued),
+                applicationContext.getString(R.string.notifications_begin_today_with_gratitude_and_faith)
             )
             val message = messages[Random.nextInt(messages.size)]
 

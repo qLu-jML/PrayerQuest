@@ -31,6 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @Composable
 fun VoiceRecordMode(
@@ -57,20 +59,20 @@ fun VoiceRecordMode(
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
-                    text = "Done Recording",
+                    text = stringResource(R.string.prayer_modes_done_recording),
                     style = MaterialTheme.typography.labelLarge
                 )
             }
         }
     ) {
         Text(
-            text = "Voice Prayer",
+            text = stringResource(R.string.prayer_modes_voice_prayer),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
 
         Text(
-            text = "Tap the microphone and speak your prayer. Your words will be transcribed.",
+            text = stringResource(R.string.prayer_modes_tap_the_microphone_and_speak_your_prayer_your_word),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -97,7 +99,7 @@ fun VoiceRecordMode(
             ) {
                 Icon(
                     imageVector = Icons.Default.Mic,
-                    contentDescription = "Record prayer",
+                    contentDescription = stringResource(R.string.prayer_modes_record_prayer),
                     tint = androidx.compose.ui.graphics.Color.White,
                     modifier = Modifier.size(60.dp)
                 )
@@ -105,7 +107,7 @@ fun VoiceRecordMode(
         }
 
         Text(
-            text = if (isRecording) "Recording... $recordingDuration" else "Ready to record",
+            text = if (isRecording) stringResource(R.string.prayer_modes_recording_x, recordingDuration) else stringResource(R.string.prayer_modes_ready_to_record),
             style = MaterialTheme.typography.bodyMedium,
             color = if (isRecording)
                 MaterialTheme.colorScheme.error
@@ -132,7 +134,7 @@ fun VoiceRecordMode(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Transcription",
+                    text = stringResource(R.string.prayer_modes_transcription),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -143,7 +145,7 @@ fun VoiceRecordMode(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit transcription",
+                            contentDescription = stringResource(R.string.prayer_modes_edit_transcription),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                         )
@@ -157,7 +159,7 @@ fun VoiceRecordMode(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp),
-                placeholder = { Text("Your prayer text will appear here...") },
+                placeholder = { Text(stringResource(R.string.prayer_modes_your_prayer_text_will_appear_here)) },
                 enabled = !isRecording,
                 shape = MaterialTheme.shapes.small
             )
@@ -176,12 +178,12 @@ fun VoiceRecordMode(
             ) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Play recording",
+                    contentDescription = stringResource(R.string.prayer_modes_play_recording),
                     modifier = Modifier
                         .size(20.dp)
                         .padding(end = 8.dp)
                 )
-                Text("Play Back Prayer")
+                Text(stringResource(R.string.prayer_modes_play_back_prayer))
             }
         }
 

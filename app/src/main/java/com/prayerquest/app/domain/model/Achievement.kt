@@ -28,7 +28,31 @@ enum class AchievementCategory {
     XP_MILESTONE,
     SESSION,
     TIME_OF_DAY,
-    COMEBACK
+    COMEBACK,
+
+    // ── Sprint-18 badge expansion (2026-04-18) ────────────────────────────
+    /** Reads `UserStats.longestSessionMinutes`. Thirty Still / Holy Hour. */
+    LONGEST_SESSION,
+    /** Reads `UserStats.totalVoiceSessions`. Spoken Prayers / Voice of Prayer. */
+    VOICE,
+    /** Reads `UserStats.totalJournalSessions`. Prayer Scribe / Prayer Journalist. */
+    JOURNAL,
+    /** Reads `UserStats.totalSundaySessions`. Sabbath Rhythm / Year of Sabbaths. */
+    SABBATH,
+    /** Derived via PrayerItemDao.getAnsweredWithTestimonyCount(). First Testimony / Book of Testimonies. */
+    TESTIMONY,
+    /** Derived via PrayerItemDao.getPartiallyAnsweredCount(). Already But Not Yet. */
+    PARTIAL_ANSWER,
+    /** Derived via NameOfGodDao.getDistinctPrayedCount(). Names He Answers By / All the Names. */
+    NAMES_OF_GOD,
+    /** Derived via FamousPrayerDao.getDistinctPrayedCount(). Heritage of Prayer / Saints of the Church. */
+    FAMOUS_DISTINCT,
+    /**
+     * Per-mode session counts via PrayerRecordDao.getCountByMode(mode). The
+     * [AchievementDef.id] is `<modeSlug>_N` and encodes which mode to query;
+     * see [GamificationRepository.getValueForAchievement].
+     */
+    MODE_MASTERY
 }
 
 object Achievements {
@@ -95,7 +119,80 @@ object Achievements {
         AchievementDef("night_owl", "Evening Meditation", "Pray after 10 PM", AchievementCategory.TIME_OF_DAY, 1, 15, 2, "🌙"),
 
         // --- COMEBACK ---
-        AchievementDef("comeback", "Prodigal Return", "Return to prayer after 7+ day gap", AchievementCategory.COMEBACK, 1, 20, 3, "🕊️")
+        AchievementDef("comeback", "Prodigal Return", "Return to prayer after 7+ day gap", AchievementCategory.COMEBACK, 1, 20, 3, "🕊️"),
+
+        // ── Sprint-18 badge expansion (2026-04-18) ──────────────────────────
+        // 30 new achievements across 9 new categories plus top-end extensions
+        // to the existing ones. Categories / IDs are referenced by
+        // GamificationRepository.getValueForAchievement — keep the id
+        // conventions consistent (`<category>_<target>` or `<modeSlug>_N`).
+
+        // --- LONGEST_SESSION (reads UserStats.longestSessionMinutes) ---
+        AchievementDef("longest_30", "Thirty Still", "Complete a single 30-minute prayer session", AchievementCategory.LONGEST_SESSION, 30, 20, 2, "🧘"),
+        AchievementDef("longest_60", "Holy Hour", "Complete a single 60-minute prayer session", AchievementCategory.LONGEST_SESSION, 60, 50, 5, "⏰"),
+
+        // --- VOICE (reads UserStats.totalVoiceSessions) ---
+        AchievementDef("voice_10", "Spoken Prayers", "Log 10 prayer sessions using voice transcription", AchievementCategory.VOICE, 10, 25, 3, "🎙️"),
+        AchievementDef("voice_50", "Voice of Prayer", "Log 50 prayer sessions using voice transcription", AchievementCategory.VOICE, 50, 75, 6, "🗣️"),
+
+        // --- JOURNAL (reads UserStats.totalJournalSessions) ---
+        AchievementDef("journal_10", "Prayer Scribe", "Log 10 journaled prayer sessions", AchievementCategory.JOURNAL, 10, 25, 3, "✍️"),
+        AchievementDef("journal_50", "Prayer Journalist", "Log 50 journaled prayer sessions", AchievementCategory.JOURNAL, 50, 75, 6, "📖"),
+
+        // --- SABBATH (reads UserStats.totalSundaySessions) ---
+        AchievementDef("sabbath_4", "Sabbath Rhythm", "Pray on 4 different Sundays", AchievementCategory.SABBATH, 4, 20, 2, "🕊️"),
+        AchievementDef("sabbath_52", "Year of Sabbaths", "Pray on 52 different Sundays", AchievementCategory.SABBATH, 52, 150, 10, "🙌"),
+
+        // --- TESTIMONY (derived via PrayerItemDao.getAnsweredWithTestimonyCount) ---
+        AchievementDef("testimony_1", "First Testimony", "Add a testimony to your first answered prayer", AchievementCategory.TESTIMONY, 1, 20, 2, "📝"),
+        AchievementDef("testimony_25", "Book of Testimonies", "Record 25 testimonies on answered prayers", AchievementCategory.TESTIMONY, 25, 100, 8, "📚"),
+
+        // --- PARTIAL_ANSWER (derived via PrayerItemDao.getPartiallyAnsweredCount) ---
+        AchievementDef("partial_1", "Already But Not Yet", "Mark a prayer as partially answered", AchievementCategory.PARTIAL_ANSWER, 1, 15, 2, "🌱"),
+
+        // --- NAMES_OF_GOD (derived via NameOfGodDao.getDistinctPrayedCount) ---
+        AchievementDef("names_10", "Names He Answers By", "Pray 10 distinct Names of God", AchievementCategory.NAMES_OF_GOD, 10, 30, 3, "✡️"),
+        AchievementDef("names_all", "All the Names", "Pray 30 distinct Names of God", AchievementCategory.NAMES_OF_GOD, 30, 200, 15, "👑"),
+
+        // --- FAMOUS_DISTINCT (derived via FamousPrayerDao.getDistinctPrayedCount) ---
+        AchievementDef("famous_distinct_10", "Heritage of Prayer", "Pray 10 distinct famous prayers", AchievementCategory.FAMOUS_DISTINCT, 10, 30, 3, "📜"),
+        AchievementDef("famous_distinct_30", "Saints of the Church", "Pray 30 distinct famous prayers", AchievementCategory.FAMOUS_DISTINCT, 30, 100, 8, "⛪"),
+
+        // --- MODE_MASTERY (derived via PrayerRecordDao.getCountByMode)  ---
+        // IDs use the PrayerMode enum name (lowercased) so the evaluator can
+        // resolve `mode.name` by uppercasing the prefix. Target 25 across
+        // all modes for consistency.
+        AchievementDef("guided_acts_25", "ACTS of Devotion", "Complete 25 Guided ACTS sessions", AchievementCategory.MODE_MASTERY, 25, 50, 4, "⚓"),
+        AchievementDef("lectio_divina_25", "Lectio Faithful", "Complete 25 Lectio Divina sessions", AchievementCategory.MODE_MASTERY, 25, 50, 4, "📖"),
+        AchievementDef("daily_examen_25", "Examined Life", "Complete 25 Daily Examen sessions", AchievementCategory.MODE_MASTERY, 25, 50, 4, "🔍"),
+        AchievementDef("prayer_beads_25", "Beads of Prayer", "Complete 25 Prayer Beads sessions", AchievementCategory.MODE_MASTERY, 25, 50, 4, "📿"),
+        AchievementDef("breath_prayer_25", "Breath of Life", "Complete 25 Breath Prayer sessions", AchievementCategory.MODE_MASTERY, 25, 50, 4, "🫁"),
+        AchievementDef("daily_office_25", "Fixed Hours", "Complete 25 Daily Office sessions", AchievementCategory.MODE_MASTERY, 25, 50, 4, "🕰️"),
+
+        // --- GRATITUDE (long-streak extension) ---
+        AchievementDef("gratitude_100_streak", "Hundred Thankful Days", "String together a 100-day gratitude streak", AchievementCategory.GRATITUDE, 100, 250, 20, "💯"),
+
+        // --- STREAK (long-term extension) ---
+        AchievementDef("streak_50", "Ever Burning", "50-day prayer streak", AchievementCategory.STREAK, 50, 100, 8, "🔥"),
+
+        // --- PRAYER_MINUTES (top-end extension) ---
+        AchievementDef("minutes_6000", "Hundred Hours", "Pray for 100 total hours", AchievementCategory.PRAYER_MINUTES, 6000, 300, 20, "💎"),
+
+        // --- ITEMS_PRAYED (top-end extension) ---
+        AchievementDef("items_500", "Book of Remembrance", "Pray for 500 different items", AchievementCategory.ITEMS_PRAYED, 500, 200, 15, "📓"),
+
+        // --- ANSWERED_PRAYER (top-end extension) ---
+        AchievementDef("answered_100", "Book of Miracles", "Record 100 answered prayers", AchievementCategory.ANSWERED_PRAYER, 100, 300, 20, "🪄"),
+
+        // --- LEVELING (infinite-curve extension) ---
+        AchievementDef("level_75", "Seasoned Intercessor", "Reach Level 75", AchievementCategory.LEVELING, 75, 400, 30, "⭐"),
+        AchievementDef("level_100", "Centurion of Prayer", "Reach Level 100", AchievementCategory.LEVELING, 100, 500, 50, "💯"),
+
+        // --- XP_MILESTONE (top-end extension) ---
+        AchievementDef("xp_50000", "XP Luminary", "Earn 50,000 total XP", AchievementCategory.XP_MILESTONE, 50000, 250, 20, "💠"),
+
+        // --- SESSION (top-end extension) ---
+        AchievementDef("session_500", "Consistency", "Complete 500 prayer sessions", AchievementCategory.SESSION, 500, 200, 15, "🎯")
     )
 
     /** Lookup by stable ID. */

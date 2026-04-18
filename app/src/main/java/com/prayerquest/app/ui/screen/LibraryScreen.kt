@@ -28,6 +28,7 @@ import com.prayerquest.app.ads.BannerAdView
 import com.prayerquest.app.data.entity.BiblePrayer
 import com.prayerquest.app.data.entity.FamousPrayer
 import com.prayerquest.app.data.entity.GratitudeEntry
+import com.prayerquest.app.data.entity.NameOfGod
 import com.prayerquest.app.data.entity.PrayerCollection
 import com.prayerquest.app.data.entity.PrayerItem
 import com.prayerquest.app.data.prayer.SuggestedPrayerPack
@@ -35,6 +36,9 @@ import com.prayerquest.app.ui.library.LibraryViewModel
 import com.prayerquest.app.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Library screen — single scrolling page of "shelves" (per user feedback).
@@ -58,6 +62,7 @@ fun LibraryScreen(
     onNavigateToCollectionDetail: (Long) -> Unit,
     onNavigateToFamousPrayerDetail: (String) -> Unit,
     onNavigateToBiblePrayerDetail: (String) -> Unit,
+    onNavigateToNameOfGodDetail: (String) -> Unit,
     onNavigateToAnsweredPrayerDetail: (Long) -> Unit,
     onNavigateToCreateCollection: () -> Unit,
     modifier: Modifier = Modifier
@@ -68,6 +73,7 @@ fun LibraryScreen(
             app.container.collectionRepository,
             app.container.prayerRepository,
             app.container.gratitudeRepository,
+            app.container.libraryRepository,
             app.container.userPreferences,
             app.container.suggestedPackLoader
         )
@@ -76,6 +82,7 @@ fun LibraryScreen(
     val collections by libraryViewModel.collections.collectAsState(initial = emptyList())
     val famousPrayers by libraryViewModel.famousPrayers.collectAsState(initial = emptyList())
     val biblePrayers by libraryViewModel.biblePrayers.collectAsState(initial = emptyList())
+    val namesOfGod by libraryViewModel.namesOfGod.collectAsState(initial = emptyList())
     val answeredPrayers by libraryViewModel.answeredPrayers.collectAsState(initial = emptyList())
     val gratitudeEntries by libraryViewModel.gratitudeEntries.collectAsState(initial = emptyList())
     // Null unless the user has the liturgical calendar enabled AND today falls
@@ -104,6 +111,12 @@ fun LibraryScreen(
             it.reference.contains(trimmedQuery, ignoreCase = true) ||
             it.description.contains(trimmedQuery, ignoreCase = true)
     }
+    val filteredNames = namesOfGod.filterIfSearch(isSearching) {
+        it.name.contains(trimmedQuery, ignoreCase = true) ||
+            it.hebrewOrGreek.contains(trimmedQuery, ignoreCase = true) ||
+            it.meaning.contains(trimmedQuery, ignoreCase = true) ||
+            it.scriptureReference.contains(trimmedQuery, ignoreCase = true)
+    }
     val filteredAnswered = answeredPrayers.filterIfSearch(isSearching) {
         it.title.contains(trimmedQuery, ignoreCase = true) ||
             (it.testimonyText?.contains(trimmedQuery, ignoreCase = true) == true)
@@ -119,6 +132,11 @@ fun LibraryScreen(
         famousPrayers.maxByOrNull { it.userPrayedCount } ?: famousPrayers.firstOrNull()
     }
 
+    // Resolved up here in the outer @Composable scope because it's used
+    // inside `LazyColumn { ... }`, which is a LazyListScope — NOT composable
+    // — so `stringResource()` can't be called down there.
+    val otherCategoryLabel = stringResource(R.string.common_other)
+
     Column(modifier = modifier.fillMaxSize()) {
         LibrarySearchBar(
             query = searchQuery,
@@ -131,6 +149,7 @@ fun LibraryScreen(
             filteredCollections.isEmpty() &&
             filteredFamous.isEmpty() &&
             filteredBible.isEmpty() &&
+            filteredNames.isEmpty() &&
             filteredAnswered.isEmpty() &&
             filteredGratitude.isEmpty()
 
@@ -143,12 +162,12 @@ fun LibraryScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "No results for \"$trimmedQuery\"",
+                    text = stringResource(R.string.library_no_results_for_x, trimmedQuery),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 Text(
-                    text = "Try a different word, or clear the search to browse everything.",
+                    text = stringResource(R.string.library_try_a_different_word_or_clear_the_search_to_browse),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -166,7 +185,7 @@ fun LibraryScreen(
                     item(key = "hero-featured") {
                         HeroCard(
                             title = featuredFamous.title,
-                            subtitle = "by ${featuredFamous.author}",
+                            subtitle = stringResource(R.string.library_by_x, featuredFamous.author),
                             body = featuredFamous.text,
                             tag = featuredFamous.category.ifEmpty { null },
                             onClick = { onNavigateToFamousPrayerDetail(featuredFamous.id) },
@@ -196,7 +215,7 @@ fun LibraryScreen(
                 if (filteredCollections.isNotEmpty()) {
                     item(key = "shelf-collections") {
                         ShelfHeader(
-                            title = "My Collections",
+                            title = stringResource(R.string.library_my_collections),
                             countLabel = pluralize(filteredCollections.size, "collection"),
                             action = {
                                 TextButton(onClick = onNavigateToCreateCollection) {
@@ -206,7 +225,7 @@ fun LibraryScreen(
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Spacer(Modifier.width(4.dp))
-                                    Text("New", style = MaterialTheme.typography.labelMedium)
+                                    Text(stringResource(R.string.library_new), style = MaterialTheme.typography.labelMedium)
                                 }
                             }
                         )
@@ -251,7 +270,7 @@ fun LibraryScreen(
                     if (isSearching) {
                         item(key = "shelf-famous-results") {
                             ShelfHeader(
-                                title = "Famous Prayers",
+                                title = stringResource(R.string.library_famous_prayers),
                                 countLabel = "${filteredFamous.size}"
                             )
                             HorizontalRail(
@@ -273,8 +292,11 @@ fun LibraryScreen(
                         // from the asset importer — a stable, predictable
                         // sequence that the content team controls by
                         // ordering entries in `famous_prayers.json`.
+                        // `otherCategoryLabel` is resolved in the outer
+                        // composable scope (this is LazyListScope, where
+                        // `stringResource()` would fail).
                         val grouped = filteredFamous.groupBy {
-                            it.category.ifBlank { "Other" }
+                            it.category.ifBlank { otherCategoryLabel }
                         }
                         for ((category, prayersInCategory) in grouped) {
                             item(key = "shelf-famous-$category") {
@@ -303,7 +325,7 @@ fun LibraryScreen(
                 if (filteredBible.isNotEmpty()) {
                     item(key = "shelf-bible") {
                         ShelfHeader(
-                            title = "Bible Prayers",
+                            title = stringResource(R.string.library_bible_prayers),
                             countLabel = "${filteredBible.size}"
                         )
                         HorizontalRail(
@@ -321,11 +343,40 @@ fun LibraryScreen(
                     }
                 }
 
+                // ── Names of God shelf (DD §3.12) ──────────────────────────
+                //
+                // Contemplative surface — tapping a card opens the detail
+                // screen, whose "Pray this name" CTA logs a Breath Prayer
+                // session rather than the standard "I prayed this" path.
+                // Sits between Bible Prayers and Answered Prayers so Scripture-
+                // adjacent content clusters together near the top of the
+                // Library, above the more personal Answered / Gratitude tail.
+                if (filteredNames.isNotEmpty()) {
+                    item(key = "shelf-names-of-god") {
+                        ShelfHeader(
+                            title = stringResource(R.string.library_names_of_god),
+                            countLabel = "${filteredNames.size}"
+                        )
+                        HorizontalRail(
+                            items = filteredNames,
+                            key = { it.id }
+                        ) { name ->
+                            NameOfGodPoster(
+                                name = name,
+                                modifier = Modifier
+                                    .width(RAIL_CARD_WIDTH)
+                                    .height(RAIL_CARD_HEIGHT),
+                                onClick = { onNavigateToNameOfGodDetail(name.id) }
+                            )
+                        }
+                    }
+                }
+
                 // ── Answered Prayers shelf ─────────────────────────────────
                 if (filteredAnswered.isNotEmpty()) {
                     item(key = "shelf-answered") {
                         ShelfHeader(
-                            title = "Answered Prayers",
+                            title = stringResource(R.string.library_answered_prayers),
                             countLabel = pluralize(filteredAnswered.size, "answer")
                         )
                         HorizontalRail(
@@ -347,7 +398,7 @@ fun LibraryScreen(
                 if (filteredGratitude.isNotEmpty()) {
                     item(key = "shelf-gratitude") {
                         ShelfHeader(
-                            title = "Gratitude",
+                            title = stringResource(R.string.common_gratitude),
                             countLabel = pluralize(filteredGratitude.size, "entry", "entries")
                         )
                         HorizontalRail(
@@ -385,7 +436,7 @@ private fun LibrarySearchBar(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        placeholder = { Text("Search the library…") },
+        placeholder = { Text(stringResource(R.string.library_search_the_library)) },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -451,7 +502,7 @@ private fun EmptyCollectionsCta(
             .padding(horizontal = 16.dp)
     ) {
         Text(
-            text = "My Collections",
+            text = stringResource(R.string.library_my_collections),
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -475,11 +526,11 @@ private fun EmptyCollectionsCta(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Create Your First Collection",
+                    text = stringResource(R.string.library_create_your_first_collection),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
                 )
                 Text(
-                    text = "Organize prayers by family, work, or any theme",
+                    text = stringResource(R.string.library_organize_prayers_by_family_work_or_any_theme),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -540,7 +591,7 @@ private fun HeroCard(
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    text = "Featured",
+                    text = stringResource(R.string.library_featured),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -605,7 +656,7 @@ private fun FamousPrayerPoster(
                     maxLines = 2
                 )
                 Text(
-                    text = "by ${prayer.author}",
+                    text = stringResource(R.string.library_by_x_3, prayer.author),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1
@@ -697,6 +748,73 @@ private fun BiblePrayerPoster(
     }
 }
 
+/**
+ * Poster card for a [NameOfGod] — title, transliteration, a one-line
+ * meaning preview, and a prayed-count badge. Shares the 160 × 180 footprint
+ * with every other poster on the Library shelves so the row heights stay
+ * visually locked.
+ */
+@Composable
+private fun NameOfGodPoster(
+    name: NameOfGod,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ElevatedCard(modifier = modifier, onClick = onClick) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = name.name,
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    maxLines = 1
+                )
+                if (name.hebrewOrGreek.isNotEmpty() && name.hebrewOrGreek != name.name) {
+                    Text(
+                        text = name.hebrewOrGreek,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
+                    )
+                }
+                // Meaning preview — 2 lines max so the prayed-count row at
+                // the bottom stays flush with the other posters on the rail.
+                Text(
+                    text = name.meaning,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (name.scriptureReference.isNotEmpty()) {
+                    Text(
+                        text = name.scriptureReference,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1
+                    )
+                }
+                if (name.userPrayedCount > 0) {
+                    Text(
+                        text = "${name.userPrayedCount}×",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun CollectionPoster(
     collection: PrayerCollection,
@@ -750,8 +868,10 @@ private fun AnsweredPoster(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dateFormat = remember { SimpleDateFormat("MMM dd", Locale.getDefault()) }
-    val dateText = prayer.answeredAt?.let { dateFormat.format(Date(it)) } ?: "Recently"
+    // Resolve at @Composable level — `remember { }` is non-@Composable.
+    val datePattern = stringResource(R.string.common_mmm_dd)
+    val dateFormat = remember(datePattern) { SimpleDateFormat(datePattern, Locale.getDefault()) }
+    val dateText = prayer.answeredAt?.let { dateFormat.format(Date(it)) } ?: stringResource(R.string.library_recently)
 
     ElevatedCard(modifier = modifier, onClick = onClick) {
         Column(
@@ -801,7 +921,9 @@ private fun GratitudePoster(
     entry: GratitudeEntry,
     modifier: Modifier = Modifier
 ) {
-    val dateFormat = remember { SimpleDateFormat("MMM dd", Locale.getDefault()) }
+    // Resolve at @Composable level — `remember { }` is non-@Composable.
+    val datePattern = stringResource(R.string.common_mmm_dd)
+    val dateFormat = remember(datePattern) { SimpleDateFormat(datePattern, Locale.getDefault()) }
     val dateText = dateFormat.format(Date(entry.timestamp))
 
     ElevatedCard(modifier = modifier) {
@@ -914,8 +1036,9 @@ private fun SeasonalPackCard(
                         .background(StainedGlassAmber.copy(alpha = 0.22f))
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
+                    val prayerPlural = pluralStringResource(R.plurals.library_prayer_plural, pack.prayers.size, pack.prayers.size)
                     Text(
-                        text = "In Season · ${pluralize(pack.prayers.size, "prayer")}",
+                        text = stringResource(R.string.library_in_season_prefix, prayerPlural),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                         fontWeight = FontWeight.SemiBold

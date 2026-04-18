@@ -29,6 +29,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,10 +64,10 @@ fun CollectionDetailScreen(
         Column(modifier = modifier.fillMaxSize()) {
             // Top bar
             TopAppBar(
-                title = { Text("Collection") },
+                title = { Text(stringResource(R.string.collections_collection)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 }
             )
@@ -101,7 +103,7 @@ fun CollectionDetailScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "${collection!!.itemCount} prayers",
+                                    text = stringResource(R.string.collections_x_prayers, collection!!.itemCount),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -126,7 +128,7 @@ fun CollectionDetailScreen(
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.Label,
-                                        contentDescription = "Tag",
+                                        contentDescription = stringResource(R.string.common_tag),
                                         modifier = Modifier.size(14.dp)
                                     )
                                 },
@@ -152,11 +154,11 @@ fun CollectionDetailScreen(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "No Prayers Yet",
+                                text = stringResource(R.string.collections_no_prayers_yet),
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                text = "Add your first prayer to this collection",
+                                text = stringResource(R.string.collections_add_your_first_prayer_to_this_collection),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(vertical = 8.dp)
@@ -197,7 +199,7 @@ fun CollectionDetailScreen(
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Add Items")
+                    Text(stringResource(R.string.collections_add_items))
                 }
                 Button(
                     onClick = { onStartPraying() },
@@ -205,7 +207,7 @@ fun CollectionDetailScreen(
                         .weight(1f)
                         .height(48.dp)
                 ) {
-                    Text("Start Praying")
+                    Text(stringResource(R.string.collections_start_praying))
                 }
             }
         }
@@ -214,8 +216,8 @@ fun CollectionDetailScreen(
         if (showDeleteDialog && itemToDelete != null) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
-                title = { Text("Remove Prayer?") },
-                text = { Text("Remove \"${itemToDelete!!.title}\" from this collection?") },
+                title = { Text(stringResource(R.string.collections_remove_prayer)) },
+                text = { Text(stringResource(R.string.collections_remove_x_from_this_collection, itemToDelete!!.title)) },
                 confirmButton = {
                     Button(
                         onClick = {
@@ -224,14 +226,14 @@ fun CollectionDetailScreen(
                             showDeleteDialog = false
                         }
                     ) {
-                        Text("Remove")
+                        Text(stringResource(R.string.common_remove))
                     }
                 },
                 dismissButton = {
                     TextButton(
                         onClick = { showDeleteDialog = false }
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.common_cancel))
                     }
                 }
             )
@@ -253,7 +255,7 @@ private fun CollectionItemCard(
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())
+    val dateFormat = SimpleDateFormat(stringResource(R.string.common_mmm_dd), Locale.getDefault())
     val createdDate = dateFormat.format(Date(item.createdAt))
 
     // Tapping the card opens the Edit screen (photo + fields). The trash
@@ -292,7 +294,7 @@ private fun CollectionItemCard(
                     )
                 }
                 Text(
-                    text = "Added $createdDate",
+                    text = stringResource(R.string.collections_added_x, createdDate),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
@@ -304,7 +306,7 @@ private fun CollectionItemCard(
             ) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "Remove",
+                    contentDescription = stringResource(R.string.common_remove),
                     tint = MaterialTheme.colorScheme.error
                 )
             }

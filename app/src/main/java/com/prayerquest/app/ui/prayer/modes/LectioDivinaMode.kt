@@ -1,5 +1,6 @@
 package com.prayerquest.app.ui.prayer.modes
 
+import android.content.Context
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -36,10 +37,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.prayerquest.app.domain.content.LectioPassage
 import com.prayerquest.app.domain.content.LectioPassageLibrary
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Lectio Divina — the four-movement monastic reading practice (DD §3.4 item 7):
@@ -63,7 +67,8 @@ fun LectioDivinaMode(
     onModeComplete: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val movements = remember { LectioMovement.all() }
+    val context = LocalContext.current
+    val movements = LectioMovement.all()
     var currentIndex by remember { mutableIntStateOf(0) }
     var movementNotes by remember { mutableStateOf(List(movements.size) { "" }) }
     var selectedPassage by remember { mutableStateOf(LectioPassageLibrary.default) }
@@ -88,6 +93,7 @@ fun LectioDivinaMode(
                     } else {
                         onModeComplete(
                             formatLectioTranscript(
+                                context = context,
                                 movements = movements,
                                 notes = movementNotes,
                                 passage = selectedPassage
@@ -101,7 +107,7 @@ fun LectioDivinaMode(
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
-                    text = if (isLast) "Complete Lectio" else "Next Movement",
+                    text = if (isLast) stringResource(R.string.prayer_modes_complete_lectio) else stringResource(R.string.prayer_modes_next_movement),
                     style = MaterialTheme.typography.labelLarge
                 )
             }
@@ -147,7 +153,7 @@ fun LectioDivinaMode(
             }
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = "${currentIndex + 1}/${movements.size}",
+                text = stringResource(R.string.prayer_modes_x_x_3, currentIndex + 1, movements.size),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -201,7 +207,7 @@ fun LectioDivinaMode(
                         IconButton(onClick = { /* Voice-to-text — SpeechRecognizer pass */ }) {
                             Icon(
                                 imageVector = Icons.Default.Mic,
-                                contentDescription = "Voice to text",
+                                contentDescription = stringResource(R.string.common_voice_to_text),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -209,7 +215,7 @@ fun LectioDivinaMode(
                 )
             } else {
                 Text(
-                    text = "Rest here. No words needed.",
+                    text = stringResource(R.string.prayer_modes_rest_here_no_words_needed),
                     style = MaterialTheme.typography.bodyMedium,
                     fontStyle = FontStyle.Italic,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -242,7 +248,7 @@ private fun PassagePicker(
             )
             Icon(
                 imageVector = Icons.Default.ArrowDropDown,
-                contentDescription = "Choose passage"
+                contentDescription = stringResource(R.string.prayer_modes_choose_passage)
             )
         }
         DropdownMenu(
@@ -272,7 +278,7 @@ private fun PassagePicker(
                         {
                             Icon(
                                 imageVector = Icons.Default.Check,
-                                contentDescription = "Selected",
+                                contentDescription = stringResource(R.string.prayer_modes_selected),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -318,32 +324,33 @@ private data class LectioMovement(
     val collectsResponse: Boolean
 ) {
     companion object {
+        @Composable
         fun all(): List<LectioMovement> = listOf(
             LectioMovement(
-                title = "Lectio",
-                subtitle = "Read",
-                prompt = "Read the passage slowly, once or twice. Let the words sit on your tongue. Which word or phrase shimmered?",
-                placeholder = "The word that caught my attention was…",
+                title = stringResource(R.string.prayer_modes_lectio),
+                subtitle = stringResource(R.string.prayer_modes_read),
+                prompt = stringResource(R.string.prayer_modes_read_the_passage_slowly_once_or_twice_let_the_word),
+                placeholder = stringResource(R.string.prayer_modes_the_word_that_caught_my_attention_was),
                 collectsResponse = true
             ),
             LectioMovement(
-                title = "Meditatio",
-                subtitle = "Meditate",
-                prompt = "Turn that word or phrase over in your mind. Why this one? What memory, question, or image does it stir?",
-                placeholder = "This word reminds me of… / It asks me…",
+                title = stringResource(R.string.prayer_modes_meditatio),
+                subtitle = stringResource(R.string.prayer_modes_meditate),
+                prompt = stringResource(R.string.prayer_modes_turn_that_word_or_phrase_over_in_your_mind_why_thi),
+                placeholder = stringResource(R.string.prayer_modes_this_word_reminds_me_of_it_asks_me),
                 collectsResponse = true
             ),
             LectioMovement(
-                title = "Oratio",
-                subtitle = "Pray",
-                prompt = "Now speak back to God — your response to what he's shown you.",
-                placeholder = "Lord, I want to say back to you…",
+                title = stringResource(R.string.prayer_modes_oratio),
+                subtitle = stringResource(R.string.prayer_modes_pray),
+                prompt = stringResource(R.string.prayer_modes_now_speak_back_to_god_your_response_to_what_he_s_s),
+                placeholder = stringResource(R.string.prayer_modes_lord_i_want_to_say_back_to_you),
                 collectsResponse = true
             ),
             LectioMovement(
-                title = "Contemplatio",
-                subtitle = "Rest",
-                prompt = "Sit in silence. No more words. Let God simply be with you.",
+                title = stringResource(R.string.prayer_modes_contemplatio),
+                subtitle = stringResource(R.string.prayer_modes_rest),
+                prompt = stringResource(R.string.prayer_modes_sit_in_silence_no_more_words_let_god_simply_be_wit),
                 placeholder = "",
                 collectsResponse = false
             )
@@ -351,18 +358,24 @@ private data class LectioMovement(
     }
 }
 
+// Note: takes a Context (not @Composable) because it's invoked from an
+// onClick handler when the user finishes the last movement — onClick
+// lambdas are not composable scopes, so stringResource() is unavailable
+// here. Application context is captured by the caller via LocalContext
+// and threaded in.
 private fun formatLectioTranscript(
+    context: Context,
     movements: List<LectioMovement>,
     notes: List<String>,
     passage: LectioPassage
 ): String = buildString {
-    appendLine("Lectio Divina · ${passage.reference}")
+    appendLine(context.getString(R.string.prayer_modes_lectio_divina_x, passage.reference))
     appendLine()
     movements.forEachIndexed { index, movement ->
         if (!movement.collectsResponse) return@forEachIndexed
         val text = notes.getOrNull(index)?.trim().orEmpty()
         if (text.isNotEmpty()) {
-            appendLine("【${movement.title} · ${movement.subtitle}】")
+            appendLine(context.getString(R.string.prayer_modes_x_x_4, movement.title, movement.subtitle))
             appendLine(text)
             appendLine()
         }

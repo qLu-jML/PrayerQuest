@@ -35,6 +35,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,10 +69,10 @@ fun CreateGroupScreen(
     ) {
         // Top bar
         TopAppBar(
-            title = { Text("Create Group") },
+            title = { Text(stringResource(R.string.groups_create_group)) },
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
             }
         )
@@ -90,8 +92,8 @@ fun CreateGroupScreen(
                     // form so the user can keep configuring the group — the
                     // Create button shifts to "Upgrade to Premium" below.
                     PremiumLimitBanner(
-                        title = "Group limit reached",
-                        description = "Free accounts can create up to ${PremiumFeatures.FREE_GROUPS_CREATED_LIMIT} prayer groups. Upgrade to Premium to create up to ${PremiumFeatures.PREMIUM_GROUPS_CREATED_LIMIT}.",
+                        title = stringResource(R.string.groups_group_limit_reached),
+                        description = stringResource(R.string.groups_free_accounts_can_create_up_to_x_prayer_groups_upg, PremiumFeatures.FREE_GROUPS_CREATED_LIMIT, PremiumFeatures.PREMIUM_GROUPS_CREATED_LIMIT),
                         onUpgrade = onNavigateToPaywall,
                     )
                 }
@@ -105,14 +107,14 @@ fun CreateGroupScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
-                            text = "Choose an Emoji",
+                            text = stringResource(R.string.common_choose_an_emoji),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         if (!isPremium) {
                             AssistChip(
                                 onClick = onNavigateToPaywall,
-                                label = { Text("Unlock all", style = MaterialTheme.typography.labelSmall) },
+                                label = { Text(stringResource(R.string.groups_unlock_all), style = MaterialTheme.typography.labelSmall) },
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.Default.WorkspacePremium,
@@ -186,7 +188,7 @@ fun CreateGroupScreen(
                                         if (locked) {
                                             Icon(
                                                 imageVector = Icons.Default.Lock,
-                                                contentDescription = "Premium only",
+                                                contentDescription = stringResource(R.string.groups_premium_only),
                                                 modifier = Modifier
                                                     .size(16.dp)
                                                     .align(Alignment.BottomEnd),
@@ -206,9 +208,9 @@ fun CreateGroupScreen(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { if (it.length <= 50) name = it },
-                    label = { Text("Group Name") },
+                    label = { Text(stringResource(R.string.groups_group_name)) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("e.g., Our Church Prayer Circle") },
+                    placeholder = { Text(stringResource(R.string.groups_e_g_our_church_prayer_circle)) },
                     singleLine = true,
                     maxLines = 1
                 )
@@ -219,9 +221,9 @@ fun CreateGroupScreen(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { if (it.length <= 200) description = it },
-                    label = { Text("Description (Optional)") },
+                    label = { Text(stringResource(R.string.common_description_optional)) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("What's this group about?") },
+                    placeholder = { Text(stringResource(R.string.groups_what_s_this_group_about)) },
                     minLines = 3,
                     maxLines = 3
                 )
@@ -231,12 +233,12 @@ fun CreateGroupScreen(
                 // Helper text
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "Create a new prayer group to share and pray with others. A unique invite code will be generated automatically.",
+                        text = stringResource(R.string.groups_create_a_new_prayer_group_to_share_and_pray_with_o),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "You'll be the group admin and can invite others using the share code.",
+                        text = stringResource(R.string.groups_you_ll_be_the_group_admin_and_can_invite_others_us),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -299,9 +301,9 @@ fun CreateGroupScreen(
                         )
                     } else {
                         val label = if (atGroupLimit && !isPremium) {
-                            "Upgrade to Premium"
+                            stringResource(R.string.common_upgrade_to_premium)
                         } else {
-                            "Create Group"
+                            stringResource(R.string.groups_create_group)
                         }
                         Text(label, style = MaterialTheme.typography.labelLarge)
                     }
@@ -370,7 +372,7 @@ private fun PremiumLimitBanner(
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             TextButton(onClick = onUpgrade) {
-                Text("See Premium")
+                Text(stringResource(R.string.groups_see_premium))
             }
         }
     }

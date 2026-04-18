@@ -47,7 +47,7 @@ phones and is safely within Play's bounds).
    - Overlay: "Pray together — invite-only groups for family & friends"
 
 8. **Profile & Achievements**
-   - Shot: Profile screen with level card (Level 7 "Intercessor"), lifetime
+   - Shot: Profile screen with level card (Level 7), lifetime
      stats grid, and achievement categories with progress bars.
    - Overlay: "Level up. Unlock badges. Keep seeking Him."
 

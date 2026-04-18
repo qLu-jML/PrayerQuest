@@ -103,7 +103,7 @@ Implement the Names of God tab in the unified Prayer Library.
    - Two primary CTAs: "Pray this name — Guided ACTS" (launches PrayerSessionScreen in GUIDED_ACTS mode pre-focused on that attribute) and "Breath Prayer for this name" (launches BREATH_PRAYER with the name as the centering phrase).
    - Increment usage count via `libraryRepository.incrementNameOfGodPrayedCount(id)` on either CTA.
 
-4) Badges: add Grace Warrior-class achievements to domain/model/Achievement.kt:
+4) Badges: add high-tier achievements to domain/model/Achievement.kt:
    - NAMES_OF_GOD_FIRST (pray your first name of God)
    - NAMES_OF_GOD_ALL (pray all 30 at least once)
    - NAMES_OF_GOD_50 (50 total name-of-God prayers)

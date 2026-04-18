@@ -39,4 +39,12 @@ interface PrayerRecordDao {
 
     @Query("SELECT COUNT(*) FROM prayer_records WHERE groupPrayerItemId IS NOT NULL")
     suspend fun getGroupPrayerRecordCount(): Int
+
+    /**
+     * Lifetime count of sessions for a specific [PrayerMode.name]. Backs
+     * the MODE_MASTERY-category badges (Lectio Faithful, ACTS of Devotion,
+     * Examined Life, Beads of Prayer).
+     */
+    @Query("SELECT COUNT(*) FROM prayer_records WHERE mode = :mode")
+    suspend fun getCountByMode(mode: String): Int
 }

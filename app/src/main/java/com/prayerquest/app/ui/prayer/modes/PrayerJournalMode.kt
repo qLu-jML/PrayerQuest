@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @Composable
 fun PrayerJournalMode(
@@ -38,7 +40,7 @@ fun PrayerJournalMode(
     var journalEntry by remember { mutableStateOf("") }
     var showRecap by remember { mutableStateOf(false) }
 
-    val dateFormatter = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
+    val dateFormatter = SimpleDateFormat(stringResource(R.string.prayer_modes_eeee_mmmm_d_yyyy), Locale.getDefault())
     val currentDate = dateFormatter.format(Date())
 
     PrayerModeScaffold(
@@ -62,7 +64,7 @@ fun PrayerJournalMode(
                     shape = MaterialTheme.shapes.medium
                 ) {
                     Text(
-                        text = "Submit Prayer",
+                        text = stringResource(R.string.prayer_modes_submit_prayer),
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
@@ -78,7 +80,7 @@ fun PrayerJournalMode(
                             .height(48.dp),
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        Text("Edit")
+                        Text(stringResource(R.string.common_edit))
                     }
                     Button(
                         onClick = { onModeComplete(journalEntry) },
@@ -87,7 +89,7 @@ fun PrayerJournalMode(
                             .height(48.dp),
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        Text("Confirm")
+                        Text(stringResource(R.string.common_confirm))
                     }
                 }
             }
@@ -95,7 +97,7 @@ fun PrayerJournalMode(
         contentArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Prayer Journal",
+            text = stringResource(R.string.prayer_modes_prayer_journal),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
@@ -120,7 +122,7 @@ fun PrayerJournalMode(
 
         // Prompt text
         Text(
-            text = "Write freely about what's on your heart today. This is your sacred space.",
+            text = stringResource(R.string.prayer_modes_write_freely_about_what_s_on_your_heart_today_this),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -133,7 +135,7 @@ fun PrayerJournalMode(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp),
-            placeholder = { Text("Write your prayer...") },
+            placeholder = { Text(stringResource(R.string.prayer_modes_write_your_prayer)) },
             shape = MaterialTheme.shapes.medium,
             trailingIcon = {
                 IconButton(
@@ -141,7 +143,7 @@ fun PrayerJournalMode(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Mic,
-                        contentDescription = "Voice to text",
+                        contentDescription = stringResource(R.string.common_voice_to_text),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -165,7 +167,7 @@ fun PrayerJournalMode(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Your Prayer Recap",
+                    text = stringResource(R.string.prayer_modes_your_prayer_recap),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )

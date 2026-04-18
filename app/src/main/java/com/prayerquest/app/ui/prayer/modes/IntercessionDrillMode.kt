@@ -34,6 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.prayerquest.app.ui.components.PrayerPhotoAvatar
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Intercession Drill — fast rhythm of praying for a handful of items in
@@ -67,17 +69,21 @@ fun IntercessionDrillMode(
     // default list — we never want to render with a zero-length list, which
     // would make `prayerItems[currentItemIndex]` throw
     // IndexOutOfBoundsException on first frame.
-    val prayerItems = remember(topics) {
+    //
+    // Resolve the localized default items at @Composable level — `remember {}`
+    // is non-@Composable, so we can't call stringResource() inside it.
+    val defaultIntercessionItems = listOf(
+        stringResource(R.string.prayer_modes_family_members),
+        stringResource(R.string.prayer_modes_friends_in_need),
+        stringResource(R.string.prayer_modes_work_colleagues),
+        stringResource(R.string.prayer_modes_church_community),
+        stringResource(R.string.prayer_modes_missionaries),
+        stringResource(R.string.prayer_modes_healing_health)
+    )
+    val prayerItems = remember(topics, defaultIntercessionItems) {
         topics?.filter { it.isNotBlank() }
             ?.takeIf { it.isNotEmpty() }
-            ?: listOf(
-                "Family members",
-                "Friends in need",
-                "Work colleagues",
-                "Church community",
-                "Missionaries",
-                "Healing & health"
-            )
+            ?: defaultIntercessionItems
     }
 
     var currentItemIndex by remember { mutableIntStateOf(0) }
@@ -146,18 +152,18 @@ fun IntercessionDrillMode(
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "Mark as prayed",
+                    contentDescription = stringResource(R.string.prayer_modes_mark_as_prayed_2),
                     modifier = Modifier.padding(end = 8.dp)
                 )
                 Text(
-                    text = if (!isLastItem) "Prayed & Next" else "Complete Drill",
+                    text = if (!isLastItem) stringResource(R.string.prayer_modes_prayed_next) else stringResource(R.string.prayer_modes_complete_drill),
                     style = MaterialTheme.typography.labelLarge
                 )
             }
         }
     ) {
         Text(
-            text = "Intercession Drill",
+            text = stringResource(R.string.prayer_modes_intercession_drill),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
@@ -172,7 +178,7 @@ fun IntercessionDrillMode(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Item ${safeIndex + 1}/${prayerItems.size}",
+                    text = stringResource(R.string.prayer_modes_item_x_x, safeIndex + 1, prayerItems.size),
                     style = MaterialTheme.typography.labelMedium
                 )
                 Text(
@@ -219,7 +225,7 @@ fun IntercessionDrillMode(
                     size = 64.dp,
                 )
                 Text(
-                    text = "Praying for:",
+                    text = stringResource(R.string.prayer_modes_praying_for),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -237,7 +243,7 @@ fun IntercessionDrillMode(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Quick Note (optional)",
+                text = stringResource(R.string.prayer_modes_quick_note_optional),
                 style = MaterialTheme.typography.labelMedium
             )
             OutlinedTextField(
@@ -249,7 +255,7 @@ fun IntercessionDrillMode(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(80.dp),
-                placeholder = { Text("e.g., pray for guidance...") },
+                placeholder = { Text(stringResource(R.string.prayer_modes_e_g_pray_for_guidance)) },
                 shape = MaterialTheme.shapes.medium,
                 trailingIcon = {
                     IconButton(
@@ -257,7 +263,7 @@ fun IntercessionDrillMode(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Mic,
-                            contentDescription = "Voice to text",
+                            contentDescription = stringResource(R.string.common_voice_to_text),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -280,7 +286,7 @@ fun IntercessionDrillMode(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Prayed for ${prayedItems.size}/${prayerItems.size}",
+                    text = stringResource(R.string.prayer_modes_prayed_for_x_x, prayedItems.size, prayerItems.size),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )

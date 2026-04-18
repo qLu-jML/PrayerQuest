@@ -36,4 +36,14 @@ class LibraryRepository(
         nameOfGodDao.incrementPrayedCount(id)
 
     suspend fun nameOfGodCount(): Int = nameOfGodDao.count()
+
+    /**
+     * One-shot getter for the detail screen. Suspend over Flow because the
+     * detail view loads a single row, shows a NotFound state if the id
+     * doesn't resolve, and otherwise never re-queries — so a cold suspend
+     * read is cheaper than wiring a whole Flow pipeline only to take the
+     * first emission.
+     */
+    suspend fun getNameOfGodById(id: String): NameOfGod? =
+        nameOfGodDao.getById(id)
 }

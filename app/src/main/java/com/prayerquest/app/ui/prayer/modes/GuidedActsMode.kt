@@ -33,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * @param topics Optional list of prayer-item titles the session is
@@ -50,24 +52,29 @@ fun GuidedActsMode(
     modifier: Modifier = Modifier,
     topics: List<String>? = null
 ) {
-    val supplicationPrompt = remember(topics) {
-        val items = topics.orEmpty().filter { it.isNotBlank() }
-        if (items.isEmpty()) {
-            "Ask for help and guidance. What are your needs?"
-        } else {
-            // Trim to keep the container readable — the banner above
-            // already carries the full list for very long packs.
-            val preview = items.take(5).joinToString(" · ")
-            val extra = items.size - 5
-            val tail = if (extra > 0) " · +$extra more" else ""
-            "Bring these to God: $preview$tail"
-        }
+    // Resolve the localized fragments at @Composable level — `remember { }`
+    // is non-@Composable. We then build the final supplicationPrompt inside
+    // remember from those plain strings.
+    val supplicationGenericPrompt = stringResource(
+        R.string.prayer_modes_ask_for_help_and_guidance_what_are_your_needs
+    )
+    val items = topics.orEmpty().filter { it.isNotBlank() }
+    val extra = items.size - 5
+    val moreTail = if (extra > 0) stringResource(R.string.prayer_modes_x_more, extra) else ""
+    val previewJoined = items.take(5).joinToString(" · ")
+    val supplicationItemPrompt = stringResource(
+        R.string.prayer_modes_bring_these_to_god_x_x,
+        previewJoined,
+        moreTail
+    )
+    val supplicationPrompt = remember(topics, supplicationGenericPrompt, supplicationItemPrompt) {
+        if (items.isEmpty()) supplicationGenericPrompt else supplicationItemPrompt
     }
     val phases = listOf(
-        ActsPhase("Adoration", "Express love and praise to God. What attributes of God inspire you most?"),
-        ActsPhase("Confession", "Admit struggles and shortcomings. Where do you need grace?"),
-        ActsPhase("Thanksgiving", "Give thanks for blessings. What has God provided?"),
-        ActsPhase("Supplication", supplicationPrompt)
+        ActsPhase(stringResource(R.string.common_adoration), stringResource(R.string.prayer_modes_express_love_and_praise_to_god_what_attributes_of)),
+        ActsPhase(stringResource(R.string.common_confession), stringResource(R.string.prayer_modes_admit_struggles_and_shortcomings_where_do_you_need)),
+        ActsPhase(stringResource(R.string.common_thanksgiving), stringResource(R.string.prayer_modes_give_thanks_for_blessings_what_has_god_provided)),
+        ActsPhase(stringResource(R.string.common_supplication), supplicationPrompt)
     )
 
     var currentPhaseIndex by remember { mutableIntStateOf(0) }
@@ -94,7 +101,7 @@ fun GuidedActsMode(
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
-                    text = if (!isLastPhase) "Next Step" else "Complete ACTS",
+                    text = if (!isLastPhase) stringResource(R.string.prayer_modes_next_step) else stringResource(R.string.prayer_modes_complete_acts),
                     style = MaterialTheme.typography.labelLarge
                 )
             }
@@ -134,7 +141,7 @@ fun GuidedActsMode(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Step ${currentPhaseIndex + 1}: ${currentPhase.title}",
+                text = stringResource(R.string.prayer_modes_step_x_x_2, currentPhaseIndex + 1, currentPhase.title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -167,7 +174,7 @@ fun GuidedActsMode(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp),
-                placeholder = { Text("Write your prayer...") },
+                placeholder = { Text(stringResource(R.string.prayer_modes_write_your_prayer)) },
                 shape = MaterialTheme.shapes.medium,
                 trailingIcon = {
                     IconButton(
@@ -175,7 +182,7 @@ fun GuidedActsMode(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Mic,
-                            contentDescription = "Voice to text",
+                            contentDescription = stringResource(R.string.common_voice_to_text),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -206,7 +213,7 @@ private fun ActsPhaseTimer(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "${secondsRemaining}s remaining",
+            text = stringResource(R.string.prayer_modes_x_s_remaining, secondsRemaining),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSecondaryContainer
         )

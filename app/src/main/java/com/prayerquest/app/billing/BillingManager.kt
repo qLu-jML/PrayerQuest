@@ -13,6 +13,7 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
+import com.prayerquest.app.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,11 +43,17 @@ class BillingManager(
         private const val TAG = "BillingManager"
 
         /**
-         * The monthly subscription SKU. Matches the product ID you create in
-         * Google Play Console. If you ever launch an annual plan, add a
-         * second constant and query both in [launchPurchaseFlow].
+         * The monthly subscription SKU. **Must** match the product ID created
+         * in Google Play Console → Monetize → Products → Subscriptions.
+         *
+         * The single source of truth is `BuildConfig.BILLING_PREMIUM_MONTHLY_ID`
+         * (defined in `app/build.gradle.kts`), so if we ever need per-flavor
+         * overrides we change one place. `val` instead of `const val` because
+         * Kotlin treats BuildConfig fields as runtime (not compile-time)
+         * constants — this is the safe form.
          */
-        const val PREMIUM_MONTHLY_ID = "prayer_quest_premium_monthly"
+        @JvmField
+        val PREMIUM_MONTHLY_ID: String = BuildConfig.BILLING_PREMIUM_MONTHLY_ID
     }
 
     private val _isPremium = MutableStateFlow(false)

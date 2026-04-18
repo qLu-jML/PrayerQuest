@@ -56,6 +56,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Circular photo slot with camera + gallery picker.
@@ -99,6 +101,12 @@ fun PhotoPickerSlot(
     var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
     var saveError by remember { mutableStateOf<String?>(null) }
 
+    // Resolve error-path strings at @Composable scope so the coroutine blocks
+    // below (scope.launch { … }) can capture them as plain Strings. Calling
+    // stringResource() inside scope.launch is a @Composable invocation in a
+    // non-@Composable context — the Compose compiler rejects it.
+    val couldNotSavePhotoMessage = stringResource(R.string.components_could_not_save_photo)
+
     // Gallery picker (system photo picker, no runtime permission needed on
     // Android 13+; on older devices PickVisualMedia falls back to GetContent).
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -107,7 +115,7 @@ fun PhotoPickerSlot(
         if (uri != null) {
             scope.launch {
                 val saved = PhotoStorage.savePhoto(context, uri, category)
-                if (saved != null) onPhotoSaved(saved) else saveError = "Could not save photo"
+                if (saved != null) onPhotoSaved(saved) else saveError = couldNotSavePhotoMessage
             }
         }
     }
@@ -132,11 +140,17 @@ fun PhotoPickerSlot(
                     } catch (_: Throwable) {
                     }
                 }
-                if (saved != null) onPhotoSaved(saved) else saveError = "Could not save photo"
+                if (saved != null) onPhotoSaved(saved) else saveError = couldNotSavePhotoMessage
             }
         }
     }
 
+    // Resolve at @Composable level — `semantics { }` is non-@Composable.
+    val photoSlotDescription = when {
+        onLockedTap != null -> stringResource(R.string.components_add_photo_locked_upgrade_to_premium)
+        currentPath != null -> stringResource(R.string.components_prayer_photo_tap_to_replace)
+        else -> stringResource(R.string.components_add_a_photo_to_this_prayer)
+    }
     Box(
         modifier = modifier
             .size(size)
@@ -149,11 +163,7 @@ fun PhotoPickerSlot(
                 }
             }
             .semantics {
-                contentDescription = when {
-                    onLockedTap != null -> "Add photo (locked — upgrade to premium)"
-                    currentPath != null -> "Prayer photo. Tap to replace."
-                    else -> "Add a photo to this prayer"
-                }
+                contentDescription = photoSlotDescription
             },
         contentAlignment = Alignment.Center,
     ) {
@@ -196,6 +206,9 @@ fun PhotoPickerSlot(
                     )
                 }
                 // Small clear-X in the top-right corner.
+                // Resolve the accessibility label at the @Composable level —
+                // `semantics { }` runs in a non-@Composable scope.
+                val removePhotoLabel = stringResource(R.string.common_remove_photo)
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -204,7 +217,7 @@ fun PhotoPickerSlot(
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surface)
                         .clickable { onPhotoCleared() }
-                        .semantics { contentDescription = "Remove photo" },
+                        .semantics { contentDescription = removePhotoLabel },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -238,13 +251,13 @@ fun PhotoPickerSlot(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    text = "Add a photo",
+                    text = stringResource(R.string.components_add_a_photo),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
                 PickerSheetRow(
                     icon = Icons.Default.PhotoCamera,
-                    label = "Take a photo",
+                    label = stringResource(R.string.components_take_a_photo),
                     onClick = {
                         showPickerSheet = false
                         // Build a scratch file in cacheDir/camera/ and hand
@@ -256,7 +269,7 @@ fun PhotoPickerSlot(
                 )
                 PickerSheetRow(
                     icon = Icons.Default.PhotoLibrary,
-                    label = "Choose from gallery",
+                    label = stringResource(R.string.components_choose_from_gallery),
                     onClick = {
                         showPickerSheet = false
                         galleryLauncher.launch(
@@ -272,7 +285,7 @@ fun PhotoPickerSlot(
     saveError?.let { msg ->
         AlertDialog(
             onDismissRequest = { saveError = null },
-            title = { Text("Photo couldn't be saved") },
+            title = { Text(stringResource(R.string.components_photo_couldn_t_be_saved)) },
             text = { Text(msg) },
             confirmButton = {
                 TextButton(onClick = { saveError = null }) { Text("OK") }

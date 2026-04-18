@@ -5,6 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.prayerquest.app.PrayerQuestApplication
 import java.time.LocalDate
+import com.prayerquest.app.R
 
 /**
  * Streak Alert — fires in the evening to warn users they haven't logged a
@@ -27,13 +28,13 @@ class StreakAlertWorker(
             val hasPrayedToday = checkIfPrayedToday()
 
             if (!hasPrayedToday) {
-                val title = "Don't lose your 🔥 streak!"
+                val title = applicationContext.getString(R.string.notifications_don_t_lose_your_streak)
                 val messages = listOf(
-                    "Pray now before midnight.",
-                    "Keep your streak alive with one prayer session.",
-                    "Your streak is waiting for you!",
-                    "Don't let today pass without prayer.",
-                    "Finish strong - pray before the day ends."
+                    applicationContext.getString(R.string.notifications_pray_now_before_midnight),
+                    applicationContext.getString(R.string.notifications_keep_your_streak_alive_with_one_prayer_session),
+                    applicationContext.getString(R.string.notifications_your_streak_is_waiting_for_you),
+                    applicationContext.getString(R.string.notifications_don_t_let_today_pass_without_prayer),
+                    applicationContext.getString(R.string.notifications_finish_strong_pray_before_the_day_ends)
                 )
                 val message = messages.random()
 

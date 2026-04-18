@@ -19,16 +19,25 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
+import com.prayerquest.app.R
 
 /**
  * Holds every answer the user gives during the 7-step onboarding flow so the
  * UI can move forwards and backwards without losing state. Every field has a
  * sensible default — the user can skip any step and we'll just persist the
  * default for that preference.
+ *
+ * Localization-pending note: defaults here are intentionally blank / empty
+ * strings because data-class constructor defaults are evaluated OUTSIDE a
+ * `@Composable` scope, so `stringResource()` can't be used here. Instead, the
+ * ViewModel's init block seeds the localized defaults via
+ * `applicationContext.getString()`, and `completeOnboarding()` uses `ifBlank`
+ * as a belt-and-suspenders fallback if a user wipes the field. See
+ * design/LOCALIZATION_AUDIT.md.
  */
 data class OnboardingAnswers(
     // Step 2 — Name + daily goal
-    val displayName: String = "Prayer Warrior",
+    val displayName: String = "",
     val dailyGoalMinutes: Int = 10,
 
     // Step 3 — Tradition multi-select (defaults to the universal set)
@@ -49,8 +58,8 @@ data class OnboardingAnswers(
     val quietEndMin: Int = UserPreferences.DEFAULT_QUIET_END_MIN,
 
     // Step 6 — First prayer collection
-    val firstCollectionName: String = "My Prayer List",
-    val firstCollectionDescription: String = "Your personal prayer list — add the people and things on your heart",
+    val firstCollectionName: String = "",
+    val firstCollectionDescription: String = "",
 
     // Step 7 — First gratitude entry (optional)
     val firstGratitudeText: String = ""
@@ -73,7 +82,18 @@ class OnboardingViewModel(
     private val applicationContext: Context
 ) : ViewModel() {
 
-    private val _answers = MutableStateFlow(OnboardingAnswers())
+    // Seed the localized defaults via `applicationContext.getString()` — we
+    // can't use `stringResource()` in the data-class constructor because
+    // default parameter values are evaluated outside a @Composable scope.
+    private val _answers = MutableStateFlow(
+        OnboardingAnswers(
+            displayName = applicationContext.getString(R.string.common_prayer_warrior),
+            firstCollectionName = applicationContext.getString(R.string.onboarding_my_prayer_list),
+            firstCollectionDescription = applicationContext.getString(
+                R.string.onboarding_your_personal_prayer_list_add_the_people_and_thing
+            )
+        )
+    )
     val answers: StateFlow<OnboardingAnswers> = _answers.asStateFlow()
 
     fun update(transform: OnboardingAnswers.() -> OnboardingAnswers) {
@@ -136,7 +156,7 @@ class OnboardingViewModel(
 
         // --- Preferences ---------------------------------------------------
         runCatching {
-            userPreferences.setDisplayName(a.displayName.ifBlank { "Prayer Warrior" })
+            userPreferences.setDisplayName(a.displayName.ifBlank { applicationContext.getString(R.string.common_prayer_warrior) })
             userPreferences.setDailyGoal(a.dailyGoalMinutes)
             userPreferences.setEnabledTraditions(a.traditions)
             userPreferences.setLiturgicalCalendar(a.liturgicalCalendar)
@@ -172,9 +192,9 @@ class OnboardingViewModel(
         // --- Starter prayer collection -------------------------------------
         runCatching {
             val collection = PrayerCollection(
-                name = a.firstCollectionName.ifBlank { "My Prayer List" },
+                name = a.firstCollectionName.ifBlank { applicationContext.getString(R.string.onboarding_my_prayer_list) },
                 description = a.firstCollectionDescription.ifBlank {
-                    "Your personal prayer list — add the people and things on your heart"
+                    applicationContext.getString(R.string.onboarding_your_personal_prayer_list_add_the_people_and_thing)
                 },
                 emoji = "\uD83D\uDE4F",  // folded hands
                 topicTag = "Personal",

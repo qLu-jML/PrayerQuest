@@ -72,6 +72,8 @@ import com.prayerquest.app.ui.prayer.modes.LectioDivinaMode
 import com.prayerquest.app.ui.prayer.modes.PrayerBeadsMode
 import com.prayerquest.app.ui.prayer.modes.PrayerJournalMode
 import com.prayerquest.app.ui.prayer.modes.VoiceRecordMode
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -132,7 +134,8 @@ fun PrayerSessionScreen(
             gamificationRepository = app.container.gamificationRepository,
             fixedMode = resolveFixedMode(chosenModeName),
             collectionId = normalizedCollectionId,
-            collectionRepository = app.container.collectionRepository
+            collectionRepository = app.container.collectionRepository,
+            context = context
         )
     )
     val uiState by viewModel.uiState.collectAsState()
@@ -143,18 +146,18 @@ fun PrayerSessionScreen(
                 title = {
                     when (uiState) {
                         is UiState.Loading -> {
-                            Text("Loading Prayer Session...")
+                            Text(stringResource(R.string.prayer_loading_prayer_session))
                         }
                         is UiState.InProgress -> {
                             val inProgressState = uiState as UiState.InProgress
                             Text(
-                                text = "Prayer Session · ${inProgressState.currentItemIndex + 1}/${inProgressState.totalItems}",
+                                text = stringResource(R.string.prayer_prayer_session_x_x, inProgressState.currentItemIndex + 1, inProgressState.totalItems),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
                         is UiState.Finished -> {
-                            Text("Session Complete!")
+                            Text(stringResource(R.string.prayer_session_complete))
                         }
                     }
                 },
@@ -162,7 +165,7 @@ fun PrayerSessionScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.common_back)
                         )
                     }
                 }
@@ -210,7 +213,7 @@ private fun LoadingState() {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Preparing your prayer session...",
+            text = stringResource(R.string.prayer_preparing_your_prayer_session),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -281,7 +284,7 @@ private fun InProgressState(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Progress",
+                    text = stringResource(R.string.prayer_progress),
                     style = MaterialTheme.typography.labelMedium
                 )
                 Row(
@@ -289,7 +292,7 @@ private fun InProgressState(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "${state.currentItemIndex + 1}/${state.totalItems}",
+                        text = stringResource(R.string.prayer_x_x, state.currentItemIndex + 1, state.totalItems),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -305,9 +308,9 @@ private fun InProgressState(
                                     Icons.Default.ExpandMore
                                 },
                                 contentDescription = if (stripExpanded) {
-                                    "Collapse session header"
+                                    stringResource(R.string.prayer_collapse_session_header)
                                 } else {
-                                    "Expand session header"
+                                    stringResource(R.string.prayer_expand_session_header)
                                 },
                                 modifier = Modifier.size(20.dp)
                             )
@@ -558,7 +561,7 @@ private fun PrayingForBanner(items: List<PrayerItem>) {
                 )
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Praying for",
+                        text = stringResource(R.string.prayer_praying_for),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
@@ -573,7 +576,7 @@ private fun PrayingForBanner(items: List<PrayerItem>) {
             }
         } else {
             Text(
-                text = if (items.size == 1) "Praying for" else "Praying for ${items.size} items",
+                text = if (items.size == 1) stringResource(R.string.prayer_praying_for) else stringResource(R.string.prayer_praying_for_x_items, items.size),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
             )
@@ -593,7 +596,7 @@ private fun PrayingForBanner(items: List<PrayerItem>) {
                     }
                     if (photoItems.size > 5) {
                         Text(
-                            text = "+${photoItems.size - 5}",
+                            text = stringResource(R.string.prayer_x, photoItems.size - 5),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                             modifier = Modifier.padding(start = 4.dp)
@@ -627,7 +630,7 @@ private fun ModeIntroOverlay(
     mode: PrayerMode,
     onDismiss: () -> Unit
 ) {
-    val intro = remember(mode) { modeIntroContent(mode) }
+    val intro = modeIntroContent(mode)
     val scrollState = rememberScrollState()
     Box(
         modifier = Modifier
@@ -685,7 +688,7 @@ private fun ModeIntroOverlay(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Skip")
+                        Text(stringResource(R.string.common_skip))
                     }
                     Button(
                         onClick = onDismiss,
@@ -694,7 +697,7 @@ private fun ModeIntroOverlay(
                             .height(48.dp),
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        Text("Got it")
+                        Text(stringResource(R.string.prayer_got_it))
                     }
                 }
             }
@@ -715,46 +718,47 @@ private data class ModeIntro(
  * knows EXACTLY what to do — the mode's `description` is already shown
  * on the sheet above this block for the higher-level "what is this".
  */
+@Composable
 private fun modeIntroContent(mode: PrayerMode): ModeIntro = when (mode) {
     PrayerMode.GUIDED_ACTS -> ModeIntro(
         emoji = "\uD83D\uDD4A\uFE0F", // dove
-        howItWorks = "You'll walk through four steps — Adoration, Confession, Thanksgiving, Supplication — about a minute each. Write a sentence or two for each, or just pray silently."
+        howItWorks = stringResource(R.string.prayer_you_ll_walk_through_four_steps_adoration_confessio)
     )
     PrayerMode.VOICE_RECORD -> ModeIntro(
         emoji = "\uD83C\uDFA4",
-        howItWorks = "Tap the microphone and pray out loud. We'll transcribe your words so you can review or edit them before saving."
+        howItWorks = stringResource(R.string.prayer_tap_the_microphone_and_pray_out_loud_we_ll_transcr)
     )
     PrayerMode.PRAYER_JOURNAL -> ModeIntro(
         emoji = "\uD83D\uDCD6",
-        howItWorks = "Write freely about what's on your heart. Use the mic button for voice-to-text when typing feels like too much."
+        howItWorks = stringResource(R.string.prayer_write_freely_about_what_s_on_your_heart_use_the_mi)
     )
     PrayerMode.INTERCESSION_DRILL -> ModeIntro(
         emoji = "\uD83D\uDE4F",
-        howItWorks = "You'll see one name or request at a time for 30 seconds. Pray for each, then tap Next to move on. Fast, focused intercession."
+        howItWorks = stringResource(R.string.prayer_you_ll_see_one_name_or_request_at_a_time_for_30_se)
     )
     PrayerMode.FLASH_PRAY_SWIPE -> ModeIntro(
         emoji = "\u26A1",
-        howItWorks = "Swipe each card after you've prayed for it. Right for 'I prayed', left to skip. Great when you have 2 minutes and a long list."
+        howItWorks = stringResource(R.string.prayer_swipe_each_card_after_you_ve_prayed_for_it_right_f)
     )
     PrayerMode.DAILY_EXAMEN -> ModeIntro(
         emoji = "\uD83D\uDD4E",
-        howItWorks = "Ignatius' five-step review of the day: gratitude, awareness, reflection, sorrow, and hope for tomorrow. One prompt at a time."
+        howItWorks = stringResource(R.string.prayer_ignatius_five_step_review_of_the_day_gratitude_awa)
     )
     PrayerMode.LECTIO_DIVINA -> ModeIntro(
         emoji = "\uD83D\uDCDC",
-        howItWorks = "Four movements over a short passage of Scripture: read, meditate, pray, contemplate. We'll pick the verse — you bring the stillness."
+        howItWorks = stringResource(R.string.prayer_four_movements_over_a_short_passage_of_scripture_r)
     )
     PrayerMode.BREATH_PRAYER -> ModeIntro(
         emoji = "\uD83C\uDF43",
-        howItWorks = "Breathe in on the first phrase, out on the second, paced by the pulsing circle. Three minutes is plenty; finish earlier if you want."
+        howItWorks = stringResource(R.string.prayer_breathe_in_on_the_first_phrase_out_on_the_second_p)
     )
     PrayerMode.PRAYER_BEADS -> ModeIntro(
         emoji = "\uD83D\uDCFF",
-        howItWorks = "Tap each bead as you pray through it. Pick Rosary, Jesus Prayer rope, or Anglican beads — the sequence guides you."
+        howItWorks = stringResource(R.string.prayer_tap_each_bead_as_you_pray_through_it_pick_rosary_j)
     )
     PrayerMode.DAILY_OFFICE -> ModeIntro(
         emoji = "\u26EA",
-        howItWorks = "Fixed-hour prayer: Morning, Midday, Evening, or Compline. We'll load the matching office; follow along and pray at your own pace."
+        howItWorks = stringResource(R.string.prayer_fixed_hour_prayer_morning_midday_evening_or_compli)
     )
 }
 

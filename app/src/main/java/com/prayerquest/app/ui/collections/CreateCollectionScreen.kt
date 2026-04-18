@@ -27,6 +27,8 @@ import com.prayerquest.app.PrayerQuestApplication
 import com.prayerquest.app.data.entity.PrayerCollection
 import com.prayerquest.app.data.repository.CollectionRepository
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,10 +60,10 @@ fun CreateCollectionScreen(
     ) {
         // Top bar
         TopAppBar(
-            title = { Text("Create Collection") },
+            title = { Text(stringResource(R.string.collections_create_collection)) },
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
             }
         )
@@ -78,7 +80,7 @@ fun CreateCollectionScreen(
                 // Emoji picker section
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "Choose an Emoji",
+                        text = stringResource(R.string.common_choose_an_emoji),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -139,9 +141,9 @@ fun CreateCollectionScreen(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { if (it.length <= 50) name = it },
-                    label = { Text("Collection Name") },
+                    label = { Text(stringResource(R.string.collections_collection_name)) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("e.g., Family Prayers") },
+                    placeholder = { Text(stringResource(R.string.collections_e_g_family_prayers)) },
                     singleLine = true,
                     maxLines = 1
                 )
@@ -152,9 +154,9 @@ fun CreateCollectionScreen(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { if (it.length <= 200) description = it },
-                    label = { Text("Description (Optional)") },
+                    label = { Text(stringResource(R.string.common_description_optional)) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("What's this collection about?") },
+                    placeholder = { Text(stringResource(R.string.collections_what_s_this_collection_about)) },
                     minLines = 3,
                     maxLines = 3
                 )
@@ -165,9 +167,9 @@ fun CreateCollectionScreen(
                 OutlinedTextField(
                     value = topicTag,
                     onValueChange = { if (it.length <= 30) topicTag = it },
-                    label = { Text("Topic Tag (Optional)") },
+                    label = { Text(stringResource(R.string.collections_topic_tag_optional)) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("e.g., Health, Relationships") },
+                    placeholder = { Text(stringResource(R.string.collections_e_g_health_relationships)) },
                     singleLine = true,
                     maxLines = 1
                 )
@@ -176,7 +178,7 @@ fun CreateCollectionScreen(
             item {
                 // Helper text
                 Text(
-                    text = "Create a collection to organize related prayers together. Name is required to continue.",
+                    text = stringResource(R.string.collections_create_a_collection_to_organize_related_prayers_to),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -202,7 +204,7 @@ fun CreateCollectionScreen(
                 .height(52.dp),
             enabled = name.isNotBlank()
         ) {
-            Text("Create Collection", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.collections_create_collection), style = MaterialTheme.typography.labelLarge)
         }
     }
 }

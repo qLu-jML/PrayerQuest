@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Shared placeholder shown for prayer modes whose real composables land in Sprint 3.
@@ -60,14 +62,16 @@ internal fun ComingSoonModePlaceholder(
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Full experience arrives in Sprint 3. For now, tap below to log a brief moment of prayer.",
+            text = stringResource(R.string.prayer_modes_full_experience_arrives_in_sprint_3_for_now_tap_be),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(32.dp))
-        Button(onClick = { onModeComplete("[$modeDisplayName placeholder session]") }) {
-            Text("Mark as Prayed")
+        // Resolve at @Composable level — onClick is plain `() -> Unit`.
+        val placeholderSummary = stringResource(R.string.prayer_modes_x_placeholder_session, modeDisplayName)
+        Button(onClick = { onModeComplete(placeholderSummary) }) {
+            Text(stringResource(R.string.prayer_modes_mark_as_prayed))
         }
     }
 }

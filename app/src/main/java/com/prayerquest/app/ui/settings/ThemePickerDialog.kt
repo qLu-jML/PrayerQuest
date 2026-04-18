@@ -34,13 +34,17 @@ import androidx.compose.ui.unit.dp
 import com.prayerquest.app.ui.theme.AppTheme
 import com.prayerquest.app.ui.theme.darken
 import com.prayerquest.app.ui.theme.lighten
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @Composable
 fun ThemePickerDialog(
     onDismiss: () -> Unit,
     onSaveTheme: (AppTheme) -> Unit
 ) {
-    val themeName = remember { mutableStateOf("My Custom Theme") }
+    // Resolve at @Composable level — `remember { }` is non-@Composable.
+    val defaultThemeName = stringResource(R.string.settings_my_custom_theme)
+    val themeName = remember { mutableStateOf(defaultThemeName) }
     val selectedPrimaryColor = remember { mutableStateOf(0xFF3949AB) }
     val selectedSecondaryColor = remember { mutableStateOf(0xFFFFA000) }
     val selectedBackgroundColor = remember { mutableStateOf(0xFFFFF8F0) }
@@ -55,7 +59,7 @@ fun ThemePickerDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                "Create Custom Theme",
+                stringResource(R.string.settings_create_custom_theme),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -68,7 +72,7 @@ fun ThemePickerDialog(
             ) {
                 // Theme name input
                 Text(
-                    text = "Theme Name",
+                    text = stringResource(R.string.settings_theme_name),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -76,14 +80,14 @@ fun ThemePickerDialog(
                     value = themeName.value,
                     onValueChange = { themeName.value = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("My Custom Theme") }
+                    placeholder = { Text(stringResource(R.string.settings_my_custom_theme)) }
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // Primary color picker
                 Text(
-                    text = "Primary Color",
+                    text = stringResource(R.string.settings_primary_color),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -97,7 +101,7 @@ fun ThemePickerDialog(
 
                 // Secondary color picker
                 Text(
-                    text = "Secondary Color",
+                    text = stringResource(R.string.settings_secondary_color),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -111,7 +115,7 @@ fun ThemePickerDialog(
 
                 // Background color picker
                 Text(
-                    text = "Background Color",
+                    text = stringResource(R.string.settings_background_color),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -129,7 +133,7 @@ fun ThemePickerDialog(
 
                 // Preview section
                 Text(
-                    text = "Preview",
+                    text = stringResource(R.string.settings_preview),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -172,7 +176,7 @@ fun ThemePickerDialog(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Custom theme",
+                                text = stringResource(R.string.settings_custom_theme),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color(selectedSecondaryColor.value)
                             )
@@ -182,6 +186,8 @@ fun ThemePickerDialog(
             }
         },
         confirmButton = {
+            // Resolve at @Composable level — onClick is plain `() -> Unit`.
+            val customThemeDescription = stringResource(R.string.settings_custom_theme)
             Button(
                 onClick = {
                     // Map the 3 user-picked colors onto the 10-slot
@@ -196,7 +202,7 @@ fun ThemePickerDialog(
                     val customTheme = AppTheme(
                         id = "custom_${System.currentTimeMillis()}",
                         name = themeName.value,
-                        description = "Custom theme",
+                        description = customThemeDescription,
                         isBuiltIn = false,
                         primary = primary,
                         primaryLight = primary.lighten(0.3f),
@@ -212,12 +218,12 @@ fun ThemePickerDialog(
                     onSaveTheme(customTheme)
                 }
             ) {
-                Text("Save Theme")
+                Text(stringResource(R.string.settings_save_theme))
             }
         },
         dismissButton = {
             OutlinedButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )

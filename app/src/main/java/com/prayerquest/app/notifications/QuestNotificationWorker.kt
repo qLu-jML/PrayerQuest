@@ -5,6 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.prayerquest.app.PrayerQuestApplication
 import kotlin.random.Random
+import com.prayerquest.app.R
 
 class QuestNotificationWorker(
     context: Context,
@@ -17,13 +18,13 @@ class QuestNotificationWorker(
                 .container.userPreferences
             if (!QuietHoursGuard.canPostNow(userPrefs)) return Result.success()
 
-            val title = "New daily quests are ready! 🎯"
+            val title = applicationContext.getString(R.string.notifications_new_daily_quests_are_ready)
             val messages = listOf(
-                "Complete all 3 for bonus XP.",
-                "Today's quests await you - earn rewards!",
-                "Start your quest journey for extra rewards.",
-                "New challenges are ready to complete.",
-                "Unlock rewards by finishing today's quests."
+                applicationContext.getString(R.string.notifications_complete_all_3_for_bonus_xp),
+                applicationContext.getString(R.string.notifications_today_s_quests_await_you_earn_rewards),
+                applicationContext.getString(R.string.notifications_start_your_quest_journey_for_extra_rewards),
+                applicationContext.getString(R.string.notifications_new_challenges_are_ready_to_complete),
+                applicationContext.getString(R.string.notifications_unlock_rewards_by_finishing_today_s_quests)
             )
             val message = messages[Random.nextInt(messages.size)]
 

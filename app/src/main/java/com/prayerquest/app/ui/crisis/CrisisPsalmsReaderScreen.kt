@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.prayerquest.app.domain.content.CrisisPsalmsLibrary
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Paged Psalms reader for Crisis Prayer Mode. One Psalm per card, swipe to
@@ -131,7 +133,7 @@ fun CrisisPsalmsReaderScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Psalms",
+                        text = stringResource(R.string.crisis_psalms),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.SemiBold
                         )
@@ -141,7 +143,7 @@ fun CrisisPsalmsReaderScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back to Crisis Prayer"
+                            contentDescription = stringResource(R.string.crisis_back_to_crisis_prayer)
                         )
                     }
                 }
@@ -235,7 +237,7 @@ private fun PsalmCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "About ${formatSeconds(estimatedReadSeconds)} to read slowly",
+                    text = stringResource(R.string.crisis_about_x_to_read_slowly, formatSeconds(estimatedReadSeconds)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     textAlign = TextAlign.Center,
@@ -252,9 +254,11 @@ private fun PageDots(
     current: Int,
     modifier: Modifier = Modifier
 ) {
+    // Resolve at @Composable level — `semantics { }` is non-@Composable.
+    val pageDescription = stringResource(R.string.crisis_page_x_of_x, current + 1, total)
     Row(
         modifier = modifier.semantics {
-            contentDescription = "Page ${current + 1} of $total"
+            contentDescription = pageDescription
         },
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -282,16 +286,18 @@ private fun AutoAdvanceToggle(
     onToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Resolve at @Composable level — `semantics { }` is non-@Composable.
+    val autoAdvanceDescription = if (enabled) {
+        stringResource(R.string.crisis_auto_advance_is_on_tap_to_turn_off)
+    } else {
+        stringResource(R.string.crisis_auto_advance_is_off_tap_to_turn_on)
+    }
     Surface(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
             .clickable { onToggle(!enabled) }
             .semantics {
-                contentDescription = if (enabled) {
-                    "Auto-advance is on. Tap to turn off."
-                } else {
-                    "Auto-advance is off. Tap to turn on."
-                }
+                contentDescription = autoAdvanceDescription
             },
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
         tonalElevation = 0.dp
@@ -305,14 +311,14 @@ private fun AutoAdvanceToggle(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Auto-advance",
+                    text = stringResource(R.string.crisis_auto_advance),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "Slowly turn the page every 45 seconds",
+                    text = stringResource(R.string.crisis_slowly_turn_the_page_every_45_seconds),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )

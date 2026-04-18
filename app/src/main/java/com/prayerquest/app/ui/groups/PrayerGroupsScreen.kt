@@ -35,6 +35,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,11 +74,11 @@ fun PrayerGroupsScreen(
                 title = {
                     Column {
                         Text(
-                            text = "Prayer Groups",
+                            text = stringResource(R.string.home_prayer_groups),
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Connect and pray with your faith community",
+                            text = stringResource(R.string.groups_connect_and_pray_with_your_faith_community),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -84,7 +86,7 @@ fun PrayerGroupsScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 // Manual refresh — real-time Firestore listeners still run
@@ -97,7 +99,7 @@ fun PrayerGroupsScreen(
                         IconButton(onClick = { viewModel.refreshFromCloud() }) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = "Refresh groups"
+                                contentDescription = stringResource(R.string.groups_refresh_groups)
                             )
                         }
                     }
@@ -120,13 +122,13 @@ fun PrayerGroupsScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "Sign in to share prayer groups",
+                            text = stringResource(R.string.groups_sign_in_to_share_prayer_groups),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "Sign in with Google to create and join prayer groups that sync across devices and with other members.",
+                            text = stringResource(R.string.groups_sign_in_with_google_to_create_and_join_prayer_grou),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -137,7 +139,7 @@ fun PrayerGroupsScreen(
                             },
                             modifier = Modifier.align(Alignment.End)
                         ) {
-                            Text("Sign in with Google")
+                            Text(stringResource(R.string.groups_sign_in_with_google))
                         }
                     }
                 }
@@ -150,9 +152,9 @@ fun PrayerGroupsScreen(
             // remediation hints) so let them wrap fully and give the user a
             // dismiss button instead of truncating with labelSmall.
             if (infoMessage.isNotEmpty()) {
-                val isError = infoMessage.startsWith("Google Sign-In failed", ignoreCase = true) ||
-                    infoMessage.startsWith("Firebase auth failed", ignoreCase = true) ||
-                    infoMessage.startsWith("Sign-in failed", ignoreCase = true)
+                val isError = infoMessage.startsWith(stringResource(R.string.groups_google_sign_in_failed), ignoreCase = true) ||
+                    infoMessage.startsWith(stringResource(R.string.groups_firebase_auth_failed), ignoreCase = true) ||
+                    infoMessage.startsWith(stringResource(R.string.groups_sign_in_failed), ignoreCase = true)
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -180,7 +182,7 @@ fun PrayerGroupsScreen(
                         ) {
                             Icon(
                                 Icons.Default.Close,
-                                contentDescription = "Dismiss",
+                                contentDescription = stringResource(R.string.common_dismiss),
                                 modifier = Modifier.size(16.dp),
                                 tint = if (isError) MaterialTheme.colorScheme.onErrorContainer
                                        else MaterialTheme.colorScheme.onSurfaceVariant
@@ -204,12 +206,12 @@ fun PrayerGroupsScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "You're Not In Any Groups Yet",
+                            text = stringResource(R.string.groups_you_re_not_in_any_groups_yet),
                             style = MaterialTheme.typography.headlineSmall,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                         Text(
-                            text = "Create a new prayer group or join an existing one to start praying with others",
+                            text = stringResource(R.string.groups_create_a_new_prayer_group_or_join_an_existing_one),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 24.dp)
@@ -228,7 +230,7 @@ fun PrayerGroupsScreen(
                             ) {
                                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Create")
+                                Text(stringResource(R.string.groups_create))
                             }
                             OutlinedButton(
                                 onClick = onNavigateToJoinGroup,
@@ -236,7 +238,7 @@ fun PrayerGroupsScreen(
                                     .weight(1f)
                                     .height(48.dp)
                             ) {
-                                Text("Join")
+                                Text(stringResource(R.string.groups_join))
                             }
                         }
                     }
@@ -277,21 +279,21 @@ fun PrayerGroupsScreen(
                     modifier = Modifier.padding(bottom = 8.dp),
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Join Group")
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.groups_join_group))
                 }
                 SmallFloatingActionButton(
                     onClick = onNavigateToCreateGroup,
                     modifier = Modifier.padding(bottom = 8.dp),
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Create Group")
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.groups_create_group))
                 }
             }
             FloatingActionButton(
                 onClick = { showActionMenu = !showActionMenu },
                 containerColor = CommunityBlue
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Groups Menu")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.groups_groups_menu))
             }
         }
 
@@ -424,6 +426,9 @@ class PrayerGroupsViewModel(
     fun getSignInIntent() = authManager.getSignInIntent()
 
     fun handleSignInResult(result: androidx.activity.result.ActivityResult) {
+        // NOTE: Strings in this ViewModel coroutine can't use @Composable
+        // stringResource(). Localization-pending — see LOCALIZATION_AUDIT.md
+        // (ViewModel strings need Context.getString via Application ref).
         viewModelScope.launch {
             val signInResult = authManager.handleSignInResult(result)
             if (signInResult.isSuccess) {
@@ -453,6 +458,9 @@ class PrayerGroupsViewModel(
      * "I don't want to wait for the listener to reconnect."
      */
     fun refreshFromCloud() {
+        // NOTE: These strings live in the ViewModel and can't call @Composable
+        // stringResource(). Localization-pending — see LOCALIZATION_AUDIT.md
+        // (ViewModel strings need Context.getString via Application ref).
         viewModelScope.launch {
             val result = groupRepository.refreshFromCloud()
             _infoMessage.value = result.fold(

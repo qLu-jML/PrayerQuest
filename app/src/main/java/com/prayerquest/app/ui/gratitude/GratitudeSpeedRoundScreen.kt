@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -83,6 +84,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Gratitude Speed Round (DD §3.6). 60-second rapid-fire gratitude logger
@@ -223,16 +226,16 @@ fun GratitudeSpeedRoundScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.Default.Close, contentDescription = "Close Speed Round")
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.gratitude_close_speed_round))
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Speed Round",
+                        text = stringResource(R.string.gratitude_speed_round),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Rapid-fire gratitude",
+                        text = stringResource(R.string.gratitude_rapid_fire_gratitude),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -242,7 +245,7 @@ fun GratitudeSpeedRoundScreen(
                     color = GratitudeGreen.copy(alpha = 0.15f)
                 ) {
                     Text(
-                        text = "${entries.size} thanks logged",
+                        text = stringResource(R.string.gratitude_x_thanks_logged, entries.size),
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelMedium,
                         color = GratitudeGreen,
@@ -289,7 +292,7 @@ fun GratitudeSpeedRoundScreen(
             // Chip bank
             // ═══════════════════════════════════════════════════════
             Text(
-                text = "Tap a chip to log instantly",
+                text = stringResource(R.string.gratitude_tap_a_chip_to_log_instantly),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -342,7 +345,7 @@ fun GratitudeSpeedRoundScreen(
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text(
-                            text = "Just logged",
+                            text = stringResource(R.string.gratitude_just_logged),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -374,7 +377,7 @@ fun GratitudeSpeedRoundScreen(
                 // `height` here does nothing. Switched to `width`.
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = if (roundFinished) "Finishing…" else "Finish & Earn XP",
+                    text = if (roundFinished) stringResource(R.string.gratitude_finishing) else stringResource(R.string.gratitude_finish_earn_xp),
                     color = Color(0xFF3E2723),
                     fontWeight = FontWeight.Bold
                 )
@@ -418,9 +421,9 @@ private fun SpeedRoundTimer(
             )
             Text(
                 text = when {
-                    roundFinished -> "Round complete"
-                    !roundStarted -> "Tap a chip or hold the mic to begin"
-                    else -> "Go!"
+                    roundFinished -> stringResource(R.string.gratitude_round_complete)
+                    !roundStarted -> stringResource(R.string.gratitude_tap_a_chip_or_hold_the_mic_to_begin)
+                    else -> stringResource(R.string.gratitude_go)
                 },
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -468,19 +471,19 @@ private fun VoiceMicRow(
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 Icon(
                     imageVector = Icons.Default.Mic,
-                    contentDescription = "Hold to speak a gratitude",
+                    contentDescription = stringResource(R.string.gratitude_hold_to_speak_a_gratitude),
                     tint = if (isListening) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = if (isListening) "Listening…" else "Hold to speak",
+                text = if (isListening) stringResource(R.string.gratitude_listening) else stringResource(R.string.gratitude_hold_to_speak),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = partialTranscript.ifEmpty { "Each pause logs a new gratitude." },
+                text = partialTranscript.ifEmpty { stringResource(R.string.gratitude_each_pause_logs_a_new_gratitude) },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2
@@ -560,8 +563,8 @@ private const val TOTAL_SECONDS = 60
  */
 private const val MAX_ENTRIES = 15
 
-/** "Grateful heart, fast hands!" speed bonus eligibility window. */
+/** stringResource(R.string.gratitude_grateful_heart_fast_hands) speed bonus eligibility window. */
 private const val SPEED_BONUS_WINDOW_MS = 60_000L
 
-/** Minimum entry count for speed bonus (DD §3.6 says "≥5 entries"). */
+/** Minimum entry count for speed bonus (DD §3.6 says stringResource(R.string.gratitude_5_entries)). */
 private const val SPEED_BONUS_MIN_ENTRIES = 5

@@ -28,6 +28,8 @@ import com.prayerquest.app.data.entity.GroupPrayerItem
 import com.prayerquest.app.data.repository.PrayerGroupRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,15 +69,15 @@ fun GroupDetailScreen(
         Column(modifier = modifier.fillMaxSize()) {
             // Top bar
             TopAppBar(
-                title = { Text("Group") },
+                title = { Text(stringResource(R.string.groups_group)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { /* Share placeholder */ }) {
-                        Icon(Icons.Default.Share, contentDescription = "Share")
+                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.common_share))
                     }
                 }
             )
@@ -131,7 +133,7 @@ fun GroupDetailScreen(
                     // Share code section
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "Invite Others",
+                            text = stringResource(R.string.groups_invite_others),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -151,7 +153,7 @@ fun GroupDetailScreen(
                             ) {
                                 Column {
                                     Text(
-                                        text = "Share Code",
+                                        text = stringResource(R.string.groups_share_code),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -167,13 +169,13 @@ fun GroupDetailScreen(
                                         showShareCodeCopied = true
                                     }
                                 ) {
-                                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy")
+                                    Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.common_copy))
                                 }
                             }
                         }
                         if (showShareCodeCopied) {
                             Text(
-                                text = "Share code copied!",
+                                text = stringResource(R.string.groups_share_code_copied),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -188,7 +190,7 @@ fun GroupDetailScreen(
                 // Shared prayers section
                 item {
                     Text(
-                        text = "Group Prayers",
+                        text = stringResource(R.string.groups_group_prayers),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -197,7 +199,7 @@ fun GroupDetailScreen(
                 if (prayerItems.isEmpty()) {
                     item {
                         Text(
-                            text = "No prayers shared yet",
+                            text = stringResource(R.string.groups_no_prayers_shared_yet),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
@@ -242,7 +244,7 @@ fun GroupDetailScreen(
                         .height(48.dp),
                     colors = ButtonDefaults.outlinedButtonColors()
                 ) {
-                    Text("Add Prayer")
+                    Text(stringResource(R.string.groups_add_prayer))
                 }
                 Button(
                     onClick = { showLeaveDialog = true },
@@ -253,7 +255,7 @@ fun GroupDetailScreen(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text(if (isCreator) "Leave" else "Leave Group")
+                    Text(if (isCreator) stringResource(R.string.groups_leave) else stringResource(R.string.groups_leave_group))
                 }
                 if (isCreator) {
                     IconButton(
@@ -264,7 +266,7 @@ fun GroupDetailScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete group",
+                            contentDescription = stringResource(R.string.groups_delete_group),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
@@ -276,8 +278,8 @@ fun GroupDetailScreen(
         if (showLeaveDialog) {
             AlertDialog(
                 onDismissRequest = { showLeaveDialog = false },
-                title = { Text("Leave Group?") },
-                text = { Text("You'll no longer see prayers from \"${group!!.name}\"") },
+                title = { Text(stringResource(R.string.groups_leave_group_2)) },
+                text = { Text(stringResource(R.string.groups_you_ll_no_longer_see_prayers_from_x, group!!.name)) },
                 confirmButton = {
                     Button(
                         onClick = {
@@ -286,14 +288,14 @@ fun GroupDetailScreen(
                             showLeaveDialog = false
                         }
                     ) {
-                        Text("Leave")
+                        Text(stringResource(R.string.groups_leave))
                     }
                 },
                 dismissButton = {
                     TextButton(
                         onClick = { showLeaveDialog = false }
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.common_cancel))
                     }
                 }
             )
@@ -306,12 +308,12 @@ fun GroupDetailScreen(
         if (showDeleteDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
-                title = { Text("Delete Group?") },
+                title = { Text(stringResource(R.string.groups_delete_group_2)) },
                 text = {
                     Text(
-                        "This will permanently delete \"${group!!.name}\" and " +
-                            "remove every member, prayer, and piece of activity. " +
-                            "This can't be undone."
+                        stringResource(R.string.groups_this_will_permanently_delete_x_and, group!!.name) +
+                            stringResource(R.string.groups_remove_every_member_prayer_and_piece_of_activity) +
+                            stringResource(R.string.groups_this_can_t_be_undone)
                     )
                 },
                 confirmButton = {
@@ -325,14 +327,14 @@ fun GroupDetailScreen(
                             containerColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("Delete")
+                        Text(stringResource(R.string.common_delete))
                     }
                 },
                 dismissButton = {
                     TextButton(
                         onClick = { showDeleteDialog = false }
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.common_cancel))
                     }
                 }
             )
@@ -383,7 +385,7 @@ private fun GroupPrayerItemCard(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "Prayed by ${prayerItem.prayedByCount} members",
+                        text = stringResource(R.string.groups_prayed_by_x_members, prayerItem.prayedByCount),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -395,7 +397,7 @@ private fun GroupPrayerItemCard(
                             color = MaterialTheme.colorScheme.primaryContainer
                         ) {
                             Text(
-                                text = "\uD83D\uDE4F $weeklyPrayerCount this week",
+                                text = stringResource(R.string.groups_ud83d_ude4f_x_this_week, weeklyPrayerCount),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
@@ -409,7 +411,7 @@ private fun GroupPrayerItemCard(
                 ) {
                     Icon(
                         Icons.Default.FavoriteBorder,
-                        contentDescription = "I Prayed This",
+                        contentDescription = stringResource(R.string.groups_i_prayed_this),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }

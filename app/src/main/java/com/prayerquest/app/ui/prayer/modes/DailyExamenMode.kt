@@ -32,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Daily Examen — the Ignatian 5-step review of the day (DD §3.4 item 6).
@@ -59,7 +61,7 @@ fun DailyExamenMode(
     onModeComplete: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val steps = remember { ExamenStep.all() }
+    val steps = ExamenStep.all()
     var currentStepIndex by remember { mutableIntStateOf(0) }
     var stepResponses by remember { mutableStateOf(List(steps.size) { "" }) }
 
@@ -84,7 +86,7 @@ fun DailyExamenMode(
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
-                    text = if (isLastStep) "Complete Examen" else "Next Step",
+                    text = if (isLastStep) stringResource(R.string.prayer_modes_complete_examen) else stringResource(R.string.prayer_modes_next_step),
                     style = MaterialTheme.typography.labelLarge
                 )
             }
@@ -111,7 +113,7 @@ fun DailyExamenMode(
             }
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = "${currentStepIndex + 1}/${steps.size}",
+                text = stringResource(R.string.prayer_modes_x_x, currentStepIndex + 1, steps.size),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -124,7 +126,7 @@ fun DailyExamenMode(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Step ${currentStepIndex + 1}: ${currentStep.title}",
+                text = stringResource(R.string.prayer_modes_step_x_x, currentStepIndex + 1, currentStep.title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -159,7 +161,7 @@ fun DailyExamenMode(
 
             // Pace hint (not a countdown — end-of-day reflection, no pressure)
             Text(
-                text = "Suggested: ${currentStep.suggestedSeconds}s · take your time",
+                text = stringResource(R.string.prayer_modes_suggested_x_s_take_your_time, currentStep.suggestedSeconds),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -180,7 +182,7 @@ fun DailyExamenMode(
                     IconButton(onClick = { /* Voice-to-text wired in SpeechRecognizer pass */ }) {
                         Icon(
                             imageVector = Icons.Default.Mic,
-                            contentDescription = "Voice to text",
+                            contentDescription = stringResource(R.string.common_voice_to_text),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -203,40 +205,41 @@ private data class ExamenStep(
     val suggestedSeconds: Int
 ) {
     companion object {
+        @Composable
         fun all(): List<ExamenStep> = listOf(
             ExamenStep(
-                title = "Gratitude",
-                prompt = "What are you thankful for today?",
-                guidance = "Start here. Notice one or two gifts from today, big or small.",
-                placeholder = "Today I'm grateful for…",
+                title = stringResource(R.string.common_gratitude),
+                prompt = stringResource(R.string.common_what_are_you_thankful_for_today),
+                guidance = stringResource(R.string.prayer_modes_start_here_notice_one_or_two_gifts_from_today_big),
+                placeholder = stringResource(R.string.prayer_modes_today_i_m_grateful_for),
                 suggestedSeconds = 60
             ),
             ExamenStep(
-                title = "Petition",
-                prompt = "Ask the Spirit for light to see your day honestly.",
-                guidance = "Before reviewing, invite God to show you what he sees.",
-                placeholder = "Lord, help me see today the way you see it…",
+                title = stringResource(R.string.prayer_modes_petition),
+                prompt = stringResource(R.string.prayer_modes_ask_the_spirit_for_light_to_see_your_day_honestly),
+                guidance = stringResource(R.string.prayer_modes_before_reviewing_invite_god_to_show_you_what_he_se),
+                placeholder = stringResource(R.string.prayer_modes_lord_help_me_see_today_the_way_you_see_it),
                 suggestedSeconds = 45
             ),
             ExamenStep(
-                title = "Review",
-                prompt = "Walk through your day with God.",
-                guidance = "Where did you feel close to God? Where did you drift? Where were you loved, and where did you love?",
-                placeholder = "This morning I… / Around midday… / Tonight I…",
+                title = stringResource(R.string.prayer_modes_review),
+                prompt = stringResource(R.string.prayer_modes_walk_through_your_day_with_god),
+                guidance = stringResource(R.string.prayer_modes_where_did_you_feel_close_to_god_where_did_you_drif),
+                placeholder = stringResource(R.string.prayer_modes_this_morning_i_around_midday_tonight_i),
                 suggestedSeconds = 90
             ),
             ExamenStep(
-                title = "Repentance",
-                prompt = "Where did you miss the mark today?",
-                guidance = "Name anything you want to bring under Christ's mercy — without shame, without minimizing.",
-                placeholder = "Forgive me, Lord, for…",
+                title = stringResource(R.string.prayer_modes_repentance),
+                prompt = stringResource(R.string.prayer_modes_where_did_you_miss_the_mark_today),
+                guidance = stringResource(R.string.prayer_modes_name_anything_you_want_to_bring_under_christ_s_mer),
+                placeholder = stringResource(R.string.prayer_modes_forgive_me_lord_for),
                 suggestedSeconds = 60
             ),
             ExamenStep(
-                title = "Resolution",
-                prompt = "How will you meet tomorrow with Christ?",
-                guidance = "A simple, concrete resolve: one thing you'll do, ask for, or let go of tomorrow.",
-                placeholder = "Tomorrow, with God's help, I will…",
+                title = stringResource(R.string.prayer_modes_resolution),
+                prompt = stringResource(R.string.prayer_modes_how_will_you_meet_tomorrow_with_christ),
+                guidance = stringResource(R.string.prayer_modes_a_simple_concrete_resolve_one_thing_you_ll_do_ask),
+                placeholder = stringResource(R.string.prayer_modes_tomorrow_with_god_s_help_i_will),
                 suggestedSeconds = 45
             )
         )

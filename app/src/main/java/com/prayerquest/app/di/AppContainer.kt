@@ -8,6 +8,7 @@ import com.prayerquest.app.data.database.PrayerQuestDatabase
 import com.prayerquest.app.data.preferences.UserPreferences
 import com.prayerquest.app.data.prayer.BiblePrayerImporter
 import com.prayerquest.app.data.prayer.FamousPrayerImporter
+import com.prayerquest.app.data.prayer.NameOfGodImporter
 import com.prayerquest.app.data.prayer.SuggestedPrayerPackLoader
 import com.prayerquest.app.data.repository.*
 import com.prayerquest.app.firebase.FirebaseAuthManager
@@ -83,7 +84,12 @@ class AppContainer(context: Context) {
         dailyActivityDao = database.dailyActivityDao(),
         prayerRecordDao = database.prayerRecordDao(),
         gratitudeEntryDao = database.gratitudeEntryDao(),
-        prayerGroupDao = database.prayerGroupDao()
+        prayerGroupDao = database.prayerGroupDao(),
+        // Back the Sprint-18 derived badge categories (TESTIMONY /
+        // PARTIAL_ANSWER / NAMES_OF_GOD / FAMOUS_DISTINCT).
+        prayerItemDao = database.prayerItemDao(),
+        nameOfGodDao = database.nameOfGodDao(),
+        famousPrayerDao = database.famousPrayerDao()
     )
 
     val libraryRepository: LibraryRepository = LibraryRepository(
@@ -110,6 +116,11 @@ class AppContainer(context: Context) {
         biblePrayerDao = database.biblePrayerDao()
     )
 
+    val nameOfGodImporter: NameOfGodImporter = NameOfGodImporter(
+        context = context,
+        nameOfGodDao = database.nameOfGodDao()
+    )
+
     val suggestedPackLoader: SuggestedPrayerPackLoader = SuggestedPrayerPackLoader(
         context = context
     )
@@ -122,6 +133,10 @@ class AppContainer(context: Context) {
             progressRepository.ensureSeeded()
             famousPrayerImporter.importIfNeeded()
             biblePrayerImporter.importIfNeeded()
+            // Names of God (DD §3.12). Importer is idempotent — after the
+            // first successful seed every subsequent launch is a single
+            // count() query that returns early.
+            nameOfGodImporter.importIfNeeded()
             // Seed the photo-count StateFlow from disk so the cap check is
             // accurate on first photo-picker open without waiting for a
             // user action to trigger a refresh.

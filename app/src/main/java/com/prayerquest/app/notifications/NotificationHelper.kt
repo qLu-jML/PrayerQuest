@@ -14,13 +14,16 @@ import com.prayerquest.app.R
 object NotificationHelper {
 
     private const val CHANNEL_ID = "prayer_quest_reminders"
-    private const val CHANNEL_NAME = "Prayer Quest Reminders"
 
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
-                description = "Notifications for prayer reminders and streaks"
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                context.getString(R.string.notifications_prayer_quest_reminders),
+                importance
+            ).apply {
+                description = context.getString(R.string.notifications_notifications_for_prayer_reminders_and_streaks)
             }
             val notificationManager: NotificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

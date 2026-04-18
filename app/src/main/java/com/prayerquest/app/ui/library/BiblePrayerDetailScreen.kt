@@ -31,6 +31,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Detail view for a single Bible prayer.
@@ -71,10 +74,10 @@ fun BiblePrayerDetailScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("Bible Prayer") },
+                title = { Text(stringResource(R.string.library_bible_prayer)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 }
             )
@@ -95,12 +98,12 @@ fun BiblePrayerDetailScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "You've prayed this",
+                                text = stringResource(R.string.library_you_ve_prayed_this),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "${current.userPrayedCount} times",
+                                text = stringResource(R.string.library_x_times, current.userPrayedCount),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -112,7 +115,7 @@ fun BiblePrayerDetailScreen(
                                 .height(48.dp)
                         ) {
                             Text(
-                                "I Prayed This Today",
+                                stringResource(R.string.library_i_prayed_this_today),
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -148,15 +151,15 @@ fun BiblePrayerDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Prayer not found",
+                            text = stringResource(R.string.library_prayer_not_found),
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
                         )
                         Text(
-                            text = "We couldn't load this prayer. It may have been removed or updated.",
+                            text = stringResource(R.string.library_we_couldn_t_load_this_prayer_it_may_have_been_remo),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Button(onClick = onNavigateBack) { Text("Go Back") }
+                        Button(onClick = onNavigateBack) { Text(stringResource(R.string.common_go_back)) }
                     }
                 }
                 return@Scaffold
@@ -218,7 +221,7 @@ fun BiblePrayerDetailScreen(
                                 onClick = {},
                                 label = {
                                     Text(
-                                        "${current.testament} Testament",
+                                        stringResource(R.string.library_x_testament, current.testament),
                                         style = MaterialTheme.typography.labelSmall
                                     )
                                 },
@@ -250,7 +253,7 @@ fun BiblePrayerDetailScreen(
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            text = "About this prayer",
+                            text = stringResource(R.string.library_about_this_prayer),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -272,7 +275,7 @@ fun BiblePrayerDetailScreen(
                 // placeholder pointing the user to the reference.
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        text = "Scripture",
+                        text = stringResource(R.string.library_scripture),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -285,8 +288,8 @@ fun BiblePrayerDetailScreen(
                             text = if (current.text.isNotBlank()) {
                                 current.text
                             } else {
-                                "Read ${current.reference} in your Bible. " +
-                                    "KJV text for this reference will appear here in the next update."
+                                stringResource(R.string.library_read_x_in_your_bible, current.reference) +
+                                    stringResource(R.string.library_kjv_text_for_this_reference_will_appear_here_in_th)
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier
@@ -339,24 +342,24 @@ internal fun PrayedSummaryDialog(
                 modifier = Modifier.size(36.dp)
             )
         },
-        title = { Text(text = "Amen") },
+        title = { Text(text = stringResource(R.string.library_amen)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (prayerTitle.isNotBlank()) {
                     Text(
-                        text = "\"$prayerTitle\" logged.",
+                        text = stringResource(R.string.library_x_logged, prayerTitle),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
                 Text(
-                    text = "+${result.xpEarned} XP",
+                    text = stringResource(R.string.library_x_xp, result.xpEarned),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold
                 )
                 if (result.leveledUp) {
                     Text(
-                        text = "Level up! → ${result.levelTitle}",
+                        text = stringResource(R.string.library_level_up_x, result.levelTitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.tertiary,
                         fontWeight = FontWeight.SemiBold
@@ -364,14 +367,14 @@ internal fun PrayedSummaryDialog(
                 }
                 if (result.streakDays > 0) {
                     Text(
-                        text = "Streak: ${result.streakDays} day${if (result.streakDays == 1) "" else "s"}",
+                        text = pluralStringResource(R.plurals.library_streak_days, result.streakDays, result.streakDays),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 if (result.newAchievements.isNotEmpty()) {
                     Text(
-                        text = "New badge: ${result.newAchievements.first().name}",
+                        text = stringResource(R.string.library_new_badge_x, result.newAchievements.first().name),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.tertiary
                     )
@@ -379,7 +382,7 @@ internal fun PrayedSummaryDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDone) { Text("Done") }
+            TextButton(onClick = onDone) { Text(stringResource(R.string.common_done)) }
         }
     )
 }

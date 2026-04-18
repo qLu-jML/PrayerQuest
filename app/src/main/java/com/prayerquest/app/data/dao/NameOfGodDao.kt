@@ -25,6 +25,10 @@ interface NameOfGodDao {
     @Query("SELECT COUNT(*) FROM name_of_god")
     suspend fun count(): Int
 
+    /** How many distinct Names of God the user has prayed at least once. Backs NAMES_OF_GOD-category badges. */
+    @Query("SELECT COUNT(*) FROM name_of_god WHERE userPrayedCount > 0")
+    suspend fun getDistinctPrayedCount(): Int
+
     @Query("UPDATE name_of_god SET userPrayedCount = userPrayedCount + 1 WHERE id = :id")
     suspend fun incrementPrayedCount(id: String)
 

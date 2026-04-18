@@ -44,6 +44,8 @@ import androidx.compose.ui.unit.sp
 import com.prayerquest.app.PrayerQuestApplication
 import com.prayerquest.app.data.entity.PrayerCollection
 import com.prayerquest.app.data.entity.PrayerGroup
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Shown after the user picks a prayer mode from [ModePickerScreen]. Lets them
@@ -103,12 +105,12 @@ fun PrayerListPickerScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("Choose a List") },
+                title = { Text(stringResource(R.string.prayer_choose_a_list)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.common_back)
                         )
                     }
                 }
@@ -132,8 +134,8 @@ fun PrayerListPickerScreen(
             item {
                 ListOptionCard(
                     emoji = "✨",
-                    title = "General Prayers",
-                    subtitle = "Your default list — quick way to pray without picking a specific scope",
+                    title = stringResource(R.string.prayer_general_prayers),
+                    subtitle = stringResource(R.string.prayer_your_default_list_quick_way_to_pray_without_pickin),
                     onClick = {
                         if (activeItems.isEmpty()) {
                             emptyGeneralPrompt = true
@@ -147,8 +149,12 @@ fun PrayerListPickerScreen(
             // 2. Private collections — empty ones open the "add prayers first"
             //    dialog instead of kicking off an empty session.
             if (collections.isNotEmpty()) {
-                item { SectionLabel("Your Collections") }
-                items(collections, key = { it.id }) { collection ->
+                item { SectionLabel(stringResource(R.string.prayer_your_collections)) }
+                // Namespace the key — collection IDs and group IDs are both
+                // 1-based Longs from separate Room tables, so a raw `it.id`
+                // collides with the groups section below the moment the user
+                // has at least one of each (crash: "Key 1 already used").
+                items(collections, key = { "collection_${it.id}" }) { collection ->
                     CollectionOptionCard(
                         collection = collection,
                         onClick = {
@@ -165,8 +171,8 @@ fun PrayerListPickerScreen(
             // 3. Prayer groups — if any. Tapping routes into the group detail
             //    where the user can pray specific shared requests.
             if (groups.isNotEmpty()) {
-                item { SectionLabel("Prayer Groups") }
-                items(groups, key = { it.id }) { group ->
+                item { SectionLabel(stringResource(R.string.home_prayer_groups)) }
+                items(groups, key = { "group_${it.id}" }) { group ->
                     GroupOptionCard(
                         group = group,
                         onClick = { onGroupPicked(group.id) }
@@ -184,11 +190,11 @@ fun PrayerListPickerScreen(
     if (emptyGeneralPrompt) {
         AlertDialog(
             onDismissRequest = { emptyGeneralPrompt = false },
-            title = { Text(text = "Nothing to pray yet") },
+            title = { Text(text = stringResource(R.string.prayer_nothing_to_pray_yet)) },
             text = {
                 Text(
-                    text = "Your general list is empty. Browse the Library for pre-written prayers, " +
-                        "or create a collection to add your own."
+                    text = stringResource(R.string.prayer_your_general_list_is_empty_browse_the_library_for) +
+                        stringResource(R.string.prayer_or_create_a_collection_to_add_your_own)
                 )
             },
             confirmButton = {
@@ -199,7 +205,7 @@ fun PrayerListPickerScreen(
                             onBrowseLibrary()
                         }
                     ) {
-                        Text("Browse Library")
+                        Text(stringResource(R.string.prayer_browse_library))
                     }
                     TextButton(
                         onClick = {
@@ -207,13 +213,13 @@ fun PrayerListPickerScreen(
                             onCreateCollection()
                         }
                     ) {
-                        Text("Create a Collection")
+                        Text(stringResource(R.string.prayer_create_a_collection))
                     }
                 }
             },
             dismissButton = {
                 TextButton(onClick = { emptyGeneralPrompt = false }) {
-                    Text("Not Now")
+                    Text(stringResource(R.string.common_not_now))
                 }
             }
         )
@@ -226,12 +232,12 @@ fun PrayerListPickerScreen(
         AlertDialog(
             onDismissRequest = { emptyCollectionPrompt = null },
             title = {
-                Text(text = "No prayers in this collection yet")
+                Text(text = stringResource(R.string.prayer_no_prayers_in_this_collection_yet))
             },
             text = {
                 Text(
-                    text = "\"${collection.name}\" doesn't have any prayer items yet. " +
-                        "Add a few so you have something to pray through."
+                    text = stringResource(R.string.prayer_x_doesn_t_have_any_prayer_items_yet, collection.name) +
+                        stringResource(R.string.prayer_add_a_few_so_you_have_something_to_pray_through)
                 )
             },
             confirmButton = {
@@ -242,12 +248,12 @@ fun PrayerListPickerScreen(
                         onAddItemsToCollection(id)
                     }
                 ) {
-                    Text("Add Prayers")
+                    Text(stringResource(R.string.common_add_prayers))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { emptyCollectionPrompt = null }) {
-                    Text("Not Now")
+                    Text(stringResource(R.string.common_not_now))
                 }
             }
         )
@@ -263,13 +269,13 @@ private fun HeaderBlurb(modeName: String) {
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
-            text = "Who will you pray for?",
+            text = stringResource(R.string.prayer_who_will_you_pray_for),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
         Text(
-            text = "Pick a list to focus this ${displayMode(modeName)} session — or just pray your general list.",
+            text = stringResource(R.string.prayer_pick_a_list_to_focus_this_x_session_or_just_pray_y, displayMode(modeName)),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -374,9 +380,9 @@ private fun CollectionOptionCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 val subtitle = when {
-                    collection.itemCount == 0 -> "No prayers yet"
-                    collection.itemCount == 1 -> "1 prayer"
-                    else -> "${collection.itemCount} prayers"
+                    collection.itemCount == 0 -> stringResource(R.string.prayer_no_prayers_yet)
+                    collection.itemCount == 1 -> stringResource(R.string.prayer_1_prayer)
+                    else -> stringResource(R.string.prayer_x_prayers, collection.itemCount)
                 }
                 Text(
                     text = subtitle,
@@ -430,7 +436,7 @@ private fun GroupOptionCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Shared prayer requests",
+                    text = stringResource(R.string.prayer_shared_prayer_requests),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -444,16 +450,17 @@ private fun GroupOptionCard(
  * generic phrase if the name is empty or unrecognized — we never want the
  * header to read "Pick a list to focus this  session".
  */
+@Composable
 private fun displayMode(modeName: String): String = when (modeName) {
-    "FLASH_PRAY_SWIPE" -> "Flash-Pray"
-    "BREATH_PRAYER" -> "Breath Prayer"
-    "INTERCESSION_DRILL" -> "Intercession"
+    "FLASH_PRAY_SWIPE" -> stringResource(R.string.prayer_flash_pray)
+    "BREATH_PRAYER" -> stringResource(R.string.prayer_breath_prayer)
+    "INTERCESSION_DRILL" -> stringResource(R.string.prayer_intercession)
     "GUIDED_ACTS" -> "ACTS"
-    "DAILY_EXAMEN" -> "Examen"
-    "LECTIO_DIVINA" -> "Lectio Divina"
-    "VOICE_RECORD" -> "Voice"
-    "PRAYER_JOURNAL" -> "Journal"
-    "PRAYER_BEADS" -> "Prayer Beads"
-    "DAILY_OFFICE" -> "Daily Office"
+    "DAILY_EXAMEN" -> stringResource(R.string.prayer_examen)
+    "LECTIO_DIVINA" -> stringResource(R.string.prayer_lectio_divina)
+    "VOICE_RECORD" -> stringResource(R.string.prayer_voice)
+    "PRAYER_JOURNAL" -> stringResource(R.string.prayer_journal)
+    "PRAYER_BEADS" -> stringResource(R.string.prayer_prayer_beads)
+    "DAILY_OFFICE" -> stringResource(R.string.prayer_daily_office)
     else -> "prayer"
 }

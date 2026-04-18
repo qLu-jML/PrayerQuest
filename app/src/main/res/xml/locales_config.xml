@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Per-app locales list (Android 13+, API 33). Enumerates every language the
+  app supports so Android can surface the correct picker in Settings >
+  Languages > PrayerQuest.
+
+  Keep this list tightly synced with `app/src/main/res/values-*` directories.
+  Every listed locale MUST have a corresponding `values-<code>/strings.xml`
+  (stub or real) or users who pick it will see default-locale strings
+  substituted, which in itself is fine, but they'll also never see MissingXX
+  lint errors surface in CI.
+
+  Adding a language? Three-step ritual:
+    1. Add `<locale android:name="xx"/>` below
+    2. Create `res/values-xx/strings.xml` (start with scratch/make_stub_translations.py)
+    3. Reference in design/LOCALIZATION_AUDIT.md so the translator knows about it
+
+  See Android docs for per-app languages:
+    https://developer.android.com/guide/topics/resources/app-languages
+-->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en"/>
+    <locale android:name="es"/>
+    <locale android:name="ko"/>
+    <locale android:name="pt"/>
+</locale-config>

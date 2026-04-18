@@ -60,6 +60,8 @@ import com.prayerquest.app.domain.model.PrayerMode
 import com.prayerquest.app.domain.model.Tradition
 import com.prayerquest.app.domain.model.isVisibleFor
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * The "Netflix of Prayer Modes" (DD §3.1.3). Replaces the old cycle-through-
@@ -132,7 +134,7 @@ fun ModePickerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Start Prayer") },
+                title = { Text(stringResource(R.string.common_start_prayer)) },
                 navigationIcon = {
                     // Only render a back arrow when the caller actually has a
                     // "back" destination. When the picker is the Pray tab root,
@@ -142,7 +144,7 @@ fun ModePickerScreen(
                         IconButton(onClick = onBackClick) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
+                                contentDescription = stringResource(R.string.common_back)
                             )
                         }
                     }
@@ -216,7 +218,7 @@ fun ModePickerScreen(
 private fun PrayerModeTutorialOverlay(
     onDismiss: () -> Unit
 ) {
-    val steps = remember { tutorialSteps() }
+    val steps = tutorialSteps()
     var stepIndex by remember { mutableIntStateOf(0) }
     val current = steps[stepIndex]
     val isLast = stepIndex == steps.lastIndex
@@ -246,7 +248,7 @@ private fun PrayerModeTutorialOverlay(
             ) {
                 TextButton(onClick = onDismiss) {
                     Text(
-                        text = "Skip",
+                        text = stringResource(R.string.common_skip),
                         color = Color.White,
                         style = MaterialTheme.typography.labelLarge
                     )
@@ -315,7 +317,7 @@ private fun PrayerModeTutorialOverlay(
                     shape = RoundedCornerShape(14.dp)
                 ) {
                     Text(
-                        text = if (isLast) "Got it — let's pray" else "Next",
+                        text = if (isLast) stringResource(R.string.prayer_got_it_let_s_pray) else stringResource(R.string.common_next),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -323,7 +325,7 @@ private fun PrayerModeTutorialOverlay(
                 if (stepIndex > 0) {
                     TextButton(onClick = { stepIndex-- }) {
                         Text(
-                            text = "Back",
+                            text = stringResource(R.string.common_back),
                             color = Color.White.copy(alpha = 0.8f),
                             style = MaterialTheme.typography.labelMedium
                         )
@@ -349,26 +351,27 @@ private data class TutorialStep(
     val body: String
 )
 
+@Composable
 private fun tutorialSteps(): List<TutorialStep> = listOf(
     TutorialStep(
         emoji = "🙏",
-        title = "Welcome to Prayer Modes",
-        body = "Each mode is a different way to pray — quick breath prayers, guided walkthroughs, voice-recorded reflections, and more. Pick whatever fits your moment."
+        title = stringResource(R.string.prayer_welcome_to_prayer_modes),
+        body = stringResource(R.string.prayer_each_mode_is_a_different_way_to_pray_quick_breath)
     ),
     TutorialStep(
         emoji = "📚",
-        title = "Shelves by style",
-        body = "Modes are grouped into Quick, Guided, Expressive, and Traditional shelves. Swipe a shelf to see more — there's always more than one way to approach God."
+        title = stringResource(R.string.prayer_shelves_by_style),
+        body = stringResource(R.string.prayer_modes_are_grouped_into_quick_guided_expressive_and)
     ),
     TutorialStep(
         emoji = "🔄",
-        title = "Switch anytime",
-        body = "There's no wrong choice. Start in one mode today, try another tomorrow — every session earns XP and keeps your streak alive."
+        title = stringResource(R.string.prayer_switch_anytime),
+        body = stringResource(R.string.prayer_there_s_no_wrong_choice_start_in_one_mode_today_tr)
     ),
     TutorialStep(
         emoji = "✨",
-        title = "You're ready",
-        body = "Tap any mode card to begin. You'll pick which prayers to focus on next — your own list, a group, or a general time with God."
+        title = stringResource(R.string.prayer_you_re_ready),
+        body = stringResource(R.string.prayer_tap_any_mode_card_to_begin_you_ll_pick_which_praye)
     )
 )
 
@@ -381,13 +384,13 @@ private fun HeaderBlurb() {
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
-            text = "How will you pray today?",
+            text = stringResource(R.string.prayer_how_will_you_pray_today),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
         Text(
-            text = "Pick any mode. You can switch anytime.",
+            text = stringResource(R.string.prayer_pick_any_mode_you_can_switch_anytime),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -489,7 +492,7 @@ private fun ModeCard(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "+${mode.baseXp} XP",
+                        text = stringResource(R.string.prayer_x_xp, mode.baseXp),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
@@ -534,13 +537,13 @@ private fun ExploreMoreTraditionsFooter(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Explore more traditions",
+                    text = stringResource(R.string.prayer_explore_more_traditions),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Prayer practices from traditions you didn't select — tap to try.",
+                    text = stringResource(R.string.prayer_prayer_practices_from_traditions_you_didn_t_select),
                     style = MaterialTheme.typography.bodySmall,
                     fontStyle = FontStyle.Italic,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -548,7 +551,7 @@ private fun ExploreMoreTraditionsFooter(
             }
             Icon(
                 imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                contentDescription = if (expanded) "Collapse" else "Expand",
+                contentDescription = if (expanded) stringResource(R.string.prayer_collapse) else stringResource(R.string.prayer_expand),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -571,11 +574,12 @@ private fun ExploreMoreTraditionsFooter(
     }
 }
 
+@Composable
 private fun shelfTitle(category: PrayerMode.Category): String = when (category) {
-    PrayerMode.Category.QUICK -> "Quick · under 3 min"
-    PrayerMode.Category.GUIDED -> "Guided"
-    PrayerMode.Category.EXPRESSIVE -> "Expressive"
-    PrayerMode.Category.TRADITIONAL -> "Traditional"
+    PrayerMode.Category.QUICK -> stringResource(R.string.prayer_quick_under_3_min)
+    PrayerMode.Category.GUIDED -> stringResource(R.string.prayer_guided)
+    PrayerMode.Category.EXPRESSIVE -> stringResource(R.string.prayer_expressive)
+    PrayerMode.Category.TRADITIONAL -> stringResource(R.string.prayer_traditional)
 }
 
 /**
@@ -601,15 +605,16 @@ private fun modeEmoji(mode: PrayerMode): String = when (mode) {
  * fuzzy — actual session length is user-controlled. Sprint 4 will track
  * median session duration per mode and adjust these based on real usage.
  */
+@Composable
 private fun modeDurationHint(mode: PrayerMode): String = when (mode) {
-    PrayerMode.FLASH_PRAY_SWIPE -> "1–3 min"
-    PrayerMode.BREATH_PRAYER -> "3–5 min"
-    PrayerMode.INTERCESSION_DRILL -> "3–5 min"
-    PrayerMode.GUIDED_ACTS -> "5–10 min"
-    PrayerMode.DAILY_EXAMEN -> "5–10 min"
-    PrayerMode.LECTIO_DIVINA -> "10–15 min"
-    PrayerMode.VOICE_RECORD -> "3–10 min"
-    PrayerMode.PRAYER_JOURNAL -> "5–15 min"
-    PrayerMode.PRAYER_BEADS -> "5–15 min"
-    PrayerMode.DAILY_OFFICE -> "5–10 min"
+    PrayerMode.FLASH_PRAY_SWIPE -> stringResource(R.string.prayer_1_3_min)
+    PrayerMode.BREATH_PRAYER -> stringResource(R.string.prayer_3_5_min)
+    PrayerMode.INTERCESSION_DRILL -> stringResource(R.string.prayer_3_5_min)
+    PrayerMode.GUIDED_ACTS -> stringResource(R.string.prayer_5_10_min)
+    PrayerMode.DAILY_EXAMEN -> stringResource(R.string.prayer_5_10_min)
+    PrayerMode.LECTIO_DIVINA -> stringResource(R.string.prayer_10_15_min)
+    PrayerMode.VOICE_RECORD -> stringResource(R.string.prayer_3_10_min)
+    PrayerMode.PRAYER_JOURNAL -> stringResource(R.string.prayer_5_15_min)
+    PrayerMode.PRAYER_BEADS -> stringResource(R.string.prayer_5_15_min)
+    PrayerMode.DAILY_OFFICE -> stringResource(R.string.prayer_5_10_min)
 }

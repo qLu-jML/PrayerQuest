@@ -43,6 +43,23 @@ object AdManager {
      */
     const val ADS_ENABLED = true
 
+    /**
+     * Google's canonical test-ad-unit prefix. Any ad-unit ID that starts with
+     * this string is a Google test ID — fine in debug, forbidden in release.
+     * Kept in one place so the fail-safe and any future diagnostics agree.
+     *
+     * https://developers.google.com/admob/android/test-ads
+     */
+    private const val TEST_AD_UNIT_PREFIX = "ca-app-pub-3940256099942544"
+
+    /**
+     * The placeholder string baked into release BuildConfig when Nathan forgets
+     * to set a real ID in `~/.gradle/gradle.properties`. See
+     * `app/build.gradle.kts`. The fail-safe also refuses to initialize if any
+     * release unit still equals this marker.
+     */
+    private const val AD_UNIT_PLACEHOLDER = "REPLACE_WITH_REAL_AD_UNIT_ID"
+
     /** Minimum time between interstitials, in ms. Prevents ad fatigue in long prayer sessions. */
     private const val INTERSTITIAL_COOLDOWN_MS = 4 * 60_000L
 
@@ -73,6 +90,42 @@ object AdManager {
 
     fun initialize(context: Context) {
         if (!ADS_ENABLED || initialized) return
+
+        // ── Release fail-safe ───────────────────────────────────────────
+        // Under no circumstances do we serve Google's test ad unit IDs (or the
+        // build-config placeholder) from a release APK. If either leaks, the
+        // AdMob request would either return a test creative (copyright risk +
+        // no revenue) or a 403 (user sees a blank ad slot forever). Better to
+        // crash loudly on first launch than to ship that.
+        if (!BuildConfig.DEBUG) {
+            val offenders = mutableListOf<String>()
+            if (BuildConfig.ADMOB_BANNER_ID.startsWith(TEST_AD_UNIT_PREFIX)) offenders += "ADMOB_BANNER_ID"
+            if (BuildConfig.ADMOB_INTERSTITIAL_ID.startsWith(TEST_AD_UNIT_PREFIX)) offenders += "ADMOB_INTERSTITIAL_ID"
+            if (BuildConfig.ADMOB_REWARDED_STREAK_SAVE_ID.startsWith(TEST_AD_UNIT_PREFIX)) offenders += "ADMOB_REWARDED_STREAK_SAVE_ID"
+            if (BuildConfig.ADMOB_REWARDED_BONUS_XP_ID.startsWith(TEST_AD_UNIT_PREFIX)) offenders += "ADMOB_REWARDED_BONUS_XP_ID"
+            if (BuildConfig.ADMOB_APP_OPEN_ID.startsWith(TEST_AD_UNIT_PREFIX)) offenders += "ADMOB_APP_OPEN_ID"
+
+            val placeholders = mutableListOf<String>()
+            if (BuildConfig.ADMOB_BANNER_ID == AD_UNIT_PLACEHOLDER) placeholders += "ADMOB_BANNER_ID"
+            if (BuildConfig.ADMOB_INTERSTITIAL_ID == AD_UNIT_PLACEHOLDER) placeholders += "ADMOB_INTERSTITIAL_ID"
+            if (BuildConfig.ADMOB_REWARDED_STREAK_SAVE_ID == AD_UNIT_PLACEHOLDER) placeholders += "ADMOB_REWARDED_STREAK_SAVE_ID"
+            if (BuildConfig.ADMOB_REWARDED_BONUS_XP_ID == AD_UNIT_PLACEHOLDER) placeholders += "ADMOB_REWARDED_BONUS_XP_ID"
+            if (BuildConfig.ADMOB_APP_OPEN_ID == AD_UNIT_PLACEHOLDER) placeholders += "ADMOB_APP_OPEN_ID"
+
+            if (offenders.isNotEmpty()) {
+                throw IllegalStateException(
+                    "Release build shipped with Google test ad unit IDs in ${offenders.joinToString()}. " +
+                        "Fix ~/.gradle/gradle.properties and rebuild — see gradle.properties.template."
+                )
+            }
+            if (placeholders.isNotEmpty()) {
+                throw IllegalStateException(
+                    "Release build shipped with placeholder ad unit IDs in ${placeholders.joinToString()}. " +
+                        "Fill in real AdMob unit IDs in ~/.gradle/gradle.properties and rebuild."
+                )
+            }
+        }
+
         initialized = true
 
         // In debug builds, register all devices as test devices. Combined with

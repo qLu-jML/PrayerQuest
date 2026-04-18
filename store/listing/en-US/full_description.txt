@@ -1,29 +1,51 @@
-PrayerQuest turns prayer into a daily habit you'll actually keep. Combining 8 interactive prayer modes, streak tracking, a gratitude journal, and invite-only prayer groups, it meets you where you are and gently guides you deeper — without ever feeling like a to-do list.
+PrayerQuest turns prayer into a daily habit you'll actually keep. Ten interactive prayer modes, streak tracking, a gratitude journal with photos, answered-prayer testimonies, and invite-only prayer groups meet you where you are and gently guide you deeper — without ever feeling like a to-do list.
+
+10 PRAYER MODES:
+• Guided ACTS Walkthrough — Adoration, Confession, Thanksgiving, Supplication
+• Voice Record & Reflect — on-device speech-to-text captures your prayer word-for-word
+• Prayer Journal — write or speak freely; voice-to-text is one tap away
+• Intercession Drill — rapid tap-bank for lifting up everyone on your active list
+• Flash-Pray Swipe — swipe through cards to log quick prayers
+• Daily Examen — the Ignatian end-of-day reflection, guided step by step
+• Lectio Divina — slow, meditative Scripture reading in four movements
+• Breath Prayer — paced breathing with classic centering phrases
+• Prayer Beads — rosary and Jesus Prayer cadence, Protestant and Catholic
+• Daily Office — morning, midday, evening, and compline liturgies
 
 FEATURES:
-• 8 Prayer Modes — Guided ACTS Walkthrough, Voice Record & Reflect, Prayer Journal, Gratitude Blast, Intercession Drill, Scripture Soak, Contemplative Silence, and Flash-Pray Swipe
-• Voice-to-Text Everywhere — Speak your prayers naturally; on-device speech recognition captures every word
-• 30+ Famous Prayers — Pray the Lord's Prayer, the Serenity Prayer, Prayer of St. Francis, Prayer of Jabez, and more — with usage tracking and milestone badges
-• Answered Prayers Catalogue — Archive answered prayers with testimony, date, and optional photos or voice notes. Watch God's faithfulness build over time.
-• Gratitude Journal — Log 1, 3, or 5 gratitudes a day with photos, categories, and a beautiful calendar heat-map
-• Prayer Groups — Create invite-only groups for family, small groups, or friends. Share prayer requests, pray for each other, and see who prayed when.
-• Streak System — Daily streaks with freezes and hearts keep your habit resilient through busy seasons
-• Daily Quests — 3 rotating challenges each day + full-set bonus for extra XP
-• XP & Leveling — Grow from Prayer Novice through Faithful Seeker, Intercessor, and Prayer Sage across 10 levels
-• 13+ Achievements — Unlock badges for streaks, minutes prayed, modes used, famous prayers, answered prayers, gratitude milestones, and group activity
-• 100% Offline — Every feature works without an internet connection. Your prayers, photos, and journal stay private on your device.
-• Beautiful Design — Material 3 with warm, prayerful colors, full dark-mode support, and gentle animations
+• Voice-to-Text Everywhere — speak your prayers naturally; recognition runs on-device
+• 30+ Famous Prayers — the Lord's Prayer, Serenity Prayer, Prayer of St. Francis, Prayer of Jabez, and more, with usage tracking and milestone badges
+• Names of God Library — 35+ Hebrew, Greek, and English names with meaning, Scripture, and a "Pray this name" launcher
+• Answered Prayers Catalogue — archive testimonies with date, photo, and voice note. Every answer triggers a celebration — confetti, a Scripture card, and a one-year anniversary reminder.
+• Gratitude Journal — 1, 3, or 5 gratitudes a day with photos, categories, calendar heat-map, search, and a 60-second Speed Round
+• Prayer Groups — invite-only groups for family or friends. Share requests, pray for each other, see who prayed when.
+• Photo Prayers — attach a photo to any active item; photos stay private on your device
+• Liturgical Calendar — Western or Eastern; Home shows the current season, and Advent, Lent, and Holy Week packs auto-surface
+• Crisis Prayer Mode — a quiet, XP-free refuge: curated Psalms, paced breath prayer, and resource links
+• Auto-Tagging — smart on-device category suggestions as you add prayer items
+• Streak System — daily streaks with freezes and hearts keep your habit resilient
+• Daily Quests — 3 rotating challenges each day plus a full-set bonus
+• XP & Leveling — an uncapped numerical level system that keeps rewarding new milestones no matter how long you pray
+• Achievements — 65+ badges for streaks, minutes prayed, longest sessions, mode mastery, famous prayers, names of God, answered prayers, testimonies, gratitude, and group activity
+• 100% Offline — every solo feature works without a connection. Prayer Groups are strictly optional.
+• Beautiful Design — Material 3 with warm colors, full dark-mode support, and gentle animations
 
-PRAYERQUEST PREMIUM ($4.99/month):
+PRAYERQUEST PREMIUM — three ways to upgrade:
+• $2.99 per month
+• $14.99 per year (save over 50%)
+• $24.99 one-time, ad-free for the life of the app
+
+Every tier unlocks:
 • Completely ad-free experience
-• Unlimited gratitude photos (free tier caps at 10 per month)
-• Unlimited testimony photos in Answered Prayers
-• Larger prayer groups (up to 25 members per group, up from 5)
-• Create up to 10 groups from one account (up from 2)
-• Custom emoji/icons for every group
+• Unlimited gratitude and testimony photos (free tier caps at 10 per month)
+• Larger prayer groups — up to 25 members (free: 5)
+• Create up to 10 groups from one account (free: 2)
+• Custom emoji and icons for every group
 
 "Pray without ceasing." — 1 Thessalonians 5:17
 
 "Rejoice always, pray continually, give thanks in all circumstances; for this is God's will for you." — 1 Thessalonians 5:16-18
 
 Whether you're starting your first prayer habit or deepening a lifelong practice, PrayerQuest helps you keep showing up — one prayer, one gratitude, one answered request at a time. Download free today and start seeking Him.
+
+From Five Cats Development Studio LLC.

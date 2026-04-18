@@ -5,7 +5,9 @@ import com.prayerquest.app.data.entity.*
 import com.prayerquest.app.domain.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
@@ -23,7 +25,13 @@ class GamificationRepository(
     private val dailyActivityDao: DailyActivityDao,
     private val prayerRecordDao: PrayerRecordDao,
     private val gratitudeEntryDao: GratitudeEntryDao,
-    private val prayerGroupDao: PrayerGroupDao
+    private val prayerGroupDao: PrayerGroupDao,
+    /** Backs the TESTIMONY and PARTIAL_ANSWER derived badge categories. */
+    private val prayerItemDao: PrayerItemDao,
+    /** Backs the NAMES_OF_GOD derived badge category. */
+    private val nameOfGodDao: NameOfGodDao,
+    /** Backs the FAMOUS_DISTINCT derived badge category. */
+    private val famousPrayerDao: FamousPrayerDao
 ) {
 
     companion object {
@@ -33,6 +41,11 @@ class GamificationRepository(
         const val QUEST_SET_BONUS_COINS = 5
         /** Flat XP bonus awarded by [onPrayerMarkedAnswered]. */
         const val ANSWERED_PRAYER_XP = 25
+
+        /** "Early bird" / Morning Watch cutoff — sessions that start strictly BEFORE this hour count. */
+        const val EARLY_BIRD_HOUR = 6
+        /** "Night owl" / Evening Meditation cutoff — sessions that start on or AFTER this hour count. */
+        const val NIGHT_OWL_HOUR = 22
 
         /**
          * Flat XP bonus awarded when a Gratitude Speed Round finishes under
@@ -60,7 +73,22 @@ class GamificationRepository(
         durationSeconds: Int,
         itemsPrayed: Int,
         isFamousPrayer: Boolean,
-        isGroupPrayer: Boolean
+        isGroupPrayer: Boolean,
+        /**
+         * True when the session recorded voice transcript content (Voice
+         * Record & Reflect, or any mode where the user spoke into the
+         * transcriber). Drives VOICE-category badges. Defaults to `false`
+         * so existing callers don't need to change.
+         */
+        hasVoiceTranscript: Boolean = false,
+        /**
+         * True when the session recorded journal text (either the journal
+         * field on the record, or PRAYER_JOURNAL mode). Drives JOURNAL-
+         * category badges. `PRAYER_JOURNAL` alone is not enough — we still
+         * require the user to actually write — but the call site flips this
+         * for any free-text entry too.
+         */
+        hasJournalText: Boolean = false
     ): SessionGamificationResult {
         val date = today()
         val stats = userStatsDao.get() ?: UserStats()
@@ -80,8 +108,41 @@ class GamificationRepository(
         // 3. Update session stats
         val minutes = (durationSeconds + 59) / 60  // round up
         userStatsDao.addSessionStats(minutes)
+        // Peak session tracker for the LONGEST_SESSION badge category
+        // (Thirty Still at 30 min, Holy Hour at 60 min). Monotone — so
+        // a shorter session after a long one does not regress the peak.
+        userStatsDao.raiseLongestSession(minutes)
         if (isFamousPrayer) userStatsDao.incrementFamousPrayers()
         if (isGroupPrayer) userStatsDao.incrementGroupPrayers()
+
+        // 3a. Lifetime counters that back the expanded badge roster
+        //     (voice / journal / sunday / morning-watch / evening-med).
+        //     Journals are flagged either by explicit content or by mode.
+        val journalSession = hasJournalText || mode == PrayerMode.PRAYER_JOURNAL
+        if (hasVoiceTranscript) userStatsDao.incrementVoiceSessions()
+        if (journalSession) userStatsDao.incrementJournalSessions()
+
+        val now = LocalTime.now()
+        val nowDate = LocalDate.parse(date, DATE_FMT)
+        if (nowDate.dayOfWeek == DayOfWeek.SUNDAY) {
+            userStatsDao.incrementSundaySessions()
+        }
+        // Flip the one-shot early-bird / night-owl flags on the first
+        // qualifying session — historically these were declared on
+        // UserStats but never set, so the corresponding badges never
+        // unlocked. Setting via `update(copy(...))` is safe because both
+        // flags are monotonic one-way transitions.
+        val needsEarlyBird = !stats.hasEarlyBirdSession && now.hour < EARLY_BIRD_HOUR
+        val needsNightOwl = !stats.hasNightOwlSession && now.hour >= NIGHT_OWL_HOUR
+        if (needsEarlyBird || needsNightOwl) {
+            val refreshed = userStatsDao.get() ?: stats
+            userStatsDao.update(
+                refreshed.copy(
+                    hasEarlyBirdSession = refreshed.hasEarlyBirdSession || needsEarlyBird,
+                    hasNightOwlSession = refreshed.hasNightOwlSession || needsNightOwl
+                )
+            )
+        }
 
         // 4. Streak check-in
         val streakResult = checkInStreak(date, stats)
@@ -196,6 +257,11 @@ class GamificationRepository(
         if (newConsecutive != stats.consecutiveGratitudeDays) {
             userStatsDao.setConsecutiveGratitudeDays(newConsecutive)
         }
+
+        // Peak tracker for the "Hundred Thankful Days" badge. Has to survive
+        // a reset of the live counter — once a user has strung 100 days
+        // together the badge is earned for good.
+        userStatsDao.raiseLongestGratitudeStreak(newConsecutive)
     }
 
     /**
@@ -454,6 +520,9 @@ class GamificationRepository(
             // even if all 7 landed on the same day.
             "gratitude_7", "gratitude_30" -> stats.consecutiveGratitudeDays
             "gratitude_photo_50" -> stats.totalGratitudePhotos
+            // "Hundred Thankful Days" — peak tracker so the badge survives
+            // a reset of the live counter (100 consecutive days ever).
+            "gratitude_100_streak" -> stats.longestGratitudeStreak
             // Volume milestones (Abundance Mindset, Faithful Thanksgiver)
             // stay on the raw lifetime-entry counter.
             else -> stats.totalGratitudesLogged
@@ -473,6 +542,25 @@ class GamificationRepository(
             else -> 0
         }
         AchievementCategory.COMEBACK -> if (stats.hasComebackAfterGap) 1 else 0
+
+        // ── Sprint-18 expansion (2026-04-18) ────────────────────────────
+        AchievementCategory.LONGEST_SESSION -> stats.longestSessionMinutes
+        AchievementCategory.VOICE -> stats.totalVoiceSessions
+        AchievementCategory.JOURNAL -> stats.totalJournalSessions
+        AchievementCategory.SABBATH -> stats.totalSundaySessions
+        AchievementCategory.TESTIMONY -> prayerItemDao.getAnsweredWithTestimonyCount()
+        AchievementCategory.PARTIAL_ANSWER -> prayerItemDao.getPartiallyAnsweredCount()
+        AchievementCategory.NAMES_OF_GOD -> nameOfGodDao.getDistinctPrayedCount()
+        AchievementCategory.FAMOUS_DISTINCT -> famousPrayerDao.getDistinctPrayedCount()
+        AchievementCategory.MODE_MASTERY -> {
+            // The AchievementDef.id is `<modeSlug>_N` where modeSlug is the
+            // PrayerMode enum `name.lowercase()` (e.g., "guided_acts_25" ↔
+            // PrayerMode.GUIDED_ACTS). Strip the trailing `_N` by finding
+            // the last underscore and uppercasing the prefix back to the
+            // enum name.
+            val mode = def.id.substringBeforeLast('_').uppercase()
+            prayerRecordDao.getCountByMode(mode)
+        }
     }
 
     // ═══════════════════════════════════════════════

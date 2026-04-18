@@ -9,6 +9,7 @@ import com.prayerquest.app.data.prayer.SuggestedPrayerPack
 import com.prayerquest.app.data.prayer.SuggestedPrayerPackLoader
 import com.prayerquest.app.data.repository.CollectionRepository
 import com.prayerquest.app.data.repository.GratitudeRepository
+import com.prayerquest.app.data.repository.LibraryRepository
 import com.prayerquest.app.data.repository.PrayerRepository
 import com.prayerquest.app.domain.liturgical.LiturgicalCalendar
 import com.prayerquest.app.domain.liturgical.LiturgicalSeason
@@ -21,6 +22,7 @@ class LibraryViewModel(
     collectionRepository: CollectionRepository,
     private val prayerRepository: PrayerRepository,
     gratitudeRepository: GratitudeRepository,
+    libraryRepository: LibraryRepository,
     userPreferences: UserPreferences,
     suggestedPackLoader: SuggestedPrayerPackLoader
 ) : ViewModel() {
@@ -36,6 +38,14 @@ class LibraryViewModel(
     // Bible Prayers tab data — imported from assets/prayers/bible_prayers.json
     // on first launch via BiblePrayerImporter (AppContainer wires this in).
     val biblePrayers = prayerRepository.observeAllBiblePrayers()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Names of God (DD §3.12) — imported from assets/prayers/names_of_god.json
+    // on first launch via NameOfGodImporter (AppContainer wires this in).
+    // Separate observer from famous/bible prayers because the entity and
+    // navigation route are distinct; the detail CTA routes through Breath
+    // Prayer instead of the regular "I prayed this" log path.
+    val namesOfGod = libraryRepository.observeNamesOfGod()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Answered Prayers tab data
@@ -82,6 +92,7 @@ class LibraryViewModel(
         private val collectionRepository: CollectionRepository,
         private val prayerRepository: PrayerRepository,
         private val gratitudeRepository: GratitudeRepository,
+        private val libraryRepository: LibraryRepository,
         private val userPreferences: UserPreferences,
         private val suggestedPackLoader: SuggestedPrayerPackLoader
     ) : ViewModelProvider.Factory {
@@ -91,6 +102,7 @@ class LibraryViewModel(
                 collectionRepository,
                 prayerRepository,
                 gratitudeRepository,
+                libraryRepository,
                 userPreferences,
                 suggestedPackLoader
             ) as T

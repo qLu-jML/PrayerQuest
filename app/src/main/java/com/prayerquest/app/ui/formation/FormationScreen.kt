@@ -44,6 +44,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prayerquest.app.PrayerQuestApplication
 import com.prayerquest.app.data.entity.PrayerItem
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,10 +53,21 @@ fun FormationScreen(
     onComplete: () -> Unit
 ) {
     val app = LocalContext.current.applicationContext as PrayerQuestApplication
+    // Resolve the starter-prayer default strings at @Composable scope and
+    // hand them to the Factory — `stringResource` is a @Composable API and
+    // cannot be called from ViewModel init (see FormationViewModel KDoc).
+    val defaultTitle = stringResource(R.string.formation_my_first_prayer)
+    val defaultDescription = stringResource(
+        R.string.formation_a_prayer_to_begin_my_journey_with_prayerquest
+    )
+    val defaultCategory = stringResource(R.string.common_personal)
     val viewModel: FormationViewModel = viewModel(
         factory = FormationViewModel.Factory(
             app.container.prayerRepository,
-            app.container.gamificationRepository
+            app.container.gamificationRepository,
+            defaultTitle,
+            defaultDescription,
+            defaultCategory,
         )
     )
     val currentStep by viewModel.currentStep.collectAsState()
@@ -66,7 +79,7 @@ fun FormationScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Prayer Formation",
+                        text = stringResource(R.string.formation_prayer_formation),
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -80,7 +93,7 @@ fun FormationScreen(
                     }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.common_back)
                         )
                     }
                 }
@@ -139,7 +152,7 @@ fun FormationScreen(
                             .height(48.dp)
                     ) {
                         Text(
-                            text = "Next",
+                            text = stringResource(R.string.common_next),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -161,7 +174,7 @@ fun FormationScreen(
                                 modifier = Modifier.padding(end = 8.dp)
                             )
                             Text(
-                                text = "Add to Collection",
+                                text = stringResource(R.string.formation_add_to_collection),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -210,7 +223,7 @@ private fun MeetYourPrayerStep(prayerItem: PrayerItem) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Meet Your Prayer",
+            text = stringResource(R.string.formation_meet_your_prayer),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 16.dp)
@@ -231,7 +244,7 @@ private fun MeetYourPrayerStep(prayerItem: PrayerItem) {
         )
 
         Text(
-            text = "Take a moment to reflect on this prayer intention and what it means to you.",
+            text = stringResource(R.string.formation_take_a_moment_to_reflect_on_this_prayer_intention),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -239,7 +252,7 @@ private fun MeetYourPrayerStep(prayerItem: PrayerItem) {
         )
 
         Text(
-            text = "This prayer is an opportunity to grow closer to what matters most.",
+            text = stringResource(R.string.formation_this_prayer_is_an_opportunity_to_grow_closer_to_wh),
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -254,7 +267,7 @@ private fun SpeakItAloudStep(prayerItem: PrayerItem) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Speak It Aloud",
+            text = stringResource(R.string.formation_speak_it_aloud),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 24.dp)
@@ -267,7 +280,7 @@ private fun SpeakItAloudStep(prayerItem: PrayerItem) {
         )
 
         Text(
-            text = "Say this prayer out loud",
+            text = stringResource(R.string.formation_say_this_prayer_out_loud),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
@@ -275,7 +288,7 @@ private fun SpeakItAloudStep(prayerItem: PrayerItem) {
         )
 
         Text(
-            text = "Speaking our prayers aloud helps us internalize them and connect more deeply with our faith.",
+            text = stringResource(R.string.formation_speaking_our_prayers_aloud_helps_us_internalize_th),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -292,7 +305,7 @@ private fun SpeakItAloudStep(prayerItem: PrayerItem) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "Take a deep breath and speak this prayer with intention and sincerity.",
+                text = stringResource(R.string.formation_take_a_deep_breath_and_speak_this_prayer_with_inte),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -308,7 +321,7 @@ private fun WriteYourHeartStep(prayerItem: PrayerItem) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Write Your Heart",
+            text = stringResource(R.string.formation_write_your_heart),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 24.dp)
@@ -321,7 +334,7 @@ private fun WriteYourHeartStep(prayerItem: PrayerItem) {
         )
 
         Text(
-            text = "Journal your thoughts",
+            text = stringResource(R.string.formation_journal_your_thoughts),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
@@ -329,7 +342,7 @@ private fun WriteYourHeartStep(prayerItem: PrayerItem) {
         )
 
         Text(
-            text = "Why does this prayer matter to you? What do you hope to achieve or feel through it?",
+            text = stringResource(R.string.formation_why_does_this_prayer_matter_to_you_what_do_you_hop),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -337,7 +350,7 @@ private fun WriteYourHeartStep(prayerItem: PrayerItem) {
         )
 
         Text(
-            text = "Writing helps clarify our intentions and deepens our spiritual reflection.",
+            text = stringResource(R.string.formation_writing_helps_clarify_our_intentions_and_deepens_o),
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -352,7 +365,7 @@ private fun QuickGratitudeStep(prayerItem: PrayerItem) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Quick Gratitude",
+            text = stringResource(R.string.formation_quick_gratitude),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 24.dp)
@@ -365,7 +378,7 @@ private fun QuickGratitudeStep(prayerItem: PrayerItem) {
         )
 
         Text(
-            text = "What are you grateful for?",
+            text = stringResource(R.string.gratitude_what_are_you_grateful_for),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
@@ -373,7 +386,7 @@ private fun QuickGratitudeStep(prayerItem: PrayerItem) {
         )
 
         Text(
-            text = "Name one thing related to this prayer that you're grateful for today.",
+            text = stringResource(R.string.formation_name_one_thing_related_to_this_prayer_that_you_re),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -390,7 +403,7 @@ private fun QuickGratitudeStep(prayerItem: PrayerItem) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "Gratitude opens our hearts and reminds us of life's blessings.",
+                text = stringResource(R.string.formation_gratitude_opens_our_hearts_and_reminds_us_of_life),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -406,7 +419,7 @@ private fun ACTSFrameworkStep(prayerItem: PrayerItem) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "ACTS Framework",
+            text = stringResource(R.string.formation_acts_framework),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 24.dp)
@@ -428,10 +441,10 @@ private fun ACTSFrameworkStep(prayerItem: PrayerItem) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            ACTSItem("A", "Adoration", "Praise God's greatness")
-            ACTSItem("C", "Confession", "Acknowledge your struggles")
-            ACTSItem("T", "Thanksgiving", "Give thanks for blessings")
-            ACTSItem("S", "Supplication", "Ask for what you need")
+            ACTSItem("A", stringResource(R.string.common_adoration), stringResource(R.string.formation_praise_god_s_greatness))
+            ACTSItem("C", stringResource(R.string.common_confession), stringResource(R.string.formation_acknowledge_your_struggles))
+            ACTSItem("T", stringResource(R.string.common_thanksgiving), stringResource(R.string.formation_give_thanks_for_blessings))
+            ACTSItem("S", stringResource(R.string.common_supplication), stringResource(R.string.formation_ask_for_what_you_need))
         }
     }
 }
@@ -440,7 +453,7 @@ private fun ACTSFrameworkStep(prayerItem: PrayerItem) {
 private fun ACTSItem(letter: String, title: String, description: String) {
     Column {
         Text(
-            text = "$letter - $title",
+            text = stringResource(R.string.formation_x_x, letter, title),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -466,7 +479,7 @@ private fun CelebrationStep(xpEarned: Int) {
         )
 
         Text(
-            text = "You've completed Prayer Formation!",
+            text = stringResource(R.string.formation_you_ve_completed_prayer_formation),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
@@ -474,7 +487,7 @@ private fun CelebrationStep(xpEarned: Int) {
         )
 
         Text(
-            text = "Great job taking this prayer journey.",
+            text = stringResource(R.string.formation_great_job_taking_this_prayer_journey),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -491,7 +504,7 @@ private fun CelebrationStep(xpEarned: Int) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "+$xpEarned XP Earned!",
+                text = stringResource(R.string.formation_x_xp_earned, xpEarned),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -499,7 +512,7 @@ private fun CelebrationStep(xpEarned: Int) {
         }
 
         Text(
-            text = "You can now add this prayer to your collection.",
+            text = stringResource(R.string.formation_you_can_now_add_this_prayer_to_your_collection),
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

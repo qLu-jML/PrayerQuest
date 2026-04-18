@@ -48,6 +48,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prayerquest.app.PrayerQuestApplication
 import com.prayerquest.app.billing.PremiumFeatures
 import com.prayerquest.app.ui.theme.LocalIsPremium
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Premium upgrade paywall.
@@ -87,10 +89,10 @@ fun PremiumPaywallScreen(
             .background(MaterialTheme.colorScheme.surface)
     ) {
         TopAppBar(
-            title = { Text("PrayerQuest Premium") },
+            title = { Text(stringResource(R.string.premium_prayerquest_premium)) },
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
             },
         )
@@ -107,7 +109,7 @@ fun PremiumPaywallScreen(
             item { CurrentStatusCard(isPremium = isPremium) }
             item {
                 Text(
-                    text = "Subscription auto-renews monthly at the price shown. Cancel anytime in Google Play. Restored automatically on reinstall.",
+                    text = stringResource(R.string.premium_subscription_auto_renews_monthly_at_the_price_show),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -129,10 +131,14 @@ fun PremiumPaywallScreen(
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
+                // Capture into a local val so the smart cast sticks — `priceText`
+                // is a delegated property (by collectAsState), which Kotlin won't
+                // smart-cast to non-null even after an explicit null check.
+                val price = priceText
                 val cta = when {
-                    isPremium -> "You're Premium — thank you!"
-                    priceText != null -> "Upgrade for $priceText"
-                    else -> "Upgrade to Premium"
+                    isPremium -> stringResource(R.string.premium_you_re_premium_thank_you)
+                    price != null -> stringResource(R.string.premium_upgrade_for_x, price)
+                    else -> stringResource(R.string.common_upgrade_to_premium)
                 }
                 Button(
                     onClick = {
@@ -148,7 +154,7 @@ fun PremiumPaywallScreen(
                     Text(cta, style = MaterialTheme.typography.titleSmall)
                 }
                 Text(
-                    text = "He is faithful. Support PrayerQuest's growth while you grow yours.",
+                    text = stringResource(R.string.premium_he_is_faithful_support_prayerquest_s_growth_while),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -192,14 +198,14 @@ private fun HeroCard() {
                     tint = colorScheme.onPrimaryContainer,
                 )
                 Text(
-                    text = "Pray Deeper, Without Limits",
+                    text = stringResource(R.string.premium_pray_deeper_without_limits),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onPrimaryContainer,
                     textAlign = TextAlign.Center,
                 )
                 Text(
-                    text = "Unlock every feature and support a faith-first habit app.",
+                    text = stringResource(R.string.premium_unlock_every_feature_and_support_a_faith_first_hab),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colorScheme.onPrimaryContainer,
                     textAlign = TextAlign.Center,
@@ -214,18 +220,18 @@ private fun FeatureList() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         PremiumFeatureRow(
             icon = Icons.Default.Bolt,
-            title = "Ad-free, always",
-            description = "No banners, no interstitials, no app-open ads. Just prayer.",
+            title = stringResource(R.string.premium_ad_free_always),
+            description = stringResource(R.string.premium_no_banners_no_interstitials_no_app_open_ads_just_p),
         )
         PremiumFeatureRow(
             icon = Icons.Default.PhotoLibrary,
-            title = "Unlimited photos",
-            description = "Attach as many photos as you want to Gratitude entries and Answered Prayer testimonies. Free tier caps at ${PremiumFeatures.FREE_GRATITUDE_PHOTOS_PER_MONTH}/month.",
+            title = stringResource(R.string.premium_unlimited_photos),
+            description = stringResource(R.string.premium_attach_as_many_photos_as_you_want_to_gratitude_ent, PremiumFeatures.FREE_GRATITUDE_PHOTOS_PER_MONTH),
         )
         PremiumFeatureRow(
             icon = Icons.Default.Groups,
-            title = "Enhanced Prayer Groups",
-            description = "Up to ${PremiumFeatures.PREMIUM_GROUP_MEMBER_LIMIT} members per group (free: ${PremiumFeatures.FREE_GROUP_MEMBER_LIMIT}), create up to ${PremiumFeatures.PREMIUM_GROUPS_CREATED_LIMIT} groups (free: ${PremiumFeatures.FREE_GROUPS_CREATED_LIMIT}), and pick any custom emoji.",
+            title = stringResource(R.string.premium_enhanced_prayer_groups),
+            description = stringResource(R.string.premium_up_to_x_members_per_group_free_x_create_up_to_x_gr, PremiumFeatures.PREMIUM_GROUP_MEMBER_LIMIT, PremiumFeatures.FREE_GROUP_MEMBER_LIMIT, PremiumFeatures.PREMIUM_GROUPS_CREATED_LIMIT, PremiumFeatures.FREE_GROUPS_CREATED_LIMIT),
         )
     }
 }
@@ -303,13 +309,13 @@ private fun CurrentStatusCard(isPremium: Boolean) {
             )
             Column {
                 Text(
-                    text = "You're a Premium supporter",
+                    text = stringResource(R.string.premium_you_re_a_premium_supporter),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onTertiaryContainer,
                 )
                 Text(
-                    text = "Thank you for helping us build PrayerQuest. Manage your subscription anytime in Google Play.",
+                    text = stringResource(R.string.premium_thank_you_for_helping_us_build_prayerquest_manage),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onTertiaryContainer,
                 )

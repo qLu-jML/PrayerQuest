@@ -41,6 +41,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Crisis Prayer Mode (DD §3.10).
@@ -60,7 +62,10 @@ import androidx.compose.ui.unit.dp
  *   2. Wiring: the Crisis breath variant lives in [CrisisBreathPrayerScreen]
  *      and does NOT share a ViewModel with the main prayer session.
  *   3. Test: `CrisisModeTest` asserts no gamification import appears in any
- *      `ui/crisis/*.kt` source file.
+ *      `.kt` file under the `ui/crisis/` directory.
+ *      (The glob form would be `ui/crisis/` + `*.kt`, written that way here
+ *      because Kotlin nests block comments — a literal `/` + `*` inside a
+ *      KDoc opens an inner comment and breaks the outer block.)
  *
  * If any one of those three drifts, the mode has regressed per DD §3.10. Do
  * not patch the test — fix the drift.
@@ -130,20 +135,20 @@ private fun CrisisContent(
 
             // ── MIDDLE (three tiles) ─────────────────────
             CrisisTile(
-                title = "Psalms that breathe with you",
-                subtitle = "Short passages to read slowly. Swipe to advance.",
+                title = stringResource(R.string.crisis_psalms_that_breathe_with_you),
+                subtitle = stringResource(R.string.crisis_short_passages_to_read_slowly_swipe_to_advance),
                 emoji = "📖",
                 onClick = onOpenPsalms
             )
             CrisisTile(
-                title = "Paced breath prayer",
-                subtitle = "The Jesus Prayer, at a slower cadence. 3 minutes.",
+                title = stringResource(R.string.crisis_paced_breath_prayer),
+                subtitle = stringResource(R.string.crisis_the_jesus_prayer_at_a_slower_cadence_3_minutes),
                 emoji = "🕊️",
                 onClick = onOpenBreath
             )
             CrisisTile(
-                title = "Crisis resources",
-                subtitle = "If you need to reach a person, a list of helplines.",
+                title = stringResource(R.string.crisis_crisis_resources),
+                subtitle = stringResource(R.string.crisis_if_you_need_to_reach_a_person_a_list_of_helplines),
                 emoji = "☎️",
                 onClick = onOpenResources
             )
@@ -166,20 +171,20 @@ private fun CrisisHeader() {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = "You are not alone.",
+            text = stringResource(R.string.crisis_you_are_not_alone),
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center
         )
         Text(
-            text = "God is with you.",
+            text = stringResource(R.string.crisis_god_is_with_you),
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "Take your time. Nothing here is scored.",
+            text = stringResource(R.string.crisis_take_your_time_nothing_here_is_scored),
             style = MaterialTheme.typography.bodyMedium,
             fontStyle = FontStyle.Italic,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
@@ -199,12 +204,14 @@ private fun CrisisTile(
     // user is already in distress, so fingers may be imprecise. The min
     // height lives on the Card itself rather than a child so the whole card
     // surface is the hit target.
+    // Resolve at @Composable level — `semantics { }` is non-@Composable.
+    val tileDescription = stringResource(R.string.crisis_x_x, title, subtitle)
     Card(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .sizeIn(minHeight = 96.dp)
-            .semantics { contentDescription = "$title. $subtitle" },
+            .semantics { contentDescription = tileDescription },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
@@ -222,7 +229,7 @@ private fun CrisisTile(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
-                    text = "$emoji  $title",
+                    text = stringResource(R.string.crisis_x_x_2, emoji, title),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
@@ -243,16 +250,18 @@ private fun ReturnHomeLink(onReturnHome: () -> Unit) {
     // Subtle, low-profile — the user should feel the exit is always there
     // without it pulling the eye. Kept at an accessible 48dp tap target via
     // the padding on the clickable Box.
+    // Resolve at @Composable level — `semantics { }` is non-@Composable.
+    val returnHomeDescription = stringResource(R.string.crisis_return_to_home)
     Box(
         modifier = Modifier
             .padding(top = 8.dp)
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onReturnHome)
             .padding(horizontal = 16.dp, vertical = 14.dp)
-            .semantics { contentDescription = "Return to Home" }
+            .semantics { contentDescription = returnHomeDescription }
     ) {
         Text(
-            text = "← Return home",
+            text = stringResource(R.string.crisis_return_home),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
         )

@@ -59,6 +59,8 @@ import com.prayerquest.app.ui.profile.ProfileViewModel
 import com.prayerquest.app.ui.profile.ProfileViewModelFactory
 import com.prayerquest.app.ui.theme.LocalIsPremium
 import com.prayerquest.app.ui.theme.SuccessGreen
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Profile Screen — Full implementation matching ScriptureQuest's layout.
@@ -183,7 +185,7 @@ private fun SettingsShortcutCard(onOpenSettings: () -> Unit) {
         )
         Spacer(modifier = Modifier.size(12.dp))
         Text(
-            text = "Settings",
+            text = stringResource(R.string.home_settings),
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
         )
     }
@@ -233,12 +235,12 @@ private fun PremiumStatusCard(
                 )
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Premium Supporter",
+                        text = stringResource(R.string.profile_premium_supporter),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onTertiaryContainer
                     )
                     Text(
-                        text = "Thank you for sustaining PrayerQuest.",
+                        text = stringResource(R.string.profile_thank_you_for_sustaining_prayerquest),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
                     )
@@ -266,12 +268,12 @@ private fun PremiumStatusCard(
                     )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "PrayerQuest Premium",
+                            text = stringResource(R.string.premium_prayerquest_premium),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "Ad-free · Unlimited gratitude photos · Larger prayer groups",
+                            text = stringResource(R.string.profile_ad_free_unlimited_gratitude_photos_larger_prayer_g),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                         )
@@ -284,7 +286,7 @@ private fun PremiumStatusCard(
                     shape = RoundedCornerShape(14.dp)
                 ) {
                     Text(
-                        text = "Upgrade to Premium",
+                        text = stringResource(R.string.common_upgrade_to_premium),
                         style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
                     )
                 }
@@ -300,7 +302,9 @@ private fun PremiumStatusCard(
 @Composable
 private fun ProfileHeaderCard(stats: UserStats) {
     var isEditing by remember { mutableStateOf(false) }
-    var displayName by remember { mutableStateOf("Prayer Warrior") }
+    // Resolve at @Composable level — `remember { }` is non-@Composable.
+    val defaultDisplayName = stringResource(R.string.common_prayer_warrior)
+    var displayName by remember { mutableStateOf(defaultDisplayName) }
 
     Card(
         modifier = Modifier
@@ -361,7 +365,7 @@ private fun ProfileHeaderCard(stats: UserStats) {
                     }
 
                     Text(
-                        text = "Level ${stats.level}",
+                        text = stringResource(R.string.profile_level_x, stats.level),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
@@ -382,7 +386,7 @@ private fun ProfileHeaderCard(stats: UserStats) {
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "${xpProgress.first} / ${xpProgress.second} XP · ${stats.totalXp} total",
+                    text = stringResource(R.string.profile_x_x_xp_x_total, xpProgress.first, xpProgress.second, stats.totalXp),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
                 )
@@ -394,7 +398,7 @@ private fun ProfileHeaderCard(stats: UserStats) {
                 onClick = { isEditing = !isEditing },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (isEditing) "Done" else "Edit Name")
+                Text(if (isEditing) stringResource(R.string.common_done) else stringResource(R.string.profile_edit_name))
             }
         }
     }
@@ -417,7 +421,7 @@ private fun LifetimeStatsCard(stats: UserStats) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Lifetime Stats",
+                text = stringResource(R.string.profile_lifetime_stats),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -426,27 +430,27 @@ private fun LifetimeStatsCard(stats: UserStats) {
             // 2-column grid
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatRow(
-                    label1 = "Total XP",
+                    label1 = stringResource(R.string.profile_total_xp),
                     value1 = stats.totalXp.toString(),
-                    label2 = "Sessions",
+                    label2 = stringResource(R.string.home_sessions),
                     value2 = stats.totalSessions.toString()
                 )
                 StatRow(
-                    label1 = "Minutes Prayed",
+                    label1 = stringResource(R.string.profile_minutes_prayed),
                     value1 = stats.totalPrayerMinutes.toString(),
-                    label2 = "Answered Prayers",
+                    label2 = stringResource(R.string.library_answered_prayers),
                     value2 = stats.answeredPrayerCount.toString()
                 )
                 StatRow(
-                    label1 = "Grace Coins",
+                    label1 = stringResource(R.string.profile_grace_coins),
                     value1 = stats.graceCoins.toString(),
-                    label2 = "Gratitudes Logged",
+                    label2 = stringResource(R.string.profile_gratitudes_logged),
                     value2 = stats.totalGratitudesLogged.toString()
                 )
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Badges Earned",
+                            text = stringResource(R.string.profile_badges_earned),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -518,7 +522,7 @@ private fun AchievementCategoriesCard(achievements: List<AchievementProgress>) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Achievements",
+                text = stringResource(R.string.profile_achievements),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -570,6 +574,16 @@ private fun AchievementCategoryRow(
         AchievementCategory.SESSION -> "🎉"
         AchievementCategory.TIME_OF_DAY -> "🌅"
         AchievementCategory.COMEBACK -> "🕊️"
+        // ── Sprint-18 categories ──
+        AchievementCategory.LONGEST_SESSION -> "🧘"
+        AchievementCategory.VOICE -> "🎙️"
+        AchievementCategory.JOURNAL -> "✍️"
+        AchievementCategory.SABBATH -> "🕊️"
+        AchievementCategory.TESTIMONY -> "📝"
+        AchievementCategory.PARTIAL_ANSWER -> "🌱"
+        AchievementCategory.NAMES_OF_GOD -> "✡️"
+        AchievementCategory.FAMOUS_DISTINCT -> "⛪"
+        AchievementCategory.MODE_MASTERY -> "🎯"
     }
 
     val categoryName = category.name.replace("_", " ").lowercase()
@@ -603,8 +617,29 @@ private fun AchievementCategoryRow(
                     style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                // Sprint-18: badges stay a surprise until earned. Only the
+                // names of UNLOCKED achievements are revealed here; any
+                // remaining locked badges appear as a coy "+ N more to
+                // discover" hint instead of by name. Fully-complete
+                // categories collapse the hint and show nothing else.
+                val unlockedNames = definitions.mapNotNull { def ->
+                    if (achievements.find { it.achievementId == def.id }?.isUnlocked == true) {
+                        def.name
+                    } else null
+                }
+                val lockedCount = definitions.size - unlockedNames.size
+                val subtitle = when {
+                    unlockedNames.isEmpty() && lockedCount > 0 ->
+                        stringResource(R.string.profile_locked_category_hint, lockedCount)
+                    lockedCount == 0 ->
+                        unlockedNames.joinToString(", ")
+                    else ->
+                        unlockedNames.joinToString(", ") +
+                            " · " +
+                            stringResource(R.string.profile_locked_more_hint, lockedCount)
+                }
                 Text(
-                    text = definitions.joinToString(", ") { it.name },
+                    text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -628,7 +663,7 @@ private fun AchievementCategoryRow(
 
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = if (unlockedCount == definitions.size) "✓ Unlocked" else "$unlockedCount/${definitions.size}",
+            text = if (unlockedCount == definitions.size) stringResource(R.string.profile_unlocked) else "$unlockedCount/${definitions.size}",
             style = MaterialTheme.typography.labelSmall,
             color = if (unlockedCount == definitions.size) SuccessGreen else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.SemiBold

@@ -1,5 +1,6 @@
 package com.prayerquest.app.ui.prayer.modes
 
+import android.content.Context
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -38,6 +40,8 @@ import com.prayerquest.app.domain.content.DailyOfficeLiturgy
 import com.prayerquest.app.domain.content.Hour
 import com.prayerquest.app.domain.content.LiturgySection
 import com.prayerquest.app.domain.content.OfficeLiturgy
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Daily Office — fixed-hour prayer (DD §3.4 item 10). Auto-selects the office
@@ -59,6 +63,7 @@ fun DailyOfficeMode(
     onModeComplete: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     var selectedHour by remember { mutableStateOf(Hour.forTime()) }
     var sectionIndex by remember { mutableIntStateOf(0) }
 
@@ -80,7 +85,7 @@ fun DailyOfficeMode(
                     if (!isLast) {
                         sectionIndex++
                     } else {
-                        onModeComplete(formatOfficeTranscript(office))
+                        onModeComplete(formatOfficeTranscript(context, office))
                     }
                 },
                 modifier = Modifier
@@ -89,7 +94,7 @@ fun DailyOfficeMode(
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
-                    text = if (isLast) "Complete Office" else "Next",
+                    text = if (isLast) stringResource(R.string.prayer_modes_complete_office) else stringResource(R.string.common_next),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -100,7 +105,7 @@ fun DailyOfficeMode(
                     onClick = { sectionIndex-- },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Back one step")
+                    Text(stringResource(R.string.prayer_modes_back_one_step))
                 }
             }
         }
@@ -160,7 +165,7 @@ fun DailyOfficeMode(
             }
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = "${sectionIndex + 1}/${sections.size}",
+                text = stringResource(R.string.prayer_modes_x_x_2, sectionIndex + 1, sections.size),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -244,15 +249,19 @@ private fun LiturgySectionCard(section: LiturgySection) {
     }
 }
 
-private fun formatOfficeTranscript(office: OfficeLiturgy): String = buildString {
-    appendLine("Daily Office · ${office.hour.displayName}")
+// Note: takes a Context (not @Composable) because it's invoked from an
+// onClick handler when the user finishes the office — onClick lambdas
+// are not composable scopes, so stringResource() is unavailable. The
+// caller captures LocalContext and threads it in.
+private fun formatOfficeTranscript(context: Context, office: OfficeLiturgy): String = buildString {
+    appendLine(context.getString(R.string.prayer_modes_daily_office_x, office.hour.displayName))
     appendLine(office.hour.subtitle)
     appendLine()
     office.sections.forEach { section ->
         appendLine("【${section.title}】")
         appendLine(section.body)
         section.response?.let {
-            appendLine("— $it")
+            appendLine(context.getString(R.string.prayer_modes_x, it))
         }
         appendLine()
     }

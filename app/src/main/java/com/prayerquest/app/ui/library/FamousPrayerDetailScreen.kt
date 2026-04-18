@@ -30,6 +30,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.prayerquest.app.R
 
 /**
  * Detail view for a single famous prayer (Lord's Prayer, Serenity, etc).
@@ -72,10 +74,10 @@ fun FamousPrayerDetailScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("Prayer") },
+                title = { Text(stringResource(R.string.library_prayer)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
@@ -85,7 +87,7 @@ fun FamousPrayerDetailScreen(
                     ) {
                         Icon(
                             if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "Favorite",
+                            contentDescription = stringResource(R.string.library_favorite),
                             tint = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -108,12 +110,12 @@ fun FamousPrayerDetailScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "You've prayed this",
+                                text = stringResource(R.string.library_you_ve_prayed_this),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "${current.userPrayedCount} times",
+                                text = stringResource(R.string.library_x_times, current.userPrayedCount),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -125,7 +127,7 @@ fun FamousPrayerDetailScreen(
                                 .height(48.dp)
                         ) {
                             Text(
-                                "I Prayed This Today",
+                                stringResource(R.string.library_i_prayed_this_today),
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -166,15 +168,15 @@ fun FamousPrayerDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Prayer not found",
+                            text = stringResource(R.string.library_prayer_not_found),
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
                         )
                         Text(
-                            text = "We couldn't load this prayer. It may have been removed or updated.",
+                            text = stringResource(R.string.library_we_couldn_t_load_this_prayer_it_may_have_been_remo),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Button(onClick = onNavigateBack) { Text("Go Back") }
+                        Button(onClick = onNavigateBack) { Text(stringResource(R.string.common_go_back)) }
                     }
                 }
                 return@Scaffold
@@ -204,14 +206,14 @@ fun FamousPrayerDetailScreen(
                     )
                     if (current.author.isNotBlank()) {
                         Text(
-                            text = "by ${current.author}",
+                            text = stringResource(R.string.library_by_x_2, current.author),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     if (current.dateComposed.isNotEmpty()) {
                         Text(
-                            text = "Composed: ${current.dateComposed}",
+                            text = stringResource(R.string.library_composed_x, current.dateComposed),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontStyle = FontStyle.Italic
@@ -226,7 +228,7 @@ fun FamousPrayerDetailScreen(
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.Label,
-                                    contentDescription = "Tag",
+                                    contentDescription = stringResource(R.string.common_tag),
                                     modifier = Modifier.size(14.dp)
                                 )
                             },
@@ -261,7 +263,7 @@ fun FamousPrayerDetailScreen(
             if (current.source.isNotBlank()) {
                 item {
                     Text(
-                        text = "Source: ${current.source}",
+                        text = stringResource(R.string.library_source_x, current.source),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontStyle = FontStyle.Italic

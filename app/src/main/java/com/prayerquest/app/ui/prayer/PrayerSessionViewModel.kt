@@ -1,5 +1,6 @@
 package com.prayerquest.app.ui.prayer
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -18,6 +19,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.prayerquest.app.R
 
 /**
  * Holds a prayer item paired with an auto-assigned mode for the session.
@@ -76,7 +78,13 @@ class PrayerSessionViewModel(
      * path) don't have to thread the repo through — the Factory can inject
      * it uniformly and we just ignore it in the non-collection branch.
      */
-    private val collectionRepository: CollectionRepository? = null
+    private val collectionRepository: CollectionRepository? = null,
+    /**
+     * Application context — used only for resolving string resources for the
+     * fallback default-session items. Stored as the application context (set
+     * by the Factory) so we never leak an Activity from a long-lived VM.
+     */
+    private val appContext: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
@@ -171,15 +179,15 @@ class PrayerSessionViewModel(
     private fun generateDefaultSessionItems(): List<SessionItem> {
         return listOf(
             SessionItem(
-                prayerItem = PrayerItem(id = 0, title = "ACTS Prayer", description = "Adoration, Confession, Thanksgiving, Supplication"),
+                prayerItem = PrayerItem(id = 0, title = appContext.getString(R.string.prayer_acts_prayer), description = appContext.getString(R.string.prayer_adoration_confession_thanksgiving_supplication)),
                 mode = PrayerMode.GUIDED_ACTS
             ),
             SessionItem(
-                prayerItem = PrayerItem(id = 0, title = "Daily Examen", description = "Ignatian 5-step prayerful review of the day"),
+                prayerItem = PrayerItem(id = 0, title = appContext.getString(R.string.prayer_daily_examen), description = appContext.getString(R.string.prayer_ignatian_5_step_prayerful_review_of_the_day)),
                 mode = PrayerMode.DAILY_EXAMEN
             ),
             SessionItem(
-                prayerItem = PrayerItem(id = 0, title = "Breath Prayer", description = "Inhale and exhale a short sacred phrase"),
+                prayerItem = PrayerItem(id = 0, title = appContext.getString(R.string.prayer_breath_prayer), description = appContext.getString(R.string.prayer_inhale_and_exhale_a_short_sacred_phrase)),
                 mode = PrayerMode.BREATH_PRAYER
             )
         )
@@ -273,13 +281,21 @@ class PrayerSessionViewModel(
             try {
                 // Use the last mode used or default to GuidedActs
                 val lastMode = modesUsed.lastOrNull() ?: PrayerMode.GUIDED_ACTS
+                // Sprint-18 voice/journal badge wiring. The session is
+                // voice-bearing if any item used VOICE_RECORD, and journal-
+                // bearing if any item used PRAYER_JOURNAL. These flags drive
+                // the VOICE / JOURNAL lifetime counters on UserStats.
+                val hadVoice = PrayerMode.VOICE_RECORD in modesUsed
+                val hadJournal = PrayerMode.PRAYER_JOURNAL in modesUsed
                 val result = gamificationRepository.onPrayerSessionCompleted(
                     mode = lastMode,
                     grade = PrayerGrade.GOOD,
                     durationSeconds = sessionDuration.toInt(),
                     itemsPrayed = sessionItems.size,
                     isFamousPrayer = false,
-                    isGroupPrayer = false
+                    isGroupPrayer = false,
+                    hasVoiceTranscript = hadVoice,
+                    hasJournalText = hadJournal
                 )
                 _uiState.value = UiState.Finished(result)
             } catch (e: Exception) {
@@ -311,7 +327,13 @@ class PrayerSessionViewModel(
             private val gamificationRepository: GamificationRepository,
             private val fixedMode: PrayerMode? = null,
             private val collectionId: Long? = null,
-            private val collectionRepository: CollectionRepository? = null
+            private val collectionRepository: CollectionRepository? = null,
+            /**
+             * Context used only to look up string resources for the default-
+             * session fallback. Factory normalizes to applicationContext so
+             * the VM can't hold on to an Activity.
+             */
+            private val context: Context
         ) : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -320,7 +342,8 @@ class PrayerSessionViewModel(
                     gamificationRepository = gamificationRepository,
                     fixedMode = fixedMode,
                     collectionId = collectionId,
-                    collectionRepository = collectionRepository
+                    collectionRepository = collectionRepository,
+                    appContext = context.applicationContext
                 ) as T
             }
         }
