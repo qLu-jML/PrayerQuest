@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.prayerquest.app.ui.components.PrayerPhotoAvatar
 import kotlinx.coroutines.delay
 
 /**
@@ -49,12 +50,18 @@ import kotlinx.coroutines.delay
  *   real items they're praying for. Null / empty falls back to the generic
  *   placeholders below. Never empty-on-read — the defensive init at the
  *   top of the function normalizes to a non-empty list.
+ * @param photoUris Optional parallel list of Photo Prayer (DD §3.9) paths —
+ *   indexed the same as [topics]. When present and non-null at a given index,
+ *   the current-item card renders a circular avatar of the user's photo next
+ *   to the title. Callers pass null for items without a photo; the mode
+ *   falls back to a monogram-style avatar in that case.
  */
 @Composable
 fun IntercessionDrillMode(
     onModeComplete: (String) -> Unit,
     modifier: Modifier = Modifier,
-    topics: List<String>? = null
+    topics: List<String>? = null,
+    photoUris: List<String?>? = null,
 ) {
     // Normalize caller-supplied topics. Null OR empty falls back to the
     // default list — we never want to render with a zero-length list, which
@@ -189,6 +196,13 @@ fun IntercessionDrillMode(
         }
 
         // Current item card
+        //
+        // Photo Prayer avatar (DD §3.9) sits above the title when the caller
+        // supplied a photo for this item. Sized a touch bigger (64dp) than the
+        // list-card avatar to give the item a face — makes intercession feel
+        // personal instead of a generic template. Items without a photo fall
+        // back to a monogram via PrayerPhotoAvatar's null-path branch.
+        val currentPhotoUri = photoUris?.getOrNull(safeIndex)
         ElevatedCard(
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -199,6 +213,11 @@ fun IntercessionDrillMode(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                PrayerPhotoAvatar(
+                    photoPath = currentPhotoUri,
+                    fallbackLabel = currentItem,
+                    size = 64.dp,
+                )
                 Text(
                     text = "Praying for:",
                     style = MaterialTheme.typography.labelMedium,

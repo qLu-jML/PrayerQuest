@@ -22,4 +22,16 @@
     <files-path
         name="shared_files"
         path="shared/" />
+
+    <!--
+      Scratch space for camera-capture hand-offs. We generate a
+      FileProvider URI pointing here, pass it to ActivityResultContracts
+      .TakePicture, and then re-read the result into PhotoStorage which
+      compresses + moves the bytes into the permanent filesDir/<category>
+      folder. Files in this dir are considered disposable and are deleted
+      by the photo-picker flow as soon as the copy lands.
+    -->
+    <cache-path
+        name="camera_captures"
+        path="camera/" />
 </paths>

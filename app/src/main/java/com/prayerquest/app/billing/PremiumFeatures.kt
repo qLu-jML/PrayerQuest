@@ -28,6 +28,20 @@ object PremiumFeatures {
     const val FREE_ANSWERED_PRAYER_PHOTOS = 3
 
     /**
+     * Soft cap on **total** photo files stored on-device across every photo-
+     * bearing feature (Photo Prayers on active items, Gratitude entries, and
+     * Answered-Prayer testimonies combined). When a free-tier user hits this
+     * cap, the photo picker is replaced with a paywall CTA. Existing photos
+     * stay visible and are never deleted — the cap only blocks *new* writes.
+     *
+     * 200 strikes a balance: a typical daily user adds ~1 gratitude photo a
+     * week, so 200 buys ~4 years of runway before the prompt appears. Users
+     * who pray over a lot of people (the Photo-Prayers power-user loop) will
+     * see it sooner and have a natural moment to convert.
+     */
+    const val FREE_TOTAL_PHOTO_CAP = 200
+
+    /**
      * Free-tier group member cap. Premium members get a larger cap (below)
      * which lets a family / small-group leader add everyone in one place.
      */
@@ -61,6 +75,17 @@ object PremiumFeatures {
 
     fun answeredPrayerPhotosFor(isPremium: Boolean): Int =
         if (isPremium) Int.MAX_VALUE else FREE_ANSWERED_PRAYER_PHOTOS
+
+    /**
+     * Whether this user is allowed to add another photo, given the current
+     * on-disk photo count across every category. Premium users always pass;
+     * free users hit the [FREE_TOTAL_PHOTO_CAP] soft cap.
+     */
+    fun canAddPhoto(isPremium: Boolean, currentTotalPhotos: Int): Boolean =
+        isPremium || currentTotalPhotos < FREE_TOTAL_PHOTO_CAP
+
+    fun totalPhotoCapFor(isPremium: Boolean): Int =
+        if (isPremium) Int.MAX_VALUE else FREE_TOTAL_PHOTO_CAP
 
     // ── Group caps ───────────────────────────────────────────────────────
 

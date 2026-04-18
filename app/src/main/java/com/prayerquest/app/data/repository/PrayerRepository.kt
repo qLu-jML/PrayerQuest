@@ -39,7 +39,36 @@ class PrayerRepository(
     suspend fun addItem(item: PrayerItem): Long = prayerItemDao.insert(item)
     suspend fun addItems(items: List<PrayerItem>) = prayerItemDao.insertAll(items)
     suspend fun updateItem(item: PrayerItem) = prayerItemDao.update(item)
-    suspend fun deleteItem(item: PrayerItem) = prayerItemDao.delete(item)
+    /**
+     * Deletes the prayer item from Room *and* removes any local Photo Prayer
+     * file from app-private storage. Storage-hygiene invariant (DD §3.9):
+     * local photos must never outlive the item they belong to — otherwise
+     * the user's "total photos" count drifts upward permanently and, more
+     * importantly, the file stays on disk after the user has unambiguously
+     * said "remove this prayer." Callers that want to keep the photo (e.g.
+     * converting an active Photo Prayer into an Answered-Prayer testimony)
+     * must copy/re-save the file *before* invoking delete.
+     */
+    suspend fun deleteItem(item: PrayerItem) {
+        prayerItemDao.delete(item)
+        com.prayerquest.app.util.PhotoStorage.deletePhoto(item.photoUri)
+    }
+
+    /**
+     * Replaces (or clears) the Photo Prayer on an active item. If an old
+     * photo path was set and the new path differs, the old file is deleted
+     * to keep on-disk count honest. Safe to call with [newPhotoPath] = null
+     * to explicitly remove the photo.
+     */
+    suspend fun updatePhotoUri(itemId: Long, newPhotoPath: String?) {
+        val existing = prayerItemDao.getById(itemId) ?: return
+        if (existing.photoUri == newPhotoPath) return
+        val oldPath = existing.photoUri
+        prayerItemDao.update(existing.copy(photoUri = newPhotoPath))
+        if (!oldPath.isNullOrBlank() && oldPath != newPhotoPath) {
+            com.prayerquest.app.util.PhotoStorage.deletePhoto(oldPath)
+        }
+    }
 
     /**
      * Mark a prayer as answered with optional testimony.

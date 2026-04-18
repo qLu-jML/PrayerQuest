@@ -94,6 +94,16 @@ object Routes {
     const val ADD_ITEMS_TO_COLLECTION = "add_items_to_collection/{collectionId}"
     fun addItemsToCollection(collectionId: Long): String =
         "add_items_to_collection/$collectionId"
+
+    /**
+     * Edit Prayer Item — tweak title/description/Photo Prayer (DD §3.9). Reached
+     * by tapping a prayer card on Collection Detail. Deliberately scoped to
+     * those three fields — status transitions (Answered / PartiallyAnswered)
+     * and category changes live on their own flows so this screen stays focused.
+     */
+    const val EDIT_PRAYER_ITEM = "edit_prayer_item/{prayerItemId}"
+    fun editPrayerItem(prayerItemId: Long): String =
+        "edit_prayer_item/$prayerItemId"
     const val FAMOUS_PRAYER_DETAIL = "famous_prayer/{prayerId}"
     const val BIBLE_PRAYER_DETAIL = "bible_prayer/{prayerId}"
     const val ANSWERED_PRAYERS = "answered_prayers"

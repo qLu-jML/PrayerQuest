@@ -58,6 +58,7 @@ import android.content.ContextWrapper
 import com.prayerquest.app.PrayerQuestApplication
 import com.prayerquest.app.ads.AdManager
 import com.prayerquest.app.domain.model.PrayerMode
+import com.prayerquest.app.ui.components.PrayerPhotoAvatar
 import com.prayerquest.app.ui.prayer.components.GradeBar
 import com.prayerquest.app.ui.prayer.components.SessionSummary
 import com.prayerquest.app.ui.theme.LocalIsPremium
@@ -381,12 +382,17 @@ private fun InProgressState(
                 // drill through THOSE instead of generic "Family members /
                 // Missionaries / ..." placeholders. Null / empty falls
                 // back to the mode's default list.
+                //
+                // Photo URIs are passed as a parallel list so each item's
+                // Photo Prayer (DD §3.9) anchors the drill card. Falls back
+                // to a monogram via PrayerPhotoAvatar when the item has none.
                 IntercessionDrillMode(
                     onModeComplete = { content ->
                         viewModel.onModeComplete(content)
                     },
                     modifier = Modifier.weight(1f),
-                    topics = realItems.takeIf { it.isNotEmpty() }?.map { it.title }
+                    topics = realItems.takeIf { it.isNotEmpty() }?.map { it.title },
+                    photoUris = realItems.takeIf { it.isNotEmpty() }?.map { it.photoUri },
                 )
             }
             PrayerMode.FLASH_PRAY_SWIPE -> {
@@ -400,7 +406,8 @@ private fun InProgressState(
                         viewModel.onModeComplete(content)
                     },
                     modifier = Modifier.weight(1f),
-                    topics = realItems.takeIf { it.isNotEmpty() }?.map { it.title }
+                    topics = realItems.takeIf { it.isNotEmpty() }?.map { it.title },
+                    photoUris = realItems.takeIf { it.isNotEmpty() }?.map { it.photoUri },
                 )
             }
             PrayerMode.DAILY_EXAMEN -> {
@@ -522,26 +529,87 @@ private fun FinishedState(
 @Composable
 private fun PrayingForBanner(items: List<PrayerItem>) {
     val joined = items.joinToString(separator = " • ") { it.title }
+    // Photo Prayer (DD §3.9) gets a dedicated hero slot when there is exactly
+    // one item with a photo — the header of every mode becomes a face/anchor
+    // for the single concern the user is praying through. With multiple items
+    // we show a small row of avatars instead so the banner's vertical footprint
+    // stays bounded. Zero photos → text-only banner (the original look).
+    val singleItemHero = items.size == 1 && !items.first().photoUri.isNullOrBlank()
+    val photoItems = items.filter { !it.photoUri.isNullOrBlank() }
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f))
             .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Text(
-            text = if (items.size == 1) "Praying for" else "Praying for ${items.size} items",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-        )
-        Text(
-            text = joined,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            maxLines = 2
-        )
+        if (singleItemHero) {
+            val solo = items.first()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                PrayerPhotoAvatar(
+                    photoPath = solo.photoUri,
+                    fallbackLabel = solo.title,
+                    size = 56.dp,
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Praying for",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    )
+                    Text(
+                        text = solo.title,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        maxLines = 2
+                    )
+                }
+            }
+        } else {
+            Text(
+                text = if (items.size == 1) "Praying for" else "Praying for ${items.size} items",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+            )
+            // Row of mini avatars when any item has a photo. Capped at 5 so
+            // a 20-item collection doesn't blow past the one-line budget.
+            if (photoItems.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    photoItems.take(5).forEach { item ->
+                        PrayerPhotoAvatar(
+                            photoPath = item.photoUri,
+                            fallbackLabel = item.title,
+                            size = 28.dp,
+                        )
+                    }
+                    if (photoItems.size > 5) {
+                        Text(
+                            text = "+${photoItems.size - 5}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                            modifier = Modifier.padding(start = 4.dp)
+                                .align(Alignment.CenterVertically)
+                        )
+                    }
+                }
+            }
+            Text(
+                text = joined,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                maxLines = 2
+            )
+        }
     }
 }
 

@@ -139,6 +139,10 @@ dependencies {
     // JSON parsing
     implementation(libs.google.gson)
 
+    // EXIF — used by PhotoStorage to bake camera orientation into pixels
+    // and strip GPS/device metadata before saving to app-private storage.
+    implementation(libs.androidx.exifinterface)
+
     // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)

@@ -21,6 +21,7 @@ import com.prayerquest.app.ui.celebration.AnsweredCelebrationScreen
 import com.prayerquest.app.ui.collections.AddItemsToCollectionScreen
 import com.prayerquest.app.ui.collections.CollectionDetailScreen
 import com.prayerquest.app.ui.collections.CreateCollectionScreen
+import com.prayerquest.app.ui.collections.EditPrayerItemScreen
 import com.prayerquest.app.ui.crisis.CrisisBreathPrayerScreen
 import com.prayerquest.app.ui.crisis.CrisisPrayerScreen
 import com.prayerquest.app.ui.crisis.CrisisPsalmsReaderScreen
@@ -377,6 +378,9 @@ fun PrayerQuestNavHost(
                         // Active list (which was the source of the
                         // "placeholders instead of real prayer items" bug).
                         navController.navigate(Routes.prayerModePicker(collectionId))
+                    },
+                    onEditItem = { itemId ->
+                        navController.navigate(Routes.editPrayerItem(itemId))
                     }
                 )
             }
@@ -395,7 +399,22 @@ fun PrayerQuestNavHost(
                 val cid = backStackEntry.arguments?.getLong("collectionId") ?: 0L
                 AddItemsToCollectionScreen(
                     collectionId = cid,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToPaywall = { navController.navigate(Routes.PAYWALL) }
+                )
+            }
+
+            // Edit Prayer Item — Photo Prayer (DD §3.9) + title/description.
+            // Reached from Collection Detail by tapping a prayer card.
+            composable(
+                route = Routes.EDIT_PRAYER_ITEM,
+                arguments = listOf(navArgument("prayerItemId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val itemId = backStackEntry.arguments?.getLong("prayerItemId") ?: 0L
+                EditPrayerItemScreen(
+                    prayerItemId = itemId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToPaywall = { navController.navigate(Routes.PAYWALL) }
                 )
             }
 

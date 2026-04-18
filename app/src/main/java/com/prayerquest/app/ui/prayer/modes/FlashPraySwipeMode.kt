@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.prayerquest.app.ui.components.PrayerPhotoAvatar
 import kotlin.math.roundToInt
 
 @Composable
@@ -44,7 +45,15 @@ fun FlashPraySwipeMode(
      * intercession topics below. Titles only (no descriptions) so the card's
      * big centered text stays readable at a glance.
      */
-    topics: List<String>? = null
+    topics: List<String>? = null,
+    /**
+     * Optional parallel list of Photo Prayer (DD §3.9) paths — same shape /
+     * indexing as [topics]. When present, each swipe card shows a circular
+     * avatar above the title for that index; null entries fall back to a
+     * monogram. Ignored entirely when [topics] is null (default topics have
+     * no photos to pair with).
+     */
+    photoUris: List<String?>? = null,
 ) {
     val defaultTopics = listOf(
         "Global peace",
@@ -214,6 +223,20 @@ fun FlashPraySwipeMode(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
+                        // Photo Prayer (DD §3.9) — shows above the topic text
+                        // when the caller paired a photo with this index. We
+                        // only render the avatar slot when real topics were
+                        // supplied; default intercession topics have no
+                        // photos to attach, so the card stays text-focused.
+                        val currentPhotoUri = photoUris?.getOrNull(currentIndex)
+                        if (topics != null) {
+                            PrayerPhotoAvatar(
+                                photoPath = currentPhotoUri,
+                                fallbackLabel = currentTopic,
+                                size = 56.dp,
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                        }
                         Text(
                             text = "Pray for:",
                             style = MaterialTheme.typography.labelMedium,

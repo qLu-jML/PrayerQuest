@@ -54,10 +54,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prayerquest.app.PrayerQuestApplication
+import com.prayerquest.app.billing.PremiumFeatures
 import com.prayerquest.app.data.entity.PrayerItem
 import com.prayerquest.app.data.repository.CollectionRepository
+import com.prayerquest.app.data.repository.PhotoCountRepository
 import com.prayerquest.app.data.repository.PrayerRepository
 import com.prayerquest.app.domain.tagging.PrayerTagger
+import com.prayerquest.app.ui.components.PhotoPickerSlot
+import com.prayerquest.app.util.PhotoStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -87,6 +91,7 @@ import kotlinx.coroutines.launch
 fun AddItemsToCollectionScreen(
     collectionId: Long,
     onNavigateBack: () -> Unit,
+    onNavigateToPaywall: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val app = LocalContext.current.applicationContext as PrayerQuestApplication
@@ -95,16 +100,24 @@ fun AddItemsToCollectionScreen(
         factory = AddItemsViewModel.Factory(
             collectionId = collectionId,
             collectionRepository = app.container.collectionRepository,
-            prayerRepository = app.container.prayerRepository
+            prayerRepository = app.container.prayerRepository,
+            photoCountRepository = app.container.photoCountRepository,
         )
     )
 
     val addableItems by viewModel.addableItems.collectAsState(initial = emptyList())
     val selectedIds by viewModel.selectedIds.collectAsState()
     val suggestedTags by viewModel.suggestedTags.collectAsState()
+    val isPremium by app.container.premiumRepository.isPremium
+        .collectAsState(initial = false)
+    val photoCount by app.container.photoCountRepository.count.collectAsState()
+    val canAddPhoto = PremiumFeatures.canAddPhoto(isPremium, photoCount)
 
     var newTitle by remember { mutableStateOf("") }
     var newDescription by remember { mutableStateOf("") }
+    // Draft photo path for the quick-create card. We stage it here and flush
+    // into the new PrayerItem row in `createAndAdd`.
+    var draftPhotoPath by remember { mutableStateOf<String?>(null) }
 
     // Which suggested category the user has tapped to accept. `null` means
     // no suggestion has been accepted — if they save in that state the
@@ -184,14 +197,51 @@ fun AddItemsToCollectionScreen(
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
-                            OutlinedTextField(
-                                value = newTitle,
-                                onValueChange = { newTitle = it },
-                                label = { Text("Prayer title") },
-                                placeholder = { Text("e.g., Healing for Mom") },
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                            // Title row with photo slot on the right. The
+                            // circular slot is a first-class part of the
+                            // add flow so it stays discoverable — DD §3.9
+                            // puts it right next to the prayer copy.
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = newTitle,
+                                    onValueChange = { newTitle = it },
+                                    label = { Text("Prayer title") },
+                                    placeholder = { Text("e.g., Healing for Mom") },
+                                    singleLine = true,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                PhotoPickerSlot(
+                                    currentPath = draftPhotoPath,
+                                    category = PhotoStorage.Category.PRAYER_ITEM,
+                                    onPhotoSaved = { path ->
+                                        // New file on disk — drop the
+                                        // old draft photo if one was
+                                        // staged, then accept the new
+                                        // path into the draft.
+                                        val previous = draftPhotoPath
+                                        draftPhotoPath = path
+                                        if (!previous.isNullOrBlank() && previous != path) {
+                                            PhotoStorage.deletePhoto(previous)
+                                        }
+                                        viewModel.onPhotoAdded()
+                                    },
+                                    onPhotoCleared = {
+                                        val previous = draftPhotoPath
+                                        draftPhotoPath = null
+                                        if (!previous.isNullOrBlank()) {
+                                            PhotoStorage.deletePhoto(previous)
+                                            viewModel.onPhotoRemoved()
+                                        }
+                                    },
+                                    onLockedTap = if (!canAddPhoto && draftPhotoPath == null)
+                                        onNavigateToPaywall
+                                    else null,
+                                )
+                            }
                             OutlinedTextField(
                                 value = newDescription,
                                 onValueChange = { newDescription = it },
@@ -224,11 +274,16 @@ fun AddItemsToCollectionScreen(
                                     viewModel.createAndAdd(
                                         title = newTitle.trim(),
                                         description = newDescription.trim(),
-                                        category = acceptedCategory?.displayName.orEmpty()
+                                        category = acceptedCategory?.displayName.orEmpty(),
+                                        photoUri = draftPhotoPath,
                                     )
                                     newTitle = ""
                                     newDescription = ""
                                     acceptedCategory = null
+                                    // Ownership of the staged file transfers
+                                    // to the new PrayerItem row — don't
+                                    // delete it here.
+                                    draftPhotoPath = null
                                 },
                                 enabled = newTitle.isNotBlank(),
                                 modifier = Modifier
@@ -439,7 +494,8 @@ private const val TAG_SUGGESTION_DEBOUNCE_MS = 300L
 class AddItemsViewModel(
     private val collectionId: Long,
     private val collectionRepository: CollectionRepository,
-    private val prayerRepository: PrayerRepository
+    private val prayerRepository: PrayerRepository,
+    private val photoCountRepository: PhotoCountRepository,
 ) : ViewModel() {
 
     /**
@@ -506,14 +562,20 @@ class AddItemsViewModel(
      * the column's empty-string default when no category is chosen — no
      * Room migration required.
      */
-    fun createAndAdd(title: String, description: String, category: String = "") {
+    fun createAndAdd(
+        title: String,
+        description: String,
+        category: String = "",
+        photoUri: String? = null,
+    ) {
         if (title.isBlank()) return
         viewModelScope.launch {
             val newId = prayerRepository.addItem(
                 PrayerItem(
                     title = title,
                     description = description,
-                    category = category
+                    category = category,
+                    photoUri = photoUri,
                 )
             )
             collectionRepository.addItemToCollection(collectionId, newId)
@@ -521,7 +583,20 @@ class AddItemsViewModel(
             // stale tags keyed to the prayer we just saved.
             _draftTitle.value = ""
             _draftDescription.value = ""
+            // Refresh the on-disk photo count so the 200-cap check stays
+            // accurate after the new row lands.
+            if (photoUri != null) photoCountRepository.refresh()
         }
+    }
+
+    /** Called after the photo-picker successfully wrote a new file to disk. */
+    fun onPhotoAdded() {
+        viewModelScope.launch { photoCountRepository.refresh() }
+    }
+
+    /** Called after the user cleared a staged photo (file already deleted). */
+    fun onPhotoRemoved() {
+        viewModelScope.launch { photoCountRepository.refresh() }
     }
 
     /**
@@ -543,14 +618,16 @@ class AddItemsViewModel(
     class Factory(
         private val collectionId: Long,
         private val collectionRepository: CollectionRepository,
-        private val prayerRepository: PrayerRepository
+        private val prayerRepository: PrayerRepository,
+        private val photoCountRepository: PhotoCountRepository,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return AddItemsViewModel(
                 collectionId = collectionId,
                 collectionRepository = collectionRepository,
-                prayerRepository = prayerRepository
+                prayerRepository = prayerRepository,
+                photoCountRepository = photoCountRepository,
             ) as T
         }
     }

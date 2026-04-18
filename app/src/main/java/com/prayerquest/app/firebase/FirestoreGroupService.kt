@@ -165,6 +165,16 @@ class FirestoreGroupService {
 
     /**
      * Add a prayer item to a group.
+     *
+     * **Photo-Prayer privacy invariant (DD §3.9):** this method accepts only
+     * plain strings/metadata — NOT a [com.prayerquest.app.data.entity.PrayerItem]
+     * object. That is deliberate: by never taking the full entity, we make it
+     * structurally impossible for `photoUri` to end up in [itemData] and get
+     * uploaded to Firestore. The payload below is authoritative — adding a
+     * new field here requires revisiting the privacy invariant first.
+     *
+     * See the `excludes photoUri from Firestore writes` unit test in
+     * `FirestoreGroupServiceTest` for the guard.
      */
     suspend fun addPrayerItem(
         groupId: String,
@@ -173,15 +183,11 @@ class FirestoreGroupService {
         userId: String,
         displayName: String
     ): String {
-        val itemData = hashMapOf(
-            "title" to title,
-            "description" to description,
-            "addedBy" to userId,
-            "addedByName" to displayName,
-            "addedAt" to Timestamp.now(),
-            "prayedByCount" to 0,
-            "prayedByUsers" to listOf<String>(),
-            "status" to "Active"
+        val itemData = buildGroupPrayerItemPayload(
+            title = title,
+            description = description,
+            userId = userId,
+            displayName = displayName
         )
 
         val docRef = db.collection(GROUPS_COLLECTION)
@@ -628,6 +634,34 @@ class FirestoreGroupService {
         private const val PRAYER_ITEMS_SUBCOLLECTION = "prayerItems"
         private const val ACTIVITY_SUBCOLLECTION = "activity"
         private const val USER_GROUPS_COLLECTION = "userGroups"
+
+        /**
+         * Builds the Firestore payload for a new group prayer item.
+         *
+         * Extracted so a plain JVM unit test can assert the payload's shape
+         * without needing Firestore Emulator. The test pins the keys so that
+         * adding `photoUri` (or any other sensitive field) requires an
+         * intentional change that trips the test.
+         *
+         * Visible for testing only — the Firestore write still goes through
+         * [addPrayerItem], which calls this and adds the server timestamp.
+         */
+        internal fun buildGroupPrayerItemPayload(
+            title: String,
+            description: String,
+            userId: String,
+            displayName: String,
+            nowTimestamp: Timestamp = Timestamp.now(),
+        ): HashMap<String, Any> = hashMapOf(
+            "title" to title,
+            "description" to description,
+            "addedBy" to userId,
+            "addedByName" to displayName,
+            "addedAt" to nowTimestamp,
+            "prayedByCount" to 0,
+            "prayedByUsers" to listOf<String>(),
+            "status" to "Active"
+        )
     }
 }
 

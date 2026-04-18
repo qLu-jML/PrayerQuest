@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
         NameOfGod::class,
         FastingSession::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = true
 )
 abstract class PrayerQuestDatabase : RoomDatabase() {
@@ -76,7 +76,7 @@ abstract class PrayerQuestDatabase : RoomDatabase() {
                 DATABASE_NAME
             )
                 .addCallback(SeedCallback(scope))
-                .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_7_8, MIGRATION_8_9)
+                .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
                 // Dev-phase policy (matches ScriptureQuest): any schema gap we
                 // haven't written an explicit migration for wipes and rebuilds.
                 // MIGRATION_4_5 still runs for v4 devices; pre-v4 installs
@@ -300,6 +300,21 @@ abstract class PrayerQuestDatabase : RoomDatabase() {
         val MIGRATION_8_9: Migration = object : Migration(8, 9) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("DROP TABLE IF EXISTS devotional")
+            }
+        }
+
+        /**
+         * v9 → v10 — Photo Prayers (DD §3.9, 2026-04-18).
+         *
+         * Adds a nullable `photoUri` column to `prayer_items` so users can
+         * attach a photo to an active prayer (e.g., a photo of the person
+         * they are praying for). Purely local — never uploaded to Firestore,
+         * even for group-shared items. See [PrayerItem.photoUri] for the
+         * privacy invariant.
+         */
+        val MIGRATION_9_10: Migration = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE prayer_items ADD COLUMN photoUri TEXT")
             }
         }
     }

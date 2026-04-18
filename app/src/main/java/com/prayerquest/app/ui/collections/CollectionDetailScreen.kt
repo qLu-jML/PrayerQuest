@@ -24,6 +24,7 @@ import com.prayerquest.app.data.entity.PrayerCollection
 import com.prayerquest.app.data.entity.PrayerItem
 import com.prayerquest.app.data.repository.CollectionRepository
 import com.prayerquest.app.data.repository.PrayerRepository
+import com.prayerquest.app.ui.components.PrayerPhotoAvatar
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -36,6 +37,7 @@ fun CollectionDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAddItems: (Long) -> Unit,
     onStartPraying: () -> Unit,
+    onEditItem: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val app = LocalContext.current.applicationContext as PrayerQuestApplication
@@ -168,7 +170,8 @@ fun CollectionDetailScreen(
                             onRemoveClick = {
                                 itemToDelete = item
                                 showDeleteDialog = true
-                            }
+                            },
+                            onEditClick = { onEditItem(item.id) }
                         )
                     }
                 }
@@ -247,12 +250,19 @@ fun CollectionDetailScreen(
 private fun CollectionItemCard(
     item: PrayerItem,
     onRemoveClick: () -> Unit,
+    onEditClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())
     val createdDate = dateFormat.format(Date(item.createdAt))
 
-    ElevatedCard(modifier = modifier.fillMaxWidth()) {
+    // Tapping the card opens the Edit screen (photo + fields). The trash
+    // icon still does its own thing and swallows the tap via IconButton's
+    // own click handler, so the two actions don't conflict.
+    ElevatedCard(
+        onClick = onEditClick,
+        modifier = modifier.fillMaxWidth()
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -260,6 +270,13 @@ private fun CollectionItemCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Photo avatar (DD §3.9) — falls back to a monogram when the
+            // item has no photo, so every card still has a visual anchor.
+            PrayerPhotoAvatar(
+                photoPath = item.photoUri,
+                fallbackLabel = item.title,
+                modifier = Modifier.padding(end = 12.dp)
+            )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.title,

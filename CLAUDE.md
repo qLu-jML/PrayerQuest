@@ -41,9 +41,22 @@ Canonical values — do not add others without updating the DD:
 - `GratitudeBlastMode` — absorbed into Gratitude Section as "Speed Round"; no longer a standalone prayer mode
 
 ## Room schema
-- Current DB version: **9** (v8→v9 drops the legacy `devotional` table; earlier bumps were for StreakData hearts/freezes + NameOfGod + FastingSession + onboarding/quest columns).
+- Current DB version: **10** (v9→v10 adds `photoUri` TEXT to `prayer_items` for Photo Prayers DD §3.9; v8→v9 drops the legacy `devotional` table; earlier bumps were for StreakData hearts/freezes + NameOfGod + FastingSession + onboarding/quest columns).
 - All migrations are explicit in `PrayerQuestDatabase.kt`. No `fallbackToDestructiveMigration()` in shipped builds.
 - Schema export is ON (`$projectDir/schemas`).
+
+## Sprint workflow (commit every sprint)
+Nathan is running one Claude conversation per sprint to finalize features + content for release. Every sprint ends with a git commit. Follow this loop:
+
+1. Do the sprint work.
+2. When the sprint's deliverables are complete, STOP and prompt Nathan to build and test:
+   > "Sprint N is done. Please build the app in Android Studio and test the new behavior on your device/emulator. Reply **all clear** when you've verified it works, or tell me what's broken and I'll fix it."
+3. If he replies "all clear" (or equivalent), commit everything to git **locally** — do not attempt to `git push`. There is no `origin` configured in this repo; Nathan pushes manually from his Windows box in PowerShell.
+4. If he reports issues, fix them, then re-prompt for build/test. Don't commit until he's green.
+
+**Commit style:** one commit per sprint, title line `Sprint N: <short summary>`, body describing what was built/changed. Match existing commit style (see `git log`). Always include the `Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>` trailer.
+
+**Never push.** Nathan pushes manually via PowerShell. Claude's job stops at a clean local commit.
 
 ## Sprint status (see DD §8.1 for full plan)
 - **Sprint 1** — Schema + cleanup: *in progress*

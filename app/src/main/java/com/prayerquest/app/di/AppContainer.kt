@@ -95,6 +95,10 @@ class AppContainer(context: Context) {
         fastingSessionDao = database.fastingSessionDao()
     )
 
+    // Tracks total on-device photo count across Photo Prayers, Gratitude,
+    // and Answered-Prayer Testimonies for the 200-photo free-tier soft cap.
+    val photoCountRepository: PhotoCountRepository = PhotoCountRepository(context)
+
     // Data loaders
     val famousPrayerImporter: FamousPrayerImporter = FamousPrayerImporter(
         context = context,
@@ -118,6 +122,10 @@ class AppContainer(context: Context) {
             progressRepository.ensureSeeded()
             famousPrayerImporter.importIfNeeded()
             biblePrayerImporter.importIfNeeded()
+            // Seed the photo-count StateFlow from disk so the cap check is
+            // accurate on first photo-picker open without waiting for a
+            // user action to trigger a refresh.
+            photoCountRepository.refresh()
         }
 
         // Attach the Prayer Groups cloud→Room mirror at application scope.
